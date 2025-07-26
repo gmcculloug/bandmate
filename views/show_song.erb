@@ -1,0 +1,93 @@
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+    <h2>🎵 <%= @song.title %></h2>
+    <div class="actions">
+        <a href="/songs/<%= @song.id %>/edit" class="btn">Edit</a>
+        <a href="/songs" class="btn">Back to Songs</a>
+    </div>
+</div>
+
+<div class="card">
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px;">
+        <div>
+            <h3>Song Details</h3>
+            <div class="song-details">
+                <div class="detail-item">
+                    <span class="detail-label">Artist:</span> <%= @song.artist %>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Bands:</span> 
+                    <% @song.bands.each_with_index do |band, index| %>
+                        <%= band.name %><%= ', ' unless index == @song.bands.length - 1 %>
+                    <% end %>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Key:</span> <%= @song.key %>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Original Key:</span> <%= @song.original_key || 'N/A' %>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Tempo:</span> <%= @song.tempo ? "#{@song.tempo} BPM" : 'N/A' %>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Genre:</span> <%= @song.genre || 'N/A' %>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Duration:</span> <%= @song.duration || 'N/A' %>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Year:</span> <%= @song.year || 'N/A' %>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Album:</span> <%= @song.album || 'N/A' %>
+                </div>
+            </div>
+        </div>
+
+        <div>
+            <h3>Actions</h3>
+            <% if @song.url.present? %>
+                <div style="margin-bottom: 20px;">
+                    <a href="<%= @song.url %>" target="_blank" class="btn btn-success">🎵 Listen on Streaming Platform</a>
+                </div>
+            <% end %>
+            
+            <div style="margin-bottom: 20px;">
+                <h4>Add to Set List</h4>
+                <form method="POST" action="/set_lists" style="display: flex; gap: 10px; align-items: end;">
+                    <div class="form-group" style="flex: 1;">
+                        <label for="set_list_name">Set List Name</label>
+                        <input type="text" id="set_list_name" name="name" placeholder="e.g., Friday Night Set" required>
+                    </div>
+                    <button type="submit" class="btn">Create & Add</button>
+                </form>
+            </div>
+
+            <% existing_set_lists = SetList.joins(:band).where(bands: { id: @song.band_ids }) %>
+            <% if existing_set_lists.any? %>
+                <div>
+                    <h4>Add to Existing Set List</h4>
+                    <% existing_set_lists.each do |set_list| %>
+                        <% unless set_list.songs.include?(@song) %>
+                            <form method="POST" action="/set_lists/<%= set_list.id %>/songs" style="margin-bottom: 10px;">
+                                <input type="hidden" name="song_id" value="<%= @song.id %>">
+                                <button type="submit" class="btn" style="width: 100%; text-align: left;">
+                                    ➕ Add to "<%= set_list.name %>" (<%= set_list.band.name %>)
+                                </button>
+                            </form>
+                        <% end %>
+                    <% end %>
+                </div>
+            <% end %>
+        </div>
+    </div>
+
+    <% if @song.notes.present? %>
+        <div style="margin-top: 30px;">
+            <h3>Notes</h3>
+            <div style="background: #f7fafc; padding: 20px; border-radius: 8px; white-space: pre-wrap;">
+                <%= @song.notes %>
+            </div>
+        </div>
+    <% end %>
+</div> 

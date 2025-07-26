@@ -1,0 +1,22 @@
+version: '3.8'
+
+services:
+  bandage:
+    build: .
+    ports:
+      - "4567:4567"
+    volumes:
+      # Mount database directory for persistence
+      - ./data:/app/data
+      # Mount logs directory
+      - ./logs:/app/logs
+    environment:
+      - RACK_ENV=production
+      - PORT=4567
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4567/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s 

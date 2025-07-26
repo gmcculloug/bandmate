@@ -1,0 +1,48 @@
+<div style="max-width: 600px; margin: 0 auto;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+        <h2>🎸 Add New Band</h2>
+        <% if params[:first_band] == 'true' %>
+            <span style="color: #666; font-style: italic;">First Band Setup</span>
+        <% else %>
+            <a href="/bands" class="btn">Back to Bands</a>
+        <% end %>
+    </div>
+    
+    <% if params[:first_band] == 'true' %>
+        <div class="info-box" style="background: #e3f2fd; border: 1px solid #2196f3; border-radius: 4px; padding: 15px; margin-bottom: 20px;">
+            <p><strong>Welcome to Bandage!</strong> You need to create your first band before you can add songs and set lists.</p>
+        </div>
+    <% end %>
+
+    <% if @errors %>
+        <div class="errors" style="margin-bottom: 20px;">
+            <% @errors.each do |error| %>
+                <p><%= error %></p>
+            <% end %>
+        </div>
+    <% end %>
+
+    <div class="card">
+        <form method="POST" action="/bands">
+            <div style="margin-bottom: 20px;">
+                <label for="band_name" style="display: block; margin-bottom: 5px; font-weight: bold;">Band Name *</label>
+                <input type="text" id="band_name" name="band[name]" value="<%= params.dig(:band, :name) %>" required style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 16px;">
+            </div>
+
+            <div style="margin-bottom: 20px;">
+                <label for="band_notes" style="display: block; margin-bottom: 5px; font-weight: bold;">Notes</label>
+                <textarea id="band_notes" name="band[notes]" rows="4" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 16px; font-family: inherit;"><%= params.dig(:band, :notes) %></textarea>
+                <small style="color: #666;">Optional notes about the band, members, style, etc.</small>
+            </div>
+
+            <div class="actions">
+                <button type="submit" class="btn btn-success">Create Band</button>
+                <% if params[:first_band] == 'true' %>
+                    <a href="/setup" class="btn">Setup Database</a>
+                <% else %>
+                    <a href="/bands" class="btn">Cancel</a>
+                <% end %>
+            </div>
+        </form>
+    </div>
+</div> 

@@ -1,0 +1,36 @@
+<div style="max-width: 600px; margin: 0 auto;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+        <h2>🎸 Edit Band</h2>
+        <a href="/bands/<%= @band.id %>" class="btn">Back to Band</a>
+    </div>
+
+    <% if @errors %>
+        <div class="errors" style="margin-bottom: 20px;">
+            <% @errors.each do |error| %>
+                <p><%= error %></p>
+            <% end %>
+        </div>
+    <% end %>
+
+    <div class="card">
+        <form method="POST" action="/bands/<%= @band.id %>">
+            <input type="hidden" name="_method" value="PUT">
+            
+            <div style="margin-bottom: 20px;">
+                <label for="band_name" style="display: block; margin-bottom: 5px; font-weight: bold;">Band Name *</label>
+                <input type="text" id="band_name" name="band[name]" value="<%= @band.name %>" required style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 16px;">
+            </div>
+
+            <div style="margin-bottom: 20px;">
+                <label for="band_notes" style="display: block; margin-bottom: 5px; font-weight: bold;">Notes</label>
+                <textarea id="band_notes" name="band[notes]" rows="4" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 16px; font-family: inherit;"><%= @band.notes %></textarea>
+                <small style="color: #666;">Optional notes about the band, members, style, etc.</small>
+            </div>
+
+            <div class="actions">
+                <button type="submit" class="btn btn-success">Update Band</button>
+                <a href="/bands/<%= @band.id %>" class="btn">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div> 

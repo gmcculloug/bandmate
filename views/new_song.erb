@@ -1,0 +1,141 @@
+<h2>➕ Add New Song</h2>
+
+<% if defined?(@errors) && @errors.any? %>
+    <div class="errors">
+        <ul>
+            <% @errors.each do |error| %>
+                <li><%= error %></li>
+            <% end %>
+        </ul>
+    </div>
+<% end %>
+
+<form method="POST" action="/songs" class="card">
+    <div class="form-group">
+        <label for="song_title">Title *</label>
+        <input type="text" id="song_title" name="song[title]" required>
+    </div>
+
+    <div class="form-group">
+        <label for="song_artist">Artist *</label>
+        <input type="text" id="song_artist" name="song[artist]" required>
+    </div>
+
+    <div class="form-group">
+        <label>Bands *</label>
+        <div class="checkbox-group" style="border: 1px solid #e2e8f0; border-radius: 8px; padding: 15px;">
+            <div style="display: flex; flex-wrap: wrap; gap: 15px;">
+                <% @bands.each do |band| %>
+                    <div class="checkbox-item">
+                        <label style="display: flex; align-items: center; cursor: pointer; font-size: 16px; justify-content: flex-start;">
+                            <input type="checkbox" 
+                                   name="song[band_ids][]" 
+                                   value="<%= band.id %>" 
+                                   style="margin-right: 8px; transform: scale(1.2);">
+                            <%= band.name %>
+                        </label>
+                    </div>
+                <% end %>
+            </div>
+        </div>
+        <small style="color: #666;">Select one or more bands for this song</small>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+        <div class="form-group">
+            <label for="song_key">Key *</label>
+            <select id="song_key" name="song[key]" required>
+                <option value="">Select Key</option>
+                <option value="C">C</option>
+                <option value="C#/Db">C#/Db</option>
+                <option value="D">D</option>
+                <option value="D#/Eb">D#/Eb</option>
+                <option value="E">E</option>
+                <option value="F">F</option>
+                <option value="F#/Gb">F#/Gb</option>
+                <option value="G">G</option>
+                <option value="G#/Ab">G#/Ab</option>
+                <option value="A">A</option>
+                <option value="A#/Bb">A#/Bb</option>
+                <option value="B">B</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="song_original_key">Original Key</label>
+            <select id="song_original_key" name="song[original_key]">
+                <option value="">Select Original Key</option>
+                <option value="C">C</option>
+                <option value="C#/Db">C#/Db</option>
+                <option value="D">D</option>
+                <option value="D#/Eb">D#/Eb</option>
+                <option value="E">E</option>
+                <option value="F">F</option>
+                <option value="F#/Gb">F#/Gb</option>
+                <option value="G">G</option>
+                <option value="G#/Ab">G#/Ab</option>
+                <option value="A">A</option>
+                <option value="A#/Bb">A#/Bb</option>
+                <option value="B">B</option>
+            </select>
+        </div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+        <div class="form-group">
+            <label for="song_tempo">Tempo (BPM)</label>
+            <input type="number" id="song_tempo" name="song[tempo]" min="1" max="300">
+        </div>
+
+        <div class="form-group">
+            <label for="song_genre">Genre</label>
+            <input type="text" id="song_genre" name="song[genre]" placeholder="e.g., Rock, Jazz, Pop">
+        </div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+        <div class="form-group">
+            <label for="song_duration">Duration</label>
+            <input type="text" id="song_duration" name="song[duration]" placeholder="e.g., 3:45">
+        </div>
+
+        <div class="form-group">
+            <label for="song_year">Year</label>
+            <input type="number" id="song_year" name="song[year]" min="1900" max="2030" placeholder="e.g., 2020">
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label for="song_album">Album</label>
+        <input type="text" id="song_album" name="song[album]" placeholder="Album name">
+    </div>
+
+    <div class="form-group">
+        <label for="song_url">Streaming URL</label>
+        <input type="url" id="song_url" name="song[url]" placeholder="https://www.youtube.com/watch?v=... or Spotify/Apple Music link">
+    </div>
+
+    <div class="form-group">
+        <label for="song_notes">Notes</label>
+        <textarea id="song_notes" name="song[notes]" rows="4" placeholder="Any additional notes about the song, chords, lyrics, etc."></textarea>
+    </div>
+
+    <div class="actions">
+        <button type="submit" class="btn btn-success">Save Song</button>
+        <a href="/songs" class="btn">Cancel</a>
+    </div>
+</form>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const keySelect = document.getElementById('song_key');
+    const originalKeySelect = document.getElementById('song_original_key');
+    
+    keySelect.addEventListener('change', function() {
+        // Only set original key if it hasn't been set yet (is empty)
+        if (originalKeySelect.value === '') {
+            originalKeySelect.value = this.value;
+        }
+    });
+});
+</script> 

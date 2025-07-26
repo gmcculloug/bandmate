@@ -1,0 +1,126 @@
+<% if params[:error] == 'copy_failed' %>
+    <div class="errors" style="margin-bottom: 20px;">
+        <p>Failed to copy set list. Please try again.</p>
+    </div>
+<% end %>
+
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+    <h2>📋 <%= @set_list.name %></h2>
+    <div class="actions">
+        <a href="/set_lists/<%= @set_list.id %>/edit" class="btn">Edit</a>
+        <a href="/set_lists/<%= @set_list.id %>/print" class="btn" target="_blank">Print</a>
+        <form method="POST" action="/set_lists/<%= @set_list.id %>/copy" style="display: inline;">
+            <button type="submit" class="btn" onclick="return confirm('Copy this set list?')">📋 Copy</button>
+        </form>
+        <a href="/set_lists" class="btn">Back to Set Lists</a>
+    </div>
+</div>
+
+<div class="card">
+    <% if @set_list.notes.present? %>
+        <div style="margin-bottom: 20px; padding: 15px; background: #f7fafc; border-radius: 8px;">
+            <h4>Notes</h4>
+            <p><%= @set_list.notes %></p>
+        </div>
+    <% end %>
+
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h3>Songs (<%= @set_list.songs.count %>)</h3>
+        <a href="/songs" class="btn btn-success">➕ Add Songs</a>
+    </div>
+
+    <% if @set_list.songs.any? %>
+        <div style="margin-bottom: 15px;">
+            <% @set_list.set_list_songs.includes(:song).order(:position).each_with_index do |set_list_song, index| %>
+                <div class="song-card" style="margin-bottom: 8px; padding: 10px; border: 1px solid #e2e8f0; border-radius: 6px; cursor: pointer;" onclick="window.location.href='/songs/<%= set_list_song.song.id %>'">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div style="flex: 1;">
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <span style="background: #667eea; color: white; padding: 3px 8px; border-radius: 12px; font-weight: bold; min-width: 25px; text-align: center; font-size: 0.85rem;">
+                                    <%= index + 1 %>
+                                </span>
+                                <div style="flex: 1;">
+                                    <div style="font-weight: 600; font-size: 1rem;"><%= set_list_song.song.title %></div>
+                                    <div style="color: #718096; font-size: 0.9rem;"><%= set_list_song.song.artist %></div>
+                                    <div style="margin-top: 4px; display: flex; gap: 15px; font-size: 0.85rem; color: #4a5568;">
+                                        <span><strong>Key:</strong> <%= set_list_song.song.key %></span>
+                                        <span><strong>Tempo:</strong> <%= set_list_song.song.tempo ? "#{set_list_song.song.tempo} BPM" : 'N/A' %></span>
+                                        <span><strong>Duration:</strong> <%= set_list_song.song.duration || 'N/A' %></span>
+                                        <span><strong>Genre:</strong> <%= set_list_song.song.genre || 'N/A' %></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="actions" onclick="event.stopPropagation();" style="display: flex; gap: 5px;">
+                            <% if set_list_song.song.url.present? %>
+                                <a href="<%= set_list_song.song.url %>" target="_blank" class="btn" style="font-size: 0.8rem; padding: 5px 10px;">🎵</a>
+                            <% end %>
+                            <form method="POST" action="/set_lists/<%= @set_list.id %>/songs/<%= set_list_song.song.id %>" style="display: inline;">
+                                <input type="hidden" name="_method" value="DELETE">
+                                <button type="submit" class="btn btn-danger" style="font-size: 0.8rem; padding: 5px 10px;" onclick="return confirm('Remove this song from the set list?')">Remove</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            <% end %>
+        </div>
+
+        <div style="background: #f7fafc; padding: 20px; border-radius: 8px;">
+            <h4>Set List Summary</h4>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-top: 15px;">
+                <div class="detail-item">
+                    <span class="detail-label">Total Songs:</span> <%= @set_list.songs.count %>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Estimated Duration:</span> 
+                    <% 
+                      total_minutes = @set_list.songs.sum do |s| 
+                        if s.duration.present? && s.duration.match?(/^\d+:\d+$/)
+                          parts = s.duration.split(':').map(&:to_i)
+                          parts[0] + parts[1]/60.0
+                        else
+                          0
+                        end
+                      end
+                    %>
+                    <%= total_minutes > 0 ? "#{total_minutes.to_i}:#{((total_minutes % 1) * 60).round.to_s.rjust(2, '0')}" : 'N/A' %>
+                </div>
+
+            </div>
+        </div>
+    <% else %>
+        <div style="text-align: center; padding: 40px;">
+            <h3>No songs in this set list yet</h3>
+            <p>Add some songs to get started!</p>
+            <a href="/songs" class="btn btn-success">Browse Songs</a>
+        </div>
+    <% end %>
+</div>
+
+<% if @available_songs.any? %>
+    <div class="card" style="margin-top: 30px;">
+        <h3>Add Songs to Set List</h3>
+        <p>Select songs from "<%= @set_list.band.name %>" to add to "<%= @set_list.name %>":</p>
+        
+        <% @available_songs.each do |song| %>
+            <form method="POST" action="/set_lists/<%= @set_list.id %>/songs" style="margin-bottom: 10px;">
+                <input type="hidden" name="song_id" value="<%= song.id %>">
+                <button type="submit" class="btn" style="width: 100%; text-align: left; justify-content: space-between;">
+                    <span>
+                        <strong><%= song.title %></strong> - <%= song.artist %>
+                        <span style="color: #718096; font-size: 0.9rem;">
+                            (<%= song.key %> • <%= song.tempo ? "#{song.tempo} BPM" : 'N/A' %>)
+                        </span>
+                    </span>
+                    <span>➕ Add</span>
+                </button>
+            </form>
+        <% end %>
+    </div>
+<% elsif @available_songs.empty? %>
+    <div class="card" style="margin-top: 30px;">
+        <h3>No More Songs Available</h3>
+        <p>All songs from "<%= @set_list.band.name %>" are already in this set list.</p>
+        <a href="/songs/new" class="btn btn-success">Add New Song to <%= @set_list.band.name %></a>
+    </div>
+<% end %> 

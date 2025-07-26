@@ -1,0 +1,40 @@
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+    <h2>🎸 Bands</h2>
+    <a href="/bands/new" class="btn btn-success">➕ Add Band</a>
+</div>
+
+<% if @bands.any? %>
+    <div style="display: flex; flex-direction: column; gap: 8px;">
+        <% @bands.each do |band| %>
+            <div class="band-card" style="padding: 12px; border: 1px solid #e2e8f0; border-radius: 6px; cursor: pointer;" onclick="window.location.href='/bands/<%= band.id %>'">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div style="flex: 1;">
+                        <div style="font-weight: 600; font-size: 1.1rem;"><%= band.name %></div>
+                        <div style="margin-top: 4px; display: flex; gap: 15px; font-size: 0.85rem; color: #4a5568;">
+                            <span><strong>Songs:</strong> <%= band.songs.count %></span>
+                            <span><strong>Set Lists:</strong> <%= band.set_lists.count %></span>
+                        </div>
+                        <% if band.notes.present? %>
+                            <div style="margin-top: 4px; font-size: 0.85rem; color: #718096; font-style: italic;">
+                                <%= band.notes.truncate(100) %>
+                            </div>
+                        <% end %>
+                    </div>
+                    <div class="actions" onclick="event.stopPropagation();" style="display: flex; gap: 5px;">
+                        <a href="/bands/<%= band.id %>/edit" class="btn" style="font-size: 0.8rem; padding: 5px 10px;">Edit</a>
+                        <form method="POST" action="/bands/<%= band.id %>" style="display: inline;">
+                            <input type="hidden" name="_method" value="DELETE">
+                            <button type="submit" class="btn btn-danger" style="font-size: 0.8rem; padding: 5px 10px;" onclick="return confirm('Delete this band? This will also delete all associated songs and set lists.')">Delete</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        <% end %>
+    </div>
+<% else %>
+    <div style="text-align: center; padding: 40px;">
+        <h3>No bands yet</h3>
+        <p>Create your first band to get started!</p>
+        <a href="/bands/new" class="btn btn-success">Create Band</a>
+    </div>
+<% end %> 

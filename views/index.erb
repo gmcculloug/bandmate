@@ -1,0 +1,71 @@
+<h2>Welcome to Bandage</h2>
+<p>Your complete song and set list management system for bands.</p>
+
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-top: 30px;">
+
+    <div class="card">
+        <h3>🎵 Recent Songs</h3>
+        <% if @songs.any? %>
+            <div class="song-grid">
+                <% @songs.limit(6).each do |song| %>
+                    <div class="song-card" style="padding: 15px; margin-bottom: 10px; cursor: pointer;" onclick="window.location.href='/songs/<%= song.id %>'">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div style="flex: 1;">
+                                <div style="font-weight: bold; color: #2d3748; margin-bottom: 3px;"><%= song.title %></div>
+                                <div style="color: #718096; font-size: 0.9rem; margin-bottom: 5px;"><%= song.artist %></div>
+                                <div style="font-size: 0.8rem; color: #a0aec0;">
+                                    <span style="background: #667eea; color: white; padding: 2px 6px; border-radius: 10px; margin-right: 8px;">
+                                        <%= song.key %>
+                                    </span>
+                                    <% if song.tempo %>
+                                        <span style="background: #38a169; color: white; padding: 2px 6px; border-radius: 10px;">
+                                            <%= song.tempo %> BPM
+                                        </span>
+                                    <% end %>
+                                </div>
+                            </div>
+                            <div class="actions" onclick="event.stopPropagation();" style="margin-left: 15px;">
+                                <a href="/songs/<%= song.id %>/edit" class="btn" style="padding: 6px 12px; font-size: 0.8rem;">Edit</a>
+                            </div>
+                        </div>
+                    </div>
+                <% end %>
+            </div>
+            <div style="text-align: center; margin-top: 20px;">
+                <a href="/songs" class="btn">View All Songs</a>
+            </div>
+        <% else %>
+            <p>No songs added yet. <a href="/songs/new" class="btn">Add your first song!</a></p>
+        <% end %>
+    </div>
+
+    <div class="card">
+        <h3>📋 Set Lists</h3>
+        <% if @set_lists.any? %>
+            <% @set_lists.limit(5).each do |set_list| %>
+                <div class="set-list-item" style="cursor: pointer; padding: 12px; margin-bottom: 8px;" onclick="window.location.href='/set_lists/<%= set_list.id %>'">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div style="flex: 1;">
+                            <div style="font-weight: bold; color: #2d3748; margin-bottom: 3px;"><%= set_list.name %></div>
+                            <div style="font-size: 0.9rem; color: #718096;">
+                                <span style="background: #667eea; color: white; padding: 2px 6px; border-radius: 10px;">
+                                    <%= set_list.songs.count %> songs
+                                </span>
+                            </div>
+                        </div>
+                                            <div class="actions" onclick="event.stopPropagation();" style="margin-left: 15px;">
+                        <a href="/set_lists/<%= set_list.id %>/print" class="btn" style="padding: 6px 12px; font-size: 0.8rem;" target="_blank">Print</a>
+                    </div>
+                    </div>
+                </div>
+            <% end %>
+            <div style="text-align: center; margin-top: 20px;">
+                <a href="/set_lists" class="btn">View All Set Lists</a>
+            </div>
+        <% else %>
+            <p>No set lists created yet. <a href="/set_lists/new" class="btn">Create your first set list!</a></p>
+        <% end %>
+    </div>
+</div>
+
+ 

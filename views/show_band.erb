@@ -1,0 +1,102 @@
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+    <h2>🎸 <%= @band.name %></h2>
+    <div class="actions">
+        <a href="/bands/<%= @band.id %>/edit" class="btn">Edit</a>
+        <a href="/bands" class="btn">Back to Bands</a>
+    </div>
+</div>
+
+<div class="card">
+    <% if @band.notes.present? %>
+        <div style="margin-bottom: 20px; padding: 15px; background: #f7fafc; border-radius: 8px;">
+            <h4>Notes</h4>
+            <p><%= @band.notes %></p>
+        </div>
+    <% end %>
+
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h3>Songs (<%= @band.songs.count %>)</h3>
+        <a href="/songs/new" class="btn btn-success">➕ Add Song</a>
+    </div>
+
+    <% if @band.songs.any? %>
+        <div style="margin-bottom: 15px;">
+            <% @band.songs.order(:title).each do |song| %>
+                <div class="song-card" style="margin-bottom: 8px; padding: 10px; border: 1px solid #e2e8f0; border-radius: 6px; cursor: pointer;" onclick="window.location.href='/songs/<%= song.id %>'">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div style="flex: 1;">
+                            <div style="font-weight: 600; font-size: 1rem;"><%= song.title %></div>
+                            <div style="color: #718096; font-size: 0.9rem;"><%= song.artist %></div>
+                            <div style="margin-top: 4px; display: flex; gap: 15px; font-size: 0.85rem; color: #4a5568;">
+                                <span><strong>Key:</strong> <%= song.key %></span>
+                                <span><strong>Tempo:</strong> <%= song.tempo ? "#{song.tempo} BPM" : 'N/A' %></span>
+                                <span><strong>Duration:</strong> <%= song.duration || 'N/A' %></span>
+                                <span><strong>Genre:</strong> <%= song.genre || 'N/A' %></span>
+                            </div>
+                        </div>
+                        <div class="actions" onclick="event.stopPropagation();" style="display: flex; gap: 5px;">
+                            <a href="/songs/<%= song.id %>/edit" class="btn" style="font-size: 0.8rem; padding: 5px 10px;">Edit</a>
+                            <form method="POST" action="/songs/<%= song.id %>" style="display: inline;">
+                                <input type="hidden" name="_method" value="DELETE">
+                                <button type="submit" class="btn btn-danger" style="font-size: 0.8rem; padding: 5px 10px;" onclick="return confirm('Delete this song?')">Delete</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            <% end %>
+        </div>
+    <% else %>
+        <div style="text-align: center; padding: 40px;">
+            <h3>No songs for this band yet</h3>
+            <p>Add some songs to get started!</p>
+            <a href="/songs/new" class="btn btn-success">Add Song</a>
+        </div>
+    <% end %>
+</div>
+
+<div class="card" style="margin-top: 30px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h3>Set Lists (<%= @band.set_lists.count %>)</h3>
+        <a href="/set_lists/new" class="btn btn-success">➕ Create Set List</a>
+    </div>
+
+    <% if @band.set_lists.any? %>
+        <div style="margin-bottom: 15px;">
+            <% @band.set_lists.order(:name).each do |set_list| %>
+                <div class="set-list-card" style="margin-bottom: 8px; padding: 10px; border: 1px solid #e2e8f0; border-radius: 6px; cursor: pointer;" onclick="window.location.href='/set_lists/<%= set_list.id %>'">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div style="flex: 1;">
+                            <div style="font-weight: 600; font-size: 1rem;"><%= set_list.name %></div>
+                            <div style="margin-top: 4px; display: flex; gap: 15px; font-size: 0.85rem; color: #4a5568;">
+                                <span><strong>Songs:</strong> <%= set_list.songs.count %></span>
+                                <span><strong>Duration:</strong> 
+                                    <% total_minutes = set_list.songs.sum { |s| s.duration ? s.duration.split(':').map(&:to_i).then { |m, s| m + s/60.0 } : 0 } %>
+                                    <%= total_minutes > 0 ? "#{total_minutes.to_i}:#{((total_minutes % 1) * 60).round.to_s.rjust(2, '0')}" : 'N/A' %>
+                                </span>
+                            </div>
+                            <% if set_list.notes.present? %>
+                                <div style="margin-top: 4px; font-size: 0.85rem; color: #718096; font-style: italic;">
+                                    <%= set_list.notes.truncate(100) %>
+                                </div>
+                            <% end %>
+                        </div>
+                        <div class="actions" onclick="event.stopPropagation();" style="display: flex; gap: 5px;">
+                            <a href="/set_lists/<%= set_list.id %>/edit" class="btn" style="font-size: 0.8rem; padding: 5px 10px;">Edit</a>
+                            <a href="/set_lists/<%= set_list.id %>/print" class="btn" style="font-size: 0.8rem; padding: 5px 10px;" target="_blank">Print</a>
+                            <form method="POST" action="/set_lists/<%= set_list.id %>" style="display: inline;">
+                                <input type="hidden" name="_method" value="DELETE">
+                                <button type="submit" class="btn btn-danger" style="font-size: 0.8rem; padding: 5px 10px;" onclick="return confirm('Delete this set list?')">Delete</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            <% end %>
+        </div>
+    <% else %>
+        <div style="text-align: center; padding: 40px;">
+            <h3>No set lists for this band yet</h3>
+            <p>Create a set list to get started!</p>
+            <a href="/set_lists/new" class="btn btn-success">Create Set List</a>
+        </div>
+    <% end %>
+</div> 
