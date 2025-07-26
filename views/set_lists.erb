@@ -15,6 +15,16 @@
                     <span style="background: #ed8936; color: white; padding: 2px 6px; border-radius: 10px;">
                         <%= set_list.band.name %>
                     </span>
+                    <% if set_list.venue && set_list.venue.present? %>
+                        <span style="background: #9f7aea; color: white; padding: 2px 6px; border-radius: 10px;">
+                            <%= set_list.venue.name %>
+                        </span>
+                    <% end %>
+                    <% if set_list.performance_date.present? %>
+                        <span style="background: #38a169; color: white; padding: 2px 6px; border-radius: 10px;">
+                            <%= set_list.performance_date.strftime('%b %d') %>
+                        </span>
+                    <% end %>
                 </p>
                 <% if set_list.notes.present? %>
                     <p style="font-style: italic; color: #718096; word-break: break-word;"><%= set_list.notes %></p>

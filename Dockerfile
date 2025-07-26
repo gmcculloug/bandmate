@@ -7,6 +7,7 @@ WORKDIR /app
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
     build-essential \
+    pkg-config \
     sqlite3 \
     && rm -rf /var/lib/apt/lists/*
 
@@ -15,6 +16,7 @@ COPY Gemfile Gemfile.lock ./
 
 # Install Ruby gems
 RUN bundle install
+RUN rake db:migrate
 
 # Copy application code
 COPY . .

@@ -1,0 +1,45 @@
+<h2>✏️ Edit Venue: <%= @venue.name %></h2>
+
+<% if defined?(@errors) && @errors.any? %>
+    <div class="errors">
+        <ul>
+            <% @errors.each do |error| %>
+                <li><%= error %></li>
+            <% end %>
+        </ul>
+    </div>
+<% end %>
+
+<form method="POST" action="/venues/<%= @venue.id %>" class="card">
+    <input type="hidden" name="_method" value="PUT">
+    
+    <div class="form-group">
+        <label for="venue_name">Venue Name *</label>
+        <input type="text" id="venue_name" name="venue[name]" value="<%= @venue.name %>" required>
+    </div>
+
+    <div class="form-group">
+        <label for="venue_location">Location *</label>
+        <input type="text" id="venue_location" name="venue[location]" value="<%= @venue.location %>" placeholder="e.g., 123 Main St, City, State" required>
+    </div>
+
+    <div class="form-group">
+        <label for="venue_contact_name">Contact Name *</label>
+        <input type="text" id="venue_contact_name" name="venue[contact_name]" value="<%= @venue.contact_name %>" placeholder="e.g., John Smith" required>
+    </div>
+
+    <div class="form-group">
+        <label for="venue_phone_number">Phone Number *</label>
+        <input type="tel" id="venue_phone_number" name="venue[phone_number]" value="<%= @venue.phone_number %>" placeholder="e.g., (555) 123-4567" required>
+    </div>
+
+    <div class="form-group">
+        <label for="venue_website">Website</label>
+        <input type="url" id="venue_website" name="venue[website]" value="<%= @venue.website %>" placeholder="https://www.venuewebsite.com">
+    </div>
+
+    <div class="actions">
+        <button type="submit" class="btn btn-success">Update Venue</button>
+        <a href="/venues/<%= @venue.id %>" class="btn">Cancel</a>
+    </div>
+</form> 

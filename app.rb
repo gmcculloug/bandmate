@@ -29,8 +29,18 @@ class Song < ActiveRecord::Base
   validates :tempo, numericality: { greater_than: 0 }, allow_nil: true
 end
 
+class Venue < ActiveRecord::Base
+  has_many :set_lists
+  
+  validates :name, presence: true
+  validates :location, presence: true
+  validates :contact_name, presence: true
+  validates :phone_number, presence: true
+end
+
 class SetList < ActiveRecord::Base
   belongs_to :band
+  belongs_to :venue, optional: true
   has_many :set_list_songs, dependent: :destroy
   has_many :songs, through: :set_list_songs
   
@@ -139,30 +149,41 @@ end
 
 # Set lists routes
 get '/set_lists' do
-  @set_lists = SetList.order(:name)
+  @set_lists = SetList.includes(:venue).order(:name)
   erb :set_lists
 end
 
 get '/set_lists/new' do
   @bands = Band.order(:name)
+  @venues = Venue.order(:name)
   @songs = Song.order(:title)
   erb :new_set_list
 end
 
 post '/set_lists' do
-  set_list = SetList.new(name: params[:name], band_id: params[:band_id])
+  set_list_params = {
+    name: params[:name], 
+    band_id: params[:band_id],
+    venue_id: params[:venue_id].presence,
+    performance_date: params[:performance_date].presence,
+    start_time: params[:start_time].presence,
+    end_time: params[:end_time].presence
+  }
+  
+  set_list = SetList.new(set_list_params)
   if set_list.save
     redirect '/set_lists'
   else
     @errors = set_list.errors.full_messages
     @bands = Band.order(:name)
+    @venues = Venue.order(:name)
     @songs = Song.order(:title)
     erb :new_set_list
   end
 end
 
 get '/set_lists/:id' do
-  @set_list = SetList.find(params[:id])
+  @set_list = SetList.includes(:venue).find(params[:id])
   # Get songs from the same band for adding to set list
   @available_songs = Song.joins(:bands).where(bands: { id: @set_list.band.id }).where.not(id: @set_list.song_ids).order(:title)
   erb :show_set_list
@@ -171,16 +192,27 @@ end
 get '/set_lists/:id/edit' do
   @set_list = SetList.find(params[:id])
   @bands = Band.order(:name)
+  @venues = Venue.order(:name)
   erb :edit_set_list
 end
 
 put '/set_lists/:id' do
   @set_list = SetList.find(params[:id])
-  if @set_list.update(name: params[:name], band_id: params[:band_id])
+  set_list_params = {
+    name: params[:name], 
+    band_id: params[:band_id],
+    venue_id: params[:venue_id].presence,
+    performance_date: params[:performance_date].presence,
+    start_time: params[:start_time].presence,
+    end_time: params[:end_time].presence
+  }
+  
+  if @set_list.update(set_list_params)
     redirect "/set_lists/#{@set_list.id}"
   else
     @errors = @set_list.errors.full_messages
-    @songs = Song.order(:title)
+    @bands = Band.order(:name)
+    @venues = Venue.order(:name)
     erb :edit_set_list
   end
 end
@@ -328,6 +360,52 @@ delete '/bands/:id' do
   redirect '/bands'
 end
 
+# Venues routes
+get '/venues' do
+  @venues = Venue.order(:name)
+  erb :venues
+end
+
+get '/venues/new' do
+  erb :new_venue
+end
+
+post '/venues' do
+  venue = Venue.new(params[:venue])
+  if venue.save
+    redirect '/venues'
+  else
+    @errors = venue.errors.full_messages
+    erb :new_venue
+  end
+end
+
+get '/venues/:id' do
+  @venue = Venue.find(params[:id])
+  erb :show_venue
+end
+
+get '/venues/:id/edit' do
+  @venue = Venue.find(params[:id])
+  erb :edit_venue
+end
+
+put '/venues/:id' do
+  @venue = Venue.find(params[:id])
+  if @venue.update(params[:venue])
+    redirect "/venues/#{@venue.id}"
+  else
+    @errors = @venue.errors.full_messages
+    erb :edit_venue
+  end
+end
+
+delete '/venues/:id' do
+  venue = Venue.find(params[:id])
+  venue.destroy
+  redirect '/venues'
+end
+
 # API routes for AJAX
 get '/api/songs' do
   content_type :json
@@ -370,10 +448,23 @@ get '/setup' do
       t.timestamps
     end
 
+    create_table :venues, force: true do |t|
+      t.string :name, null: false
+      t.string :location, null: false
+      t.string :contact_name, null: false
+      t.string :phone_number, null: false
+      t.string :website
+      t.timestamps
+    end
+
     create_table :set_lists, force: true do |t|
       t.string :name, null: false
       t.text :notes
       t.references :band, null: false
+      t.references :venue
+      t.date :performance_date
+      t.time :start_time
+      t.time :end_time
       t.timestamps
     end
 

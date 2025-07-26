@@ -4,6 +4,14 @@
     </div>
 <% end %>
 
+<% unless @set_list %>
+    <div class="errors" style="margin-bottom: 20px;">
+        <p>Set list not found.</p>
+    </div>
+    <a href="/set_lists" class="btn">Back to Set Lists</a>
+    <% return %>
+<% end %>
+
 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; flex-wrap: wrap; gap: 10px;">
     <h2>📋 <%= @set_list.name %></h2>
     <div class="actions">
@@ -17,6 +25,35 @@
 </div>
 
 <div class="card">
+    <% if @set_list && ((@set_list.venue && @set_list.venue.present?) || @set_list.performance_date.present? || @set_list.start_time.present?) %>
+        <div style="margin-bottom: 20px; padding: 15px; background: #f7fafc; border-radius: 8px;">
+            <h4>Performance Details</h4>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-top: 10px;">
+                <% if @set_list.venue && @set_list.venue.present? %>
+                    <div class="detail-item">
+                        <span class="detail-label">Venue:</span> 
+                        <a href="/venues/<%= @set_list.venue.id %>" style="color: #667eea; text-decoration: none;"><%= @set_list.venue.name %></a>
+                    </div>
+                <% end %>
+                <% if @set_list.performance_date.present? %>
+                    <div class="detail-item">
+                        <span class="detail-label">Date:</span> <%= @set_list.performance_date.strftime('%B %d, %Y') %>
+                    </div>
+                <% end %>
+                <% if @set_list.start_time.present? %>
+                    <div class="detail-item">
+                        <span class="detail-label">Start Time:</span> <%= @set_list.start_time.strftime('%I:%M %p') %>
+                    </div>
+                <% end %>
+                <% if @set_list.end_time.present? %>
+                    <div class="detail-item">
+                        <span class="detail-label">End Time:</span> <%= @set_list.end_time.strftime('%I:%M %p') %>
+                    </div>
+                <% end %>
+            </div>
+        </div>
+    <% end %>
+
     <% if @set_list.notes.present? %>
         <div style="margin-bottom: 20px; padding: 15px; background: #f7fafc; border-radius: 8px;">
             <h4>Notes</h4>

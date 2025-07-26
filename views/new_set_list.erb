@@ -27,8 +27,44 @@
     </div>
 
     <div class="form-group">
+        <label for="set_list_venue_id">Venue</label>
+        <select id="set_list_venue_id" name="venue_id">
+            <option value="">Select Venue (Optional)</option>
+            <% @venues.each do |venue| %>
+                <option value="<%= venue.id %>"><%= venue.name %> - <%= venue.location %></option>
+            <% end %>
+        </select>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 1fr; gap: 20px;">
+        <style>
+            @media (min-width: 768px) {
+                .form-grid {
+                    grid-template-columns: 1fr 1fr !important;
+                }
+            }
+        </style>
+        <div class="form-grid" style="display: grid; grid-template-columns: 1fr; gap: 20px;">
+            <div class="form-group">
+                <label for="set_list_performance_date">Performance Date</label>
+                <input type="date" id="set_list_performance_date" name="performance_date">
+            </div>
+
+            <div class="form-group">
+                <label for="set_list_start_time">Start Time</label>
+                <input type="time" id="set_list_start_time" name="start_time">
+            </div>
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label for="set_list_end_time">End Time</label>
+        <input type="time" id="set_list_end_time" name="end_time">
+    </div>
+
+    <div class="form-group">
         <label for="set_list_notes">Notes</label>
-        <textarea id="set_list_notes" name="notes" rows="3" placeholder="Any notes about this set list (venue, date, special instructions, etc.)"></textarea>
+        <textarea id="set_list_notes" name="notes" rows="3" placeholder="Any notes about this set list (special instructions, equipment needs, etc.)"></textarea>
     </div>
 
     <div class="actions">

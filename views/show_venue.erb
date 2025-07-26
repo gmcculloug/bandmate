@@ -1,0 +1,57 @@
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; flex-wrap: wrap; gap: 10px;">
+    <h2>🏢 <%= @venue.name %></h2>
+    <div class="actions">
+        <a href="/venues/<%= @venue.id %>/edit" class="btn">Edit</a>
+        <a href="/venues" class="btn">Back to Venues</a>
+    </div>
+</div>
+
+<div class="card">
+    <h3>Venue Details</h3>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-top: 15px;">
+        <div class="detail-item">
+            <span class="detail-label">Location:</span> <%= @venue.location %>
+        </div>
+        <div class="detail-item">
+            <span class="detail-label">Contact Name:</span> <%= @venue.contact_name %>
+        </div>
+        <div class="detail-item">
+            <span class="detail-label">Phone Number:</span> <%= @venue.phone_number %>
+        </div>
+        <% if @venue.website.present? %>
+            <div class="detail-item">
+                <span class="detail-label">Website:</span> 
+                <a href="<%= @venue.website %>" target="_blank" style="color: #667eea; text-decoration: none;">🌐 <%= @venue.website %></a>
+            </div>
+        <% end %>
+    </div>
+</div>
+
+<div class="card" style="margin-top: 20px;">
+    <h3>Set Lists at this Venue (<%= @venue.set_lists.count %>)</h3>
+    <% if @venue.set_lists.any? %>
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+            <% @venue.set_lists.order(:performance_date).each do |set_list| %>
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #e2e8f0; cursor: pointer;" onclick="window.location.href='/set_lists/<%= set_list.id %>'">
+                    <div style="flex: 1; min-width: 0;">
+                        <div style="font-weight: 600; color: #2d3748; word-break: break-word;"><%= set_list.name %></div>
+                        <div style="font-size: 0.85rem; color: #718096; display: flex; gap: 8px; flex-wrap: wrap;">
+                            <span><strong>Band:</strong> <%= set_list.band.name %></span>
+                            <% if set_list.performance_date %>
+                                <span><strong>Date:</strong> <%= set_list.performance_date.strftime('%B %d, %Y') %></span>
+                            <% end %>
+                            <% if set_list.start_time %>
+                                <span><strong>Time:</strong> <%= set_list.start_time.strftime('%I:%M %p') %></span>
+                            <% end %>
+                        </div>
+                    </div>
+                    <div class="actions" onclick="event.stopPropagation();" style="flex-shrink: 0;">
+                        <a href="/set_lists/<%= set_list.id %>" class="btn" style="padding: 4px 8px; font-size: 0.75rem;">View</a>
+                    </div>
+                </div>
+            <% end %>
+        </div>
+    <% else %>
+        <p style="text-align: center; color: #718096; font-style: italic;">No set lists scheduled at this venue yet.</p>
+    <% end %>
+</div> 
