@@ -1,4 +1,4 @@
-<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; flex-wrap: wrap; gap: 10px;">
     <h2>🎸 Bands</h2>
     <a href="/bands/new" class="btn btn-success">➕ Add Band</a>
 </div>
@@ -7,20 +7,20 @@
     <div style="display: flex; flex-direction: column; gap: 8px;">
         <% @bands.each do |band| %>
             <div class="band-card" style="padding: 12px; border: 1px solid #e2e8f0; border-radius: 6px; cursor: pointer;" onclick="window.location.href='/bands/<%= band.id %>'">
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <div style="flex: 1;">
-                        <div style="font-weight: 600; font-size: 1.1rem;"><%= band.name %></div>
-                        <div style="margin-top: 4px; display: flex; gap: 15px; font-size: 0.85rem; color: #4a5568;">
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                    <div style="flex: 1; min-width: 0;">
+                        <div style="font-weight: 600; font-size: 1.1rem; word-break: break-word;"><%= band.name %></div>
+                        <div style="margin-top: 4px; display: flex; gap: 15px; font-size: 0.85rem; color: #4a5568; flex-wrap: wrap;">
                             <span><strong>Songs:</strong> <%= band.songs.count %></span>
                             <span><strong>Set Lists:</strong> <%= band.set_lists.count %></span>
                         </div>
                         <% if band.notes.present? %>
-                            <div style="margin-top: 4px; font-size: 0.85rem; color: #718096; font-style: italic;">
+                            <div style="margin-top: 4px; font-size: 0.85rem; color: #718096; font-style: italic; word-break: break-word;">
                                 <%= band.notes.truncate(100) %>
                             </div>
                         <% end %>
                     </div>
-                    <div class="actions" onclick="event.stopPropagation();" style="display: flex; gap: 5px;">
+                    <div class="actions" onclick="event.stopPropagation();" style="display: flex; gap: 5px; flex-shrink: 0;">
                         <a href="/bands/<%= band.id %>/edit" class="btn" style="font-size: 0.8rem; padding: 5px 10px;">Edit</a>
                         <form method="POST" action="/bands/<%= band.id %>" style="display: inline;">
                             <input type="hidden" name="_method" value="DELETE">

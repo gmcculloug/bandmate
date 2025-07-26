@@ -1,11 +1,11 @@
-<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
     <h2>🎵 Songs</h2>
     <a href="/songs/new" class="btn btn-success">➕ Add New Song</a>
 </div>
 
 <div style="margin-bottom: 20px;">
-    <div style="display: flex; gap: 10px; align-items: center;">
-        <input type="text" id="search-input" value="<%= @search %>" placeholder="Search songs by title or artist..." style="flex: 1; padding: 10px; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 16px;">
+    <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+        <input type="text" id="search-input" value="<%= @search %>" placeholder="Search songs by title or artist..." style="flex: 1; min-width: 200px; padding: 10px; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 16px;">
         <select id="band-filter" style="padding: 10px; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 16px; min-width: 150px;">
             <option value="">All Bands</option>
             <% @bands.each do |band| %>
@@ -94,32 +94,32 @@ document.addEventListener('DOMContentLoaded', function() {
     <div style="display: flex; flex-direction: column; gap: 8px;">
         <% @songs.each do |song| %>
             <div class="song-card" style="padding: 15px; margin-bottom: 0; cursor: pointer;" onclick="window.location.href='/songs/<%= song.id %>'">
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <div style="flex: 1;">
-                        <div style="font-weight: bold; color: #2d3748; margin-bottom: 3px;"><%= song.title %></div>
-                        <div style="color: #718096; font-size: 0.9rem; margin-bottom: 5px;"><%= song.artist %></div>
-                        <div style="font-size: 0.8rem; color: #a0aec0;">
-                            <span style="background: #667eea; color: white; padding: 2px 6px; border-radius: 10px; margin-right: 8px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                    <div style="flex: 1; min-width: 0;">
+                        <div style="font-weight: bold; color: #2d3748; margin-bottom: 3px; word-break: break-word;"><%= song.title %></div>
+                        <div style="color: #718096; font-size: 0.9rem; margin-bottom: 5px; word-break: break-word;"><%= song.artist %></div>
+                        <div style="font-size: 0.8rem; color: #a0aec0; display: flex; flex-wrap: wrap; gap: 5px;">
+                            <span style="background: #667eea; color: white; padding: 2px 6px; border-radius: 10px;">
                                 <%= song.key %>
                             </span>
                             <% if song.original_key.present? %>
-                                <span style="background: #9f7aea; color: white; padding: 2px 6px; border-radius: 10px; margin-right: 8px;">
+                                <span style="background: #9f7aea; color: white; padding: 2px 6px; border-radius: 10px;">
                                     Orig: <%= song.original_key %>
                                 </span>
                             <% end %>
                             <% if song.tempo %>
-                                <span style="background: #38a169; color: white; padding: 2px 6px; border-radius: 10px; margin-right: 8px;">
+                                <span style="background: #38a169; color: white; padding: 2px 6px; border-radius: 10px;">
                                     <%= song.tempo %> BPM
                                 </span>
                             <% end %>
                             <% song.bands.each do |band| %>
-                                <span style="background: #ed8936; color: white; padding: 2px 6px; border-radius: 10px; margin-right: 4px;">
+                                <span style="background: #ed8936; color: white; padding: 2px 6px; border-radius: 10px;">
                                     <%= band.name %>
                                 </span>
                             <% end %>
                         </div>
                     </div>
-                    <div class="actions" onclick="event.stopPropagation();" style="margin-left: 15px; display: flex; gap: 5px;">
+                    <div class="actions" onclick="event.stopPropagation();" style="margin-left: 15px; display: flex; gap: 5px; flex-shrink: 0;">
                         <% if song.url.present? %>
                             <a href="<%= song.url %>" target="_blank" class="btn" style="padding: 6px 12px; font-size: 0.8rem;">🎵</a>
                         <% end %>

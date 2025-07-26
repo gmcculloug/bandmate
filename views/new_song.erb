@@ -27,11 +27,11 @@
             <div style="display: flex; flex-wrap: wrap; gap: 15px;">
                 <% @bands.each do |band| %>
                     <div class="checkbox-item">
-                        <label style="display: flex; align-items: center; cursor: pointer; font-size: 16px; justify-content: flex-start;">
+                        <label style="display: flex; align-items: center; cursor: pointer; font-size: 16px; justify-content: flex-start; min-height: 44px;">
                             <input type="checkbox" 
                                    name="song[band_ids][]" 
                                    value="<%= band.id %>" 
-                                   style="margin-right: 8px; transform: scale(1.2);">
+                                   style="margin-right: 8px; transform: scale(1.2); min-width: 20px; min-height: 20px;">
                             <%= band.name %>
                         </label>
                     </div>
@@ -41,67 +41,80 @@
         <small style="color: #666;">Select one or more bands for this song</small>
     </div>
 
-    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-        <div class="form-group">
-            <label for="song_key">Key *</label>
-            <select id="song_key" name="song[key]" required>
-                <option value="">Select Key</option>
-                <option value="C">C</option>
-                <option value="C#/Db">C#/Db</option>
-                <option value="D">D</option>
-                <option value="D#/Eb">D#/Eb</option>
-                <option value="E">E</option>
-                <option value="F">F</option>
-                <option value="F#/Gb">F#/Gb</option>
-                <option value="G">G</option>
-                <option value="G#/Ab">G#/Ab</option>
-                <option value="A">A</option>
-                <option value="A#/Bb">A#/Bb</option>
-                <option value="B">B</option>
-            </select>
-        </div>
+    <div style="display: grid; grid-template-columns: 1fr; gap: 20px;">
+        <style>
+            @media (min-width: 768px) {
+                .form-grid {
+                    grid-template-columns: 1fr 1fr !important;
+                }
+            }
+        </style>
+        <div class="form-grid" style="display: grid; grid-template-columns: 1fr; gap: 20px;">
+            <div class="form-group">
+                <label for="song_key">Key *</label>
+                <select id="song_key" name="song[key]" required>
+                    <option value="">Select Key</option>
+                    <option value="C">C</option>
+                    <option value="C#/Db">C#/Db</option>
+                    <option value="D">D</option>
+                    <option value="D#/Eb">D#/Eb</option>
+                    <option value="E">E</option>
+                    <option value="F">F</option>
+                    <option value="F#/Gb">F#/Gb</option>
+                    <option value="G">G</option>
+                    <option value="G#/Ab">G#/Ab</option>
+                    <option value="A">A</option>
+                    <option value="A#/Bb">A#/Bb</option>
+                    <option value="B">B</option>
+                </select>
+            </div>
 
-        <div class="form-group">
-            <label for="song_original_key">Original Key</label>
-            <select id="song_original_key" name="song[original_key]">
-                <option value="">Select Original Key</option>
-                <option value="C">C</option>
-                <option value="C#/Db">C#/Db</option>
-                <option value="D">D</option>
-                <option value="D#/Eb">D#/Eb</option>
-                <option value="E">E</option>
-                <option value="F">F</option>
-                <option value="F#/Gb">F#/Gb</option>
-                <option value="G">G</option>
-                <option value="G#/Ab">G#/Ab</option>
-                <option value="A">A</option>
-                <option value="A#/Bb">A#/Bb</option>
-                <option value="B">B</option>
-            </select>
-        </div>
-    </div>
-
-    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-        <div class="form-group">
-            <label for="song_tempo">Tempo (BPM)</label>
-            <input type="number" id="song_tempo" name="song[tempo]" min="1" max="300">
-        </div>
-
-        <div class="form-group">
-            <label for="song_genre">Genre</label>
-            <input type="text" id="song_genre" name="song[genre]" placeholder="e.g., Rock, Jazz, Pop">
+            <div class="form-group">
+                <label for="song_original_key">Original Key</label>
+                <select id="song_original_key" name="song[original_key]">
+                    <option value="">Select Original Key</option>
+                    <option value="C">C</option>
+                    <option value="C#/Db">C#/Db</option>
+                    <option value="D">D</option>
+                    <option value="D#/Eb">D#/Eb</option>
+                    <option value="E">E</option>
+                    <option value="F">F</option>
+                    <option value="F#/Gb">F#/Gb</option>
+                    <option value="G">G</option>
+                    <option value="G#/Ab">G#/Ab</option>
+                    <option value="A">A</option>
+                    <option value="A#/Bb">A#/Bb</option>
+                    <option value="B">B</option>
+                </select>
+            </div>
         </div>
     </div>
 
-    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-        <div class="form-group">
-            <label for="song_duration">Duration</label>
-            <input type="text" id="song_duration" name="song[duration]" placeholder="e.g., 3:45">
-        </div>
+    <div style="display: grid; grid-template-columns: 1fr; gap: 20px;">
+        <div class="form-grid" style="display: grid; grid-template-columns: 1fr; gap: 20px;">
+            <div class="form-group">
+                <label for="song_tempo">Tempo (BPM)</label>
+                <input type="number" id="song_tempo" name="song[tempo]" min="1" max="300">
+            </div>
 
-        <div class="form-group">
-            <label for="song_year">Year</label>
-            <input type="number" id="song_year" name="song[year]" min="1900" max="2030" placeholder="e.g., 2020">
+            <div class="form-group">
+                <label for="song_genre">Genre</label>
+                <input type="text" id="song_genre" name="song[genre]" placeholder="e.g., Rock, Jazz, Pop">
+            </div>
+        </div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 1fr; gap: 20px;">
+        <div class="form-grid" style="display: grid; grid-template-columns: 1fr; gap: 20px;">
+            <div class="form-group">
+                <label for="song_duration">Duration</label>
+                <input type="text" id="song_duration" name="song[duration]" placeholder="e.g., 3:45">
+            </div>
+
+            <div class="form-group">
+                <label for="song_year">Year</label>
+                <input type="number" id="song_year" name="song[year]" min="1900" max="2030" placeholder="e.g., 2020">
+            </div>
         </div>
     </div>
 

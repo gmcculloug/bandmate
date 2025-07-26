@@ -32,6 +32,7 @@
             font-size: 2.5rem;
             margin: 0 0 10px 0;
             font-weight: bold;
+            word-break: break-word;
         }
         
         .header .date {
@@ -48,6 +49,8 @@
             align-items: center;
             margin-bottom: 10px;
             page-break-inside: avoid;
+            flex-wrap: wrap;
+            gap: 10px;
         }
         
         .song-number {
@@ -56,6 +59,7 @@
             min-width: 30px;
             text-align: center;
             margin-right: 15px;
+            flex-shrink: 0;
         }
         
         .song-info {
@@ -63,22 +67,27 @@
             display: flex;
             align-items: center;
             gap: 10px;
+            flex-wrap: wrap;
+            min-width: 0;
         }
         
         .song-title {
             font-size: 1.4rem;
             font-weight: bold;
+            word-break: break-word;
         }
         
         .song-artist {
             font-size: 1rem;
             color: #666;
+            word-break: break-word;
         }
         
         .song-key {
             font-size: 1.2rem;
             color: #666;
             font-weight: bold;
+            flex-shrink: 0;
         }
         
         .summary {
@@ -122,7 +131,7 @@
             body {
                 max-width: 800px;
                 margin: 0 auto;
-                padding: 40px;
+                padding: 20px;
             }
             
             .print-button {
@@ -132,10 +141,88 @@
                 background: #007bff;
                 color: white;
                 border: none;
-                padding: 10px 20px;
-                border-radius: 5px;
+                padding: 12px 20px;
+                border-radius: 8px;
                 cursor: pointer;
                 font-size: 16px;
+                min-height: 44px;
+                min-width: 44px;
+                z-index: 1000;
+                box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            }
+            
+            .print-button:hover {
+                background: #0056b3;
+            }
+        }
+        
+        /* Mobile-specific styles */
+        @media screen and (max-width: 768px) {
+            body {
+                padding: 15px;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .song-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 5px;
+            }
+            
+            .song-number {
+                margin-right: 0;
+                margin-bottom: 5px;
+            }
+            
+            .song-info {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 5px;
+                width: 100%;
+            }
+            
+            .song-title {
+                font-size: 1.2rem;
+            }
+            
+            .song-key {
+                font-size: 1rem;
+            }
+            
+            .summary-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .print-button {
+                top: 10px;
+                right: 10px;
+                padding: 10px 15px;
+                font-size: 14px;
+            }
+        }
+        
+        /* Small mobile devices */
+        @media screen and (max-width: 480px) {
+            body {
+                padding: 10px;
+            }
+            
+            .header h1 {
+                font-size: 1.8rem;
+            }
+            
+            .song-title {
+                font-size: 1.1rem;
+            }
+            
+            .print-button {
+                top: 5px;
+                right: 5px;
+                padding: 8px 12px;
+                font-size: 12px;
             }
         }
     </style>

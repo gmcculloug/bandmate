@@ -4,7 +4,7 @@
     </div>
 <% end %>
 
-<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; flex-wrap: wrap; gap: 10px;">
     <h2>📋 <%= @set_list.name %></h2>
     <div class="actions">
         <a href="/set_lists/<%= @set_list.id %>/edit" class="btn">Edit</a>
@@ -24,7 +24,7 @@
         </div>
     <% end %>
 
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
         <h3>Songs (<%= @set_list.songs.count %>)</h3>
         <a href="/songs" class="btn btn-success">➕ Add Songs</a>
     </div>
@@ -33,16 +33,16 @@
         <div style="margin-bottom: 15px;">
             <% @set_list.set_list_songs.includes(:song).order(:position).each_with_index do |set_list_song, index| %>
                 <div class="song-card" style="margin-bottom: 8px; padding: 10px; border: 1px solid #e2e8f0; border-radius: 6px; cursor: pointer;" onclick="window.location.href='/songs/<%= set_list_song.song.id %>'">
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <div style="flex: 1;">
-                            <div style="display: flex; align-items: center; gap: 10px;">
-                                <span style="background: #667eea; color: white; padding: 3px 8px; border-radius: 12px; font-weight: bold; min-width: 25px; text-align: center; font-size: 0.85rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                        <div style="flex: 1; min-width: 0;">
+                            <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                                <span style="background: #667eea; color: white; padding: 3px 8px; border-radius: 12px; font-weight: bold; min-width: 25px; text-align: center; font-size: 0.85rem; flex-shrink: 0;">
                                     <%= index + 1 %>
                                 </span>
-                                <div style="flex: 1;">
-                                    <div style="font-weight: 600; font-size: 1rem;"><%= set_list_song.song.title %></div>
-                                    <div style="color: #718096; font-size: 0.9rem;"><%= set_list_song.song.artist %></div>
-                                    <div style="margin-top: 4px; display: flex; gap: 15px; font-size: 0.85rem; color: #4a5568;">
+                                <div style="flex: 1; min-width: 0;">
+                                    <div style="font-weight: 600; font-size: 1rem; word-break: break-word;"><%= set_list_song.song.title %></div>
+                                    <div style="color: #718096; font-size: 0.9rem; word-break: break-word;"><%= set_list_song.song.artist %></div>
+                                    <div style="margin-top: 4px; display: flex; gap: 15px; font-size: 0.85rem; color: #4a5568; flex-wrap: wrap;">
                                         <span><strong>Key:</strong> <%= set_list_song.song.key %></span>
                                         <span><strong>Tempo:</strong> <%= set_list_song.song.tempo ? "#{set_list_song.song.tempo} BPM" : 'N/A' %></span>
                                         <span><strong>Duration:</strong> <%= set_list_song.song.duration || 'N/A' %></span>
@@ -51,7 +51,7 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="actions" onclick="event.stopPropagation();" style="display: flex; gap: 5px;">
+                        <div class="actions" onclick="event.stopPropagation();" style="display: flex; gap: 5px; flex-shrink: 0;">
                             <% if set_list_song.song.url.present? %>
                                 <a href="<%= set_list_song.song.url %>" target="_blank" class="btn" style="font-size: 0.8rem; padding: 5px 10px;">🎵</a>
                             <% end %>
@@ -105,14 +105,14 @@
         <% @available_songs.each do |song| %>
             <form method="POST" action="/set_lists/<%= @set_list.id %>/songs" style="margin-bottom: 10px;">
                 <input type="hidden" name="song_id" value="<%= song.id %>">
-                <button type="submit" class="btn" style="width: 100%; text-align: left; justify-content: space-between;">
-                    <span>
-                        <strong><%= song.title %></strong> - <%= song.artist %>
-                        <span style="color: #718096; font-size: 0.9rem;">
+                <button type="submit" class="btn" style="width: 100%; text-align: left; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+                    <span style="flex: 1; min-width: 0;">
+                        <strong style="word-break: break-word;"><%= song.title %></strong> - <span style="word-break: break-word;"><%= song.artist %></span>
+                        <span style="color: #718096; font-size: 0.9rem; display: block; margin-top: 2px;">
                             (<%= song.key %> • <%= song.tempo ? "#{song.tempo} BPM" : 'N/A' %>)
                         </span>
                     </span>
-                    <span>➕ Add</span>
+                    <span style="flex-shrink: 0;">➕ Add</span>
                 </button>
             </form>
         <% end %>
