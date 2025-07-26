@@ -6,8 +6,14 @@
 <div style="margin-bottom: 20px;">
     <div style="display: flex; gap: 10px; align-items: center;">
         <input type="text" id="search-input" value="<%= @search %>" placeholder="Search songs by title or artist..." style="flex: 1; padding: 10px; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 16px;">
+        <select id="band-filter" style="padding: 10px; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 16px; min-width: 150px;">
+            <option value="">All Bands</option>
+            <% @bands.each do |band| %>
+                <option value="<%= band.id %>" <%= 'selected' if @band_filter == band.id.to_s %>><%= band.name %></option>
+            <% end %>
+        </select>
         <button type="button" onclick="filterSongs()" class="btn" style="padding: 10px 20px;">🔍 Filter</button>
-        <% if @search.present? %>
+        <% if @search.present? || @band_filter.present? %>
             <a href="/songs" class="btn" style="padding: 10px 20px;">Clear</a>
         <% end %>
     </div>
@@ -30,14 +36,26 @@ document.getElementById('search-input').addEventListener('keypress', function(e)
     }
 });
 
+// Add event listener for band filter dropdown
+document.getElementById('band-filter').addEventListener('change', function() {
+    filterSongs();
+});
+
 function filterSongs() {
     const searchTerm = document.getElementById('search-input').value;
+    const bandFilter = document.getElementById('band-filter').value;
     const currentUrl = new URL(window.location);
     
     if (searchTerm.trim() === '') {
         currentUrl.searchParams.delete('search');
     } else {
         currentUrl.searchParams.set('search', searchTerm);
+    }
+    
+    if (bandFilter === '') {
+        currentUrl.searchParams.delete('band_id');
+    } else {
+        currentUrl.searchParams.set('band_id', bandFilter);
     }
     
     window.location.href = currentUrl.toString();
@@ -57,10 +75,16 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 
-<% if @search.present? %>
+<% if @search.present? || @band_filter.present? %>
     <div style="margin-bottom: 20px; padding: 10px; background: #f7fafc; border-radius: 8px; border-left: 4px solid #667eea;">
         <p style="margin: 0; color: #4a5568;">
-            Showing results for "<strong><%= @search %></strong>" 
+            <% if @search.present? && @band_filter.present? %>
+                Showing results for "<strong><%= @search %></strong>" in "<strong><%= Band.find(@band_filter).name %></strong>"
+            <% elsif @search.present? %>
+                Showing results for "<strong><%= @search %></strong>"
+            <% elsif @band_filter.present? %>
+                Showing songs from "<strong><%= Band.find(@band_filter).name %></strong>"
+            <% end %>
             (<%= @songs.count %> song<%= @songs.count == 1 ? '' : 's' %>)
         </p>
     </div>

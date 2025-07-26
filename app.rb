@@ -61,11 +61,21 @@ end
 # Songs routes
 get '/songs' do
   @search = params[:search]
+  @band_filter = params[:band_id]
+  @bands = Band.order(:name)
+  
+  @songs = Song.order('LOWER(title)')
+  
+  # Apply search filter
   if @search.present?
-    @songs = Song.where('LOWER(title) LIKE ? OR LOWER(artist) LIKE ?', "%#{@search.downcase}%", "%#{@search.downcase}%").order('LOWER(title)')
-  else
-    @songs = Song.order('LOWER(title)')
+    @songs = @songs.where('LOWER(title) LIKE ? OR LOWER(artist) LIKE ?', "%#{@search.downcase}%", "%#{@search.downcase}%")
   end
+  
+  # Apply band filter
+  if @band_filter.present?
+    @songs = @songs.joins(:bands).where(bands: { id: @band_filter })
+  end
+  
   erb :songs
 end
 
