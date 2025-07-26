@@ -54,11 +54,16 @@ A comprehensive Ruby web application for managing band songs and set lists. Buil
 
 4. **Start the application**
    ```bash
+   # For local access only
    ruby app.rb
+   
+   # For external access (accessible from other devices)
+   ./start-external.sh
    ```
 
 5. **Open your browser**
-   Navigate to `http://localhost:4567`
+   - **Local access**: Navigate to `http://localhost:4567`
+   - **External access**: Use the URL shown in the terminal (e.g., `http://192.168.1.100:4567`)
 
 ## Usage
 
@@ -168,6 +173,38 @@ bandage/
 
 ### Styling
 The application uses CSS Grid and Flexbox for responsive design. Styles are included in `views/layout.erb` and can be customized there.
+
+## External Access
+
+### Running on Your Local Network
+To make the application accessible from other devices on your network:
+
+1. **Use the external start script**:
+   ```bash
+   ./start-external.sh
+   ```
+
+2. **Or manually bind to all interfaces**:
+   ```bash
+   ruby app.rb -o 0.0.0.0
+   ```
+
+3. **Access from other devices**:
+   - Use the external URL shown in the terminal
+   - Example: `http://192.168.1.100:4567`
+
+### Firewall Configuration
+Make sure your firewall allows connections on port 4567:
+- **macOS**: System Preferences → Security & Privacy → Firewall
+- **Windows**: Windows Defender Firewall
+- **Linux**: `sudo ufw allow 4567`
+
+### Internet Access (Production)
+For internet access, consider:
+- Using a reverse proxy (nginx, Apache)
+- Setting up SSL/TLS certificates
+- Using a cloud hosting service
+- Configuring proper security measures
 
 ## Troubleshooting
 

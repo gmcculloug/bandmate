@@ -398,8 +398,18 @@ if __FILE__ == $0
   puts "🎸 Bandage is starting up..."
   puts "Visit http://localhost:4567 to access the application"
   puts "Visit http://localhost:4567/setup to initialize the database (first time only)"
+  puts ""
+  
+  # Get local IP address for external access
+  require 'socket'
+  local_ip = Socket.ip_address_list.find { |addr| addr.ipv4? && !addr.ipv4_loopback? }&.ip_address
+  if local_ip
+    puts "🌐 External access: http://#{local_ip}:4567"
+  end
   puts "Press Ctrl+C to stop the server"
   puts ""
+  
   set :port, 4567
+  set :bind, '0.0.0.0'  # Bind to all interfaces
   Sinatra::Application.run!
 end 
