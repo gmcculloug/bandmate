@@ -1,255 +1,138 @@
-# 🎸 Bandage - Song Management System
+# 🎸 Bandage - Band Management System
 
-A comprehensive Ruby web application for managing band songs and set lists. Built with Sinatra and SQLite, featuring a modern, responsive interface.
+A Sinatra-based web application for managing bands, songs, set lists, and venues.
 
-## Features
-
-### Song Management
-- ✅ Add, edit, and delete songs
-- ✅ Associate songs with multiple bands
-- ✅ Track key and original key information
-- ✅ Store tempo (BPM) for each song
-- ✅ Include streaming platform URLs (YouTube, Spotify, etc.)
-- ✅ Additional song properties: genre, duration, year, album, notes
-- ✅ Beautiful card-based song display
-
-### Set List Management
-- ✅ Create and manage multiple set lists
-- ✅ Add songs to set lists with automatic ordering
-- ✅ Remove songs from set lists
-- ✅ Print-friendly set list views
-- ✅ Set list summary with total duration
-- ✅ Notes for each set list
-
-### User Interface
-- ✅ Modern, responsive design with gradient backgrounds
-- ✅ Intuitive navigation
-- ✅ Print-optimized set list layouts
-- ✅ Mobile-friendly interface
-- ✅ Real-time song management
-
-## Quick Start
+## 🚀 Quick Start
 
 ### Prerequisites
 - Ruby 2.7 or higher
-- Bundler gem
+- Bundler
 
 ### Installation
-
-1. **Clone or download the project**
-   ```bash
-   cd bandage
-   ```
-
-2. **Install dependencies**
+1. Clone the repository
+2. Install dependencies:
    ```bash
    bundle install
    ```
 
-3. **Setup the database**
-   ```bash
-   ruby app.rb
-   ```
-   Then visit `http://localhost:4567/setup` in your browser to create the database tables and a default band.
+### Database Setup
+The application now uses proper database migrations instead of a full database reset.
 
-4. **Start the application**
-   ```bash
-   # For local access only
-   ruby app.rb
-   
-   # For external access (accessible from other devices)
-   ./start-external.sh
-   ```
+#### First Time Setup
+```bash
+rake db:setup
+```
+This will:
+- Run all pending migrations
+- Seed the database with initial data (default band)
 
-5. **Open your browser**
-   - **Local access**: Navigate to `http://localhost:4567`
-   - **External access**: Use the URL shown in the terminal (e.g., `http://192.168.1.100:4567`)
+#### Alternative Setup (Legacy)
+You can still use the web interface at `http://localhost:4567/setup` for first-time setup.
 
-## Usage
+### Running the Application
+```bash
+ruby app.rb
+```
+Then visit `http://localhost:4567`
 
-### Adding Songs
-1. **First, ensure you have at least one band created** - Songs must be associated with at least one band
-2. Click "Add Song" from the navigation
-3. Fill in the required fields:
-   - **Bands**: Select one or more bands this song belongs to (hold Ctrl/Cmd to select multiple)
-   - **Title**: Song name
-   - **Artist**: Original artist
-   - **Key**: Current key your band plays in
-   - **Original Key**: Original key of the song - optional
-   - **Tempo**: BPM (beats per minute) - optional
-4. Optionally add:
-   - Genre, duration, year, album
-   - Streaming URL (YouTube, Spotify, etc.)
-   - Notes (chords, lyrics, special instructions)
-5. Click "Save Song"
+## 🗄️ Database Management
 
-### Creating Set Lists
-1. **First, ensure you have a band created** - Set lists must be associated with a band
-2. Click "Create Set List" from the navigation
-3. Enter a name for your set list
-4. Select the band this set list belongs to
-5. Add optional notes (venue, date, etc.)
-6. Click "Create Set List"
-7. Add songs to your set list from the set list view
+### Migration Commands
 
-### Managing Set Lists
-- **View**: See all songs in the set list with details
-- **Edit**: Modify set list name and notes
-- **Print**: Generate a print-friendly version
-- **Add Songs**: Select from available songs
-- **Remove Songs**: Remove songs from the set list
+#### Create a new migration
+```bash
+rake db:create_migration[name_of_migration]
+```
+Example: `rake db:create_migration[add_user_preferences]`
 
-### Printing Set Lists
-1. Navigate to any set list
-2. Click the "Print" button
-3. The print view will open in a new tab
-4. Use your browser's print function (Ctrl+P / Cmd+P)
+#### Run pending migrations
+```bash
+rake db:migrate
+```
 
-## File Structure
+#### Rollback the last migration
+```bash
+rake db:rollback
+```
+
+#### Check migration status
+```bash
+rake db:status
+```
+
+#### Reset database (drop, create, migrate)
+```bash
+rake db:reset
+```
+
+#### Seed database with initial data
+```bash
+rake db:seed
+```
+
+### Migration Files
+Migrations are stored in `db/migrate/` and follow the format:
+```
+YYYYMMDDHHMMSS_descriptive_name.rb
+```
+
+## 📁 Project Structure
 
 ```
 bandage/
-├── app.rb              # Main Sinatra application
-├── Gemfile             # Ruby dependencies
-├── README.md           # This file
-├── bandage.db          # SQLite database (created after setup)
-└── views/              # ERB templates
-    ├── layout.erb      # Main layout template
-    ├── index.erb       # Home page
-    ├── songs.erb       # Songs listing
-    ├── new_song.erb    # Add song form
-    ├── show_song.erb   # Song detail view
-    ├── edit_song.erb   # Edit song form
-    ├── set_lists.erb   # Set lists listing
-    ├── new_set_list.erb # Create set list form
-    ├── show_set_list.erb # Set list detail view
-    ├── edit_set_list.erb # Edit set list form
-    └── print_set_list.erb # Print-friendly set list
+├── app.rb                 # Main application file
+├── Gemfile               # Dependencies
+├── Rakefile              # Database tasks
+├── config/
+│   └── database.yml      # Database configuration
+├── db/
+│   └── migrate/          # Database migrations
+├── views/                # ERB templates
+└── README.md            # This file
 ```
 
-## Database Schema
+## 🎯 Features
 
-### Songs Table
-- `id` - Primary key
-- `title` - Song title (required)
-- `artist` - Artist name (required)
-- `key` - Current key (required)
-- `original_key` - Original key (optional)
-- `tempo` - BPM (optional)
-- `genre` - Song genre
-- `url` - Streaming platform URL
-- `notes` - Additional notes
-- `duration` - Song duration (e.g., "3:45")
-- `year` - Release year
-- `album` - Album name
-- `created_at`, `updated_at` - Timestamps
+- **Band Management**: Create and manage multiple bands
+- **Song Library**: Store songs with metadata (key, tempo, genre, etc.)
+- **Set Lists**: Create and organize set lists for performances
+- **Venue Management**: Track venues with contact information
+- **Performance Scheduling**: Schedule performances with dates and times
+- **Mobile Responsive**: Works great on mobile devices
+- **Print Support**: Print-friendly set list views
 
-### Bands Songs Table (Join Table)
-- `id` - Primary key
-- `band_id` - Foreign key to bands
-- `song_id` - Foreign key to songs
-- `created_at`, `updated_at` - Timestamps
+## 🔧 Development
 
-### Set Lists Table
-- `id` - Primary key
-- `name` - Set list name (required)
-- `notes` - Set list notes
-- `created_at`, `updated_at` - Timestamps
-
-### Set List Songs Table (Join Table)
-- `id` - Primary key
-- `set_list_id` - Foreign key to set_lists
-- `song_id` - Foreign key to songs
-- `position` - Order in set list (required)
-- `created_at`, `updated_at` - Timestamps
-
-## Customization
-
-### Adding New Song Properties
-1. Add the column to the database schema in `app.rb` (setup route)
-2. Update the Song model validations if needed
-3. Add form fields to `new_song.erb` and `edit_song.erb`
-4. Update display templates as needed
-
-### Styling
-The application uses CSS Grid and Flexbox for responsive design. Styles are included in `views/layout.erb` and can be customized there.
-
-## External Access
-
-### Running on Your Local Network
-To make the application accessible from other devices on your network:
-
-1. **Use the external start script**:
+### Adding New Features
+1. Create a migration for any database changes:
    ```bash
-   ./start-external.sh
+   rake db:create_migration[add_new_feature]
    ```
-
-2. **Or manually bind to all interfaces**:
+2. Edit the generated migration file in `db/migrate/`
+3. Run the migration:
    ```bash
-   ruby app.rb -o 0.0.0.0
+   rake db:migrate
    ```
+4. Update models and views as needed
 
-3. **Access from other devices**:
-   - Use the external URL shown in the terminal
-   - Example: `http://192.168.1.100:4567`
+### Database Schema Changes
+- Always use migrations for schema changes
+- Never modify the database directly
+- Test migrations on a copy of production data
 
-### Firewall Configuration
-Make sure your firewall allows connections on port 4567:
-- **macOS**: System Preferences → Security & Privacy → Firewall
-- **Windows**: Windows Defender Firewall
-- **Linux**: `sudo ufw allow 4567`
+## 🐛 Troubleshooting
 
-### Internet Access (Production)
-For internet access, consider:
-- Using a reverse proxy (nginx, Apache)
-- Setting up SSL/TLS certificates
-- Using a cloud hosting service
-- Configuring proper security measures
+### Migration Issues
+If you encounter migration problems:
+1. Check migration status: `rake db:status`
+2. Rollback if needed: `rake db:rollback`
+3. Reset if necessary: `rake db:reset` (⚠️ This will delete all data)
 
-## Troubleshooting
+### Database Connection Issues
+- Ensure the database file is writable
+- Check database configuration in `config/database.yml`
+- Verify SQLite3 is installed
 
-### Database Issues
-If you encounter database errors:
-1. Delete the `bandage.db` file
-2. Restart the application
-3. Visit `http://localhost:4567/setup` to recreate the database
-
-### Port Already in Use
-If port 4567 is already in use, you can change it by modifying the last line in `app.rb`:
-```ruby
-set :port, 4569  # or any other available port
-```
-
-## Docker Deployment
-
-### Quick Start with Docker
-```bash
-# Build and run with Docker Compose (recommended)
-docker-compose up -d
-
-# Or build and run manually
-docker build -t bandage .
-docker run -p 4567:4567 -v $(pwd)/data:/app/data bandage
-```
-
-### Docker Features
-- **Persistent Database**: Database is stored in `./data` directory
-- **Health Checks**: Automatic health monitoring
-- **Security**: Runs as non-root user
-- **Production Ready**: Optimized for production deployment
-
-### Environment Variables
-- `DATABASE_PATH`: Path to SQLite database file (default: `bandage.db`)
-- `RACK_ENV`: Environment mode (default: `production`)
-- `PORT`: Application port (default: `4567`)
-
-### Database Setup
-After starting the container, visit `http://localhost:4567/setup` to initialize the database and create a default band.
-
-## Contributing
-
-Feel free to fork this project and submit pull requests for improvements!
-
-## License
+## 📝 License
 
 This project is open source and available under the MIT License. 

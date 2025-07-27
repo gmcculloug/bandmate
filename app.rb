@@ -4,8 +4,18 @@ require 'json'
 require 'erb'
 
 # Database configuration
-database_path = ENV['DATABASE_PATH'] || 'bandage.db'
-set :database, { adapter: 'sqlite3', database: database_path }
+configure :development do
+  set :database, { adapter: 'sqlite3', database: 'bandage.db' }
+end
+
+configure :production do
+  database_path = ENV['DATABASE_PATH'] || 'bandage.db'
+  set :database, { adapter: 'sqlite3', database: database_path }
+end
+
+configure :test do
+  set :database, { adapter: 'sqlite3', database: 'bandage_test.db' }
+end
 
 # Models
 class Band < ActiveRecord::Base
@@ -418,70 +428,24 @@ get '/api/songs' do
   songs.map { |song| { id: song.id, title: song.title, artist: song.artist } }.to_json
 end
 
-# Create database tables
+# Database setup route (legacy support)
 get '/setup' do
-  ActiveRecord::Schema.define do
-    create_table :bands, force: true do |t|
-      t.string :name, null: false
-      t.text :notes
-      t.timestamps
+  begin
+    # Check if migrations table exists
+    unless ActiveRecord::Base.connection.table_exists?('schema_migrations')
+      # Run migrations if they haven't been run
+      ActiveRecord::Base.connection.migration_context.migrate
     end
-
-    create_table :songs, force: true do |t|
-      t.string :title, null: false
-      t.string :artist, null: false
-      t.string :key, null: false
-      t.string :original_key
-      t.integer :tempo
-      t.string :genre
-      t.string :url
-      t.text :notes
-      t.string :duration
-      t.integer :year
-      t.string :album
-      t.timestamps
+    
+    # Seed the database
+    if Band.count == 0
+      Band.create!(name: "My Band", notes: "Default band created during setup")
     end
-
-    create_table :bands_songs, force: true do |t|
-      t.references :band, null: false
-      t.references :song, null: false
-      t.timestamps
-    end
-
-    create_table :venues, force: true do |t|
-      t.string :name, null: false
-      t.string :location, null: false
-      t.string :contact_name, null: false
-      t.string :phone_number, null: false
-      t.string :website
-      t.timestamps
-    end
-
-    create_table :set_lists, force: true do |t|
-      t.string :name, null: false
-      t.text :notes
-      t.references :band, null: false
-      t.references :venue
-      t.date :performance_date
-      t.time :start_time
-      t.time :end_time
-      t.timestamps
-    end
-
-    create_table :set_list_songs, force: true do |t|
-      t.references :set_list, null: false
-      t.references :song, null: false
-      t.integer :position, null: false
-      t.timestamps
-    end
+    
+    "Database setup complete! Default band 'My Band' has been created."
+  rescue => e
+    "Database setup failed: #{e.message}. Please run 'rake db:setup' instead."
   end
-  
-  # Create a default band if none exists
-  if Band.count == 0
-    Band.create!(name: "My Band", notes: "Default band created during setup")
-  end
-  
-  "Database setup complete! Default band 'My Band' has been created."
 end
 
 # Start the server
