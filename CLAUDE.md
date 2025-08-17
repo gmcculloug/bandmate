@@ -1,0 +1,85 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## Common Development Commands
+
+### Database Management
+- **Setup database**: `rake db:setup` (runs migrations + seeds)
+- **Create migration**: `rake db:create_migration NAME=migration_name`
+- **Run migrations**: `rake db:migrate`
+- **Check migration status**: `rake db:status`
+- **Rollback last migration**: `rake db:rollback`
+- **Reset database**: `rake db:reset` (drops all tables, re-runs migrations)
+- **Seed database**: `rake db:seed`
+
+### Testing
+- **Run all tests**: `rake spec` or `rspec`
+- **Run specific test file**: `rspec spec/models/band_spec.rb`
+- **Run tests with coverage**: `rake test:coverage`
+- **Run tests with HTML output**: `rake test:html`
+
+### Application
+- **Start development server**: `ruby app.rb` (runs on http://localhost:4567)
+- **Install dependencies**: `bundle install`
+
+## Architecture Overview
+
+### Application Structure
+- **Single-file Sinatra app**: All models, routes, and configuration in `app.rb`
+- **ERB templates**: Located in `views/` directory
+- **SQLite database**: Uses ActiveRecord ORM with custom migration system
+- **Test suite**: RSpec with FactoryBot, Capybara for integration tests
+
+### Core Models and Relationships
+- **Band**: Has many songs (many-to-many), has many set lists
+- **Song**: Belongs to many bands, appears in set lists through join table
+- **SetList**: Belongs to band and venue, has many songs through SetListSong
+- **Venue**: Has many set lists
+- **SetListSong**: Join table with position ordering for songs in set lists
+
+### Database Configuration
+- Development: `bandage.db`
+- Test: `bandage_test.db`
+- Production: Uses `DATABASE_PATH` environment variable or defaults to `bandage.db`
+
+### Custom Migration System
+This project implements a custom migration system (not Rails migrations):
+- Migrations in `db/migrate/` with timestamp_name.rb format
+- Custom rake tasks handle migration state tracking
+- Always use `rake db:create_migration` to generate new migrations
+- Migration classes must inherit from `ActiveRecord::Migration[7.0]`
+
+### Testing Setup
+- Tests clear all data before each spec
+- FactoryBot provides test data factories
+- Capybara configured for integration testing
+- Database cleaner ensures test isolation
+
+### Key Features
+- Band management with song libraries
+- Set list creation and organization
+- Venue tracking with contact information
+- Mobile-responsive design
+- Print-friendly set list views
+- Performance scheduling
+
+## Development Guidelines
+
+### Database Changes
+- Always create migrations for schema changes: `rake db:create_migration NAME=descriptive_name`
+- Never modify database directly
+- Test migrations on copy of production data before applying
+
+### Testing
+- All models have comprehensive specs in `spec/models/`
+- Request specs cover all routes in `spec/requests/`
+- Use factories for test data creation
+- Clean database state between tests
+
+### Adding New Features
+1. Create migration if database changes needed
+2. Update models with validations and associations
+3. Add routes and views
+4. Write comprehensive tests
+5. Ensure mobile responsiveness

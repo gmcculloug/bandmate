@@ -4,6 +4,17 @@ require 'rake'
 # Load the application
 require_relative 'app'
 
+# RSpec tasks
+begin
+  require 'rspec/core/rake_task'
+  RSpec::Core::RakeTask.new(:spec)
+  RSpec::Core::RakeTask.new(:test) do |t|
+    t.pattern = 'spec/**/*_spec.rb'
+  end
+rescue LoadError
+  puts "RSpec not available. Install with: bundle install"
+end
+
 namespace :db do
   desc "Create a new migration"
   task :create_migration => :environment do
@@ -172,6 +183,27 @@ namespace :db do
     puts "Database setup completed!"
   end
 end
+
+# Test tasks
+namespace :test do
+  desc "Run all tests"
+  task :all => [:spec]
+  
+  desc "Run tests with coverage"
+  task :coverage => :environment do
+    ENV['COVERAGE'] = 'true'
+    Rake::Task[:spec].invoke
+  end
+  
+  desc "Run tests and generate HTML report"
+  task :html => :environment do
+    ENV['RSPEC_FORMAT'] = 'html'
+    Rake::Task[:spec].invoke
+  end
+end
+
+# Default task
+task :default => [:test]
 
 # Helper method for camelizing strings
 class String

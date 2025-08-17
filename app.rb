@@ -15,6 +15,13 @@ end
 
 configure :test do
   set :database, { adapter: 'sqlite3', database: 'bandage_test.db' }
+  set :bind, '0.0.0.0'
+  set :port, 4567
+  set :protection, false
+  set :environment, :test
+  set :dump_errors, false
+  set :raise_errors, true
+  set :show_exceptions, false
 end
 
 # Models
@@ -73,7 +80,7 @@ get '/' do
   end
   
   @songs = Song.order(:title)
-  @set_lists = SetList.order(:name)
+  @set_lists = SetList.where('performance_date IS NULL OR performance_date >= ?', Date.current).order(:performance_date, :name)
   @bands = Band.order(:name)
   erb :index
 end
