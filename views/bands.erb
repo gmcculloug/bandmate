@@ -3,6 +3,12 @@
     <a href="/bands/new" class="btn btn-success">➕ Add Band</a>
 </div>
 
+<% if params[:left_band] %>
+    <div class="success" style="margin-bottom: 20px;">
+        You have successfully left the band.
+    </div>
+<% end %>
+
 <% if @bands.any? %>
     <div style="display: flex; flex-direction: column; gap: 8px;">
         <% @bands.each do |band| %>
@@ -13,6 +19,7 @@
                         <div style="margin-top: 4px; display: flex; gap: 15px; font-size: 0.85rem; color: #4a5568; flex-wrap: wrap;">
                             <span><strong>Songs:</strong> <%= band.songs.count %></span>
                             <span><strong>Set Lists:</strong> <%= band.set_lists.count %></span>
+                            <span><strong>Members:</strong> <%= band.users.count %></span>
                         </div>
                         <% if band.notes.present? %>
                             <div style="margin-top: 4px; font-size: 0.85rem; color: #718096; font-style: italic; word-break: break-word;">

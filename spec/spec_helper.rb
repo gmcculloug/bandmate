@@ -1,0 +1,44 @@
+ENV['RACK_ENV'] = 'test'
+
+require 'rspec'
+require 'rack/test'
+require 'capybara/rspec'
+require 'factory_bot'
+require 'faker'
+require_relative '../app'
+
+# Load factories
+require_relative 'factories'
+
+puts "[DEBUG] ActiveRecord DB file: #{ActiveRecord::Base.connection_db_config.database}"
+
+RSpec.configure do |config|
+  config.include Rack::Test::Methods
+  config.include Capybara::DSL
+  config.include FactoryBot::Syntax::Methods
+
+  def app
+    Sinatra::Application
+  end
+
+  config.before(:each) do
+    SetListSong.delete_all
+    SetList.delete_all
+    UserBand.delete_all
+    Song.delete_all
+    Band.delete_all
+    User.delete_all
+    GlobalSong.delete_all
+    Venue.delete_all
+  end
+end
+
+Capybara.app = Sinatra::Application
+Capybara.default_driver = :rack_test
+Capybara.javascript_driver = :selenium_chrome_headless
+
+class String
+  def camelize
+    self.split('_').map(&:capitalize).join
+  end
+end 

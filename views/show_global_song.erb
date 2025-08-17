@@ -1,0 +1,119 @@
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+    <h2>🌍 <%= @global_song.title %></h2>
+    <div class="actions">
+        <a href="/global_songs/<%= @global_song.id %>/edit" class="btn">Edit</a>
+        <a href="/global_songs" class="btn">Back to Global Songs</a>
+    </div>
+</div>
+
+<div class="card">
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px;">
+        <div>
+            <h3>Song Details</h3>
+            <div class="song-details">
+                <div class="detail-item">
+                    <span class="detail-label">Artist:</span> <%= @global_song.artist %>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Key:</span> <%= @global_song.key %>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Original Key:</span> <%= @global_song.original_key || 'N/A' %>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Tempo:</span> <%= @global_song.tempo ? "#{@global_song.tempo} BPM" : 'N/A' %>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Genre:</span> <%= @global_song.genre || 'N/A' %>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Duration:</span> <%= @global_song.duration || 'N/A' %>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Year:</span> <%= @global_song.year || 'N/A' %>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Album:</span> <%= @global_song.album || 'N/A' %>
+                </div>
+            </div>
+        </div>
+
+        <div>
+            <h3>Actions</h3>
+            <% if @global_song.url.present? %>
+                <div style="margin-bottom: 20px;">
+                    <a href="<%= @global_song.url %>" target="_blank" class="btn btn-success">🎵 Listen on Streaming Platform</a>
+                </div>
+            <% end %>
+            
+            <div style="margin-bottom: 20px;">
+                <h4>Copy to Band</h4>
+                <% if @bands.any? %>
+                    <p style="color: #666; font-size: 0.9rem; margin-bottom: 10px;">
+                        Select a band to copy this song to their repertoire:
+                    </p>
+                    <% @bands.each do |band| %>
+                        <% existing_copy = band.songs.find_by(global_song_id: @global_song.id) %>
+                        <% if existing_copy %>
+                            <div style="margin-bottom: 8px; padding: 8px; background: #f0f4f8; border-radius: 4px; color: #666;">
+                                ✓ Already copied to <%= band.name %>
+                            </div>
+                        <% else %>
+                            <form method="POST" action="/bands/<%= band.id %>/copy_songs" style="margin-bottom: 8px;">
+                                <input type="hidden" name="global_song_ids[]" value="<%= @global_song.id %>">
+                                <button type="submit" class="btn" style="width: 100%; text-align: left;">
+                                    📋 Copy to <%= band.name %>
+                                </button>
+                            </form>
+                        <% end %>
+                    <% end %>
+                <% else %>
+                    <p style="color: #666; font-size: 0.9rem; margin-bottom: 10px;">
+                        You need to be a member of at least one band to copy songs. 
+                        <a href="/bands/new" class="btn btn-success" style="margin-top: 10px; display: inline-block;">Create a Band</a>
+                    </p>
+                <% end %>
+            </div>
+
+            <div>
+                <h4>Usage Statistics</h4>
+                <% song_copies = @global_song.songs.includes(:bands) %>
+                <div class="detail-item">
+                    <span class="detail-label">Copied by:</span> 
+                    <% if song_copies.any? %>
+                        <%= song_copies.count %> band<%= song_copies.count == 1 ? '' : 's' %>
+                        <div style="margin-top: 5px; font-size: 0.85rem;">
+                            <% song_copies.group_by(&:bands).each do |bands, songs| %>
+                                <% bands.each do |band| %>
+                                    <span style="background: #ed8936; color: white; padding: 2px 6px; border-radius: 10px; margin-right: 4px;">
+                                        <%= band.name %>
+                                    </span>
+                                <% end %>
+                            <% end %>
+                        </div>
+                    <% else %>
+                        Not copied yet
+                    <% end %>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <% if @global_song.notes.present? %>
+        <div style="margin-top: 30px;">
+            <h3>Notes</h3>
+            <div style="background: #f7fafc; padding: 20px; border-radius: 8px; white-space: pre-wrap;">
+                <%= @global_song.notes %>
+            </div>
+        </div>
+    <% end %>
+
+    <% if @global_song.lyrics.present? %>
+        <div style="margin-top: 30px;">
+            <h3>Lyrics</h3>
+            <div style="background: #f7fafc; padding: 20px; border-radius: 8px; white-space: pre-wrap; font-family: monospace;">
+                <%= @global_song.lyrics %>
+            </div>
+        </div>
+    <% end %>
+</div>

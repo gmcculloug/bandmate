@@ -90,4 +90,13 @@
             </div>
         </div>
     <% end %>
+
+    <% if @song.lyrics.present? %>
+        <div style="margin-top: 30px;">
+            <h3>Lyrics</h3>
+            <div style="background: #f7fafc; padding: 20px; border-radius: 8px; white-space: pre-wrap; font-family: monospace;">
+                <%= @song.lyrics %>
+            </div>
+        </div>
+    <% end %>
 </div> 

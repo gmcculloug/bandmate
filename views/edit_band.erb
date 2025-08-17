@@ -33,4 +33,60 @@
             </div>
         </form>
     </div>
+
+    <div class="card" style="margin-top: 30px;">
+        <h3>👥 Band Members</h3>
+        
+        <% if @user_error %>
+            <div class="errors" style="margin-bottom: 20px;">
+                <p><%= @user_error %></p>
+            </div>
+        <% end %>
+        
+        <% if @user_success %>
+            <div class="success" style="margin-bottom: 20px;">
+                <p><%= @user_success %></p>
+            </div>
+        <% end %>
+
+        <div style="margin-bottom: 20px;">
+            <% if @band.users.any? %>
+                <div style="margin-bottom: 20px;">
+                    <h4>Current Members</h4>
+                    <% @band.users.order(:username).each do |user| %>
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px; border: 1px solid #e2e8f0; border-radius: 4px; margin-bottom: 5px;">
+                            <span style="font-weight: 500;">
+                                <%= user.username %>
+                                <% if user == current_user %>
+                                    <span style="background: #667eea; color: white; padding: 2px 6px; border-radius: 10px; font-size: 0.75rem; margin-left: 8px;">You</span>
+                                <% end %>
+                            </span>
+                            <% if @band.users.count > 1 %>
+                                <form method="POST" action="/bands/<%= @band.id %>/remove_user" style="display: inline;">
+                                    <input type="hidden" name="user_id" value="<%= user.id %>">
+                                    <% if user == current_user %>
+                                        <button type="submit" class="btn btn-danger" style="font-size: 0.8rem; padding: 3px 8px;" onclick="return confirm('Leave this band? You will no longer have access to its songs and set lists.')">Leave Band</button>
+                                    <% else %>
+                                        <button type="submit" class="btn btn-danger" style="font-size: 0.8rem; padding: 3px 8px;" onclick="return confirm('Remove <%= user.username %> from this band?')">Remove</button>
+                                    <% end %>
+                                </form>
+                            <% elsif user == current_user %>
+                                <span style="font-size: 0.8rem; color: #999; padding: 3px 8px;">Last member</span>
+                            <% end %>
+                        </div>
+                    <% end %>
+                </div>
+            <% end %>
+
+            <h4>Add New Member</h4>
+            <form method="POST" action="/bands/<%= @band.id %>/add_user" style="display: flex; gap: 10px; align-items: end;">
+                <div style="flex: 1;">
+                    <label for="username" style="display: block; margin-bottom: 5px; font-weight: bold;">Username</label>
+                    <input type="text" id="username" name="username" required style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 16px;" placeholder="Enter username to add">
+                </div>
+                <button type="submit" class="btn btn-success">Add Member</button>
+            </form>
+            <small style="color: #666; margin-top: 5px; display: block;">Enter the exact username of the user you want to add to this band.</small>
+        </div>
+    </div>
 </div> 

@@ -43,6 +43,35 @@
             margin-bottom: 10px;
         }
         
+        .user-info {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .user-info span {
+            color: #4a5568;
+            font-weight: 500;
+        }
+        
+        .band-selector {
+            padding: 8px 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 6px;
+            background: white;
+            color: #4a5568;
+            font-size: 14px;
+            cursor: pointer;
+        }
+        
+        .band-selector:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
         .nav {
             display: flex;
             justify-content: center;
@@ -462,13 +491,35 @@
     <div class="container">
         <div class="header">
             <h1>🎸 Bandage</h1>
+            <% if logged_in? %>
+                <div class="user-info">
+                    <span>Welcome, <%= current_user.username %>!</span>
+                    <% if user_bands.any? %>
+                        <form method="post" action="/select_band" style="display: inline;">
+                            <select name="band_id" onchange="this.form.submit()" class="band-selector">
+                                <option value="">Select Band</option>
+                                <% user_bands.each do |band| %>
+                                    <option value="<%= band.id %>" <%= 'selected' if current_band&.id == band.id %>><%= band.name %></option>
+                                <% end %>
+                            </select>
+                        </form>
+                    <% end %>
+                    <a href="/logout" class="btn btn-danger">Logout</a>
+                </div>
+            <% end %>
             <button class="mobile-menu-toggle" onclick="toggleMobileMenu()">☰</button>
             <nav class="nav" id="mobile-nav">
-                <a href="/">Home</a>
-                <a href="/set_lists">Set Lists</a>
-                <a href="/songs">Songs</a>
-                <a href="/venues">Venues</a>
-                <a href="/bands">Bands</a>
+                <% if logged_in? %>
+                    <a href="/">Home</a>
+                    <a href="/set_lists">Set Lists</a>
+                    <a href="/songs">Songs</a>
+                    <a href="/global_songs">Global Songs</a>
+                    <a href="/venues">Venues</a>
+                    <a href="/bands">Bands</a>
+                <% else %>
+                    <a href="/login">Login</a>
+                    <a href="/signup">Sign Up</a>
+                <% end %>
             </nav>
         </div>
         

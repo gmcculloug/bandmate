@@ -2,6 +2,10 @@ require 'sinatra'
 require 'sinatra/activerecord'
 require 'json'
 require 'erb'
+require 'bcrypt'
+
+enable :sessions
+set :session_secret, ENV['SESSION_SECRET'] || 'your_secret_key_here_that_is_very_long_and_secure_at_least_64_chars'
 
 # Database configuration
 configure :development do
@@ -25,15 +29,47 @@ configure :test do
 end
 
 # Models
+class User < ActiveRecord::Base
+  has_secure_password
+  has_many :user_bands
+  has_many :bands, through: :user_bands
+  belongs_to :last_selected_band, class_name: 'Band', optional: true
+  
+  validates :username, presence: true, uniqueness: { case_sensitive: false }
+  validates :password, length: { minimum: 6 }, if: :password_digest_changed?
+end
+
+class UserBand < ActiveRecord::Base
+  belongs_to :user
+  belongs_to :band
+end
+
 class Band < ActiveRecord::Base
   has_and_belongs_to_many :songs
   has_many :set_lists
+  has_many :user_bands
+  has_many :users, through: :user_bands
   
   validates :name, presence: true
   validates :name, uniqueness: true
 end
 
+class GlobalSong < ActiveRecord::Base
+  has_many :songs
+  
+  validates :title, presence: true
+  validates :artist, presence: true
+  validates :key, presence: true
+  validates :tempo, numericality: { greater_than: 0 }, allow_nil: true
+  
+  # Scope for searching global songs
+  scope :search, ->(query) { 
+    where('LOWER(title) LIKE ? OR LOWER(artist) LIKE ?', "%#{query.downcase}%", "%#{query.downcase}%") if query.present?
+  }
+end
+
 class Song < ActiveRecord::Base
+  belongs_to :global_song, optional: true
   has_and_belongs_to_many :bands
   has_many :set_list_songs
   has_many :set_lists, through: :set_list_songs
@@ -41,9 +77,28 @@ class Song < ActiveRecord::Base
   validates :title, presence: true
   validates :artist, presence: true
   validates :key, presence: true
-  validates :bands, presence: true
-
   validates :tempo, numericality: { greater_than: 0 }, allow_nil: true
+  
+  # Create a band-specific copy of a global song
+  def self.create_from_global_song(global_song, band_ids = [])
+    song = new(
+      title: global_song.title,
+      artist: global_song.artist,
+      key: global_song.key,
+      original_key: global_song.original_key,
+      tempo: global_song.tempo,
+      genre: global_song.genre,
+      url: global_song.url,
+      notes: global_song.notes,
+      duration: global_song.duration,
+      year: global_song.year,
+      album: global_song.album,
+      lyrics: global_song.lyrics,
+      global_song: global_song
+    )
+    song.band_ids = band_ids
+    song
+  end
 end
 
 class Venue < ActiveRecord::Base
@@ -72,115 +127,331 @@ class SetListSong < ActiveRecord::Base
   validates :position, presence: true, numericality: { greater_than: 0 }
 end
 
+# Authentication helpers
+helpers do
+  def current_user
+    @current_user ||= User.find(session[:user_id]) if session[:user_id]
+  end
+
+  def logged_in?
+    !!current_user
+  end
+
+  def require_login
+    unless logged_in?
+      redirect '/login'
+    end
+  end
+
+  def current_band
+    if session[:band_id] && logged_in?
+      current_user.bands.find_by(id: session[:band_id])
+    end
+  end
+
+  def user_bands
+    logged_in? ? current_user.bands.order(:name) : Band.none
+  end
+
+  def filter_by_current_band(collection)
+    if current_band
+      case collection.name
+      when 'Song'
+        collection.joins(:bands).where(bands: { id: current_band.id })
+      when 'SetList'
+        collection.where(band: current_band)
+      else
+        collection
+      end
+    else
+      collection.none
+    end
+  end
+end
+
+# Authentication routes
+get '/login' do
+  erb :login, layout: :layout
+end
+
+post '/login' do
+  user = User.where('LOWER(username) = ?', params[:username].downcase).first
+  
+  if user && user.authenticate(params[:password])
+    session[:user_id] = user.id
+    
+    # Restore the last selected band if it exists and user still has access to it
+    if user.last_selected_band && user.bands.include?(user.last_selected_band)
+      session[:band_id] = user.last_selected_band.id
+    elsif user.bands.any?
+      # If no saved band or user no longer has access, select the first band
+      session[:band_id] = user.bands.first.id
+    end
+    
+    redirect '/'
+  else
+    @error = "Invalid username or password"
+    erb :login, layout: :layout
+  end
+end
+
+get '/signup' do
+  erb :signup, layout: :layout
+end
+
+post '/signup' do
+  user = User.new(username: params[:username], password: params[:password])
+  
+  if user.save
+    session[:user_id] = user.id
+    redirect '/'
+  else
+    @errors = user.errors.full_messages
+    erb :signup, layout: :layout
+  end
+end
+
+get '/logout' do
+  # Save the current band selection before clearing session
+  if logged_in? && current_band
+    current_user.update(last_selected_band_id: current_band.id)
+  end
+  
+  session.clear
+  redirect '/login'
+end
+
+post '/select_band' do
+  require_login
+  band = current_user.bands.find_by(id: params[:band_id])
+  if band
+    session[:band_id] = band.id
+    # Save this as the user's preferred band
+    current_user.update(last_selected_band_id: band.id)
+  end
+  redirect back
+end
+
 # Routes
 get '/' do
-  # Check if there are any bands, if not redirect to create first band
-  if Band.count == 0
+  require_login
+  
+  # If user has no bands, redirect to create or join a band
+  if user_bands.empty?
     redirect '/bands/new?first_band=true'
   end
   
-  @songs = Song.order(:title)
-  @set_lists = SetList.where('performance_date IS NULL OR performance_date >= ?', Date.current).order(:performance_date, :name)
-  @bands = Band.order(:name)
+  @bands = user_bands
+  
+  # If no band is selected, show empty collections
+  unless current_band
+    @songs = Song.none
+    @set_lists = SetList.none
+    return erb :index
+  end
+  
+  @songs = filter_by_current_band(Song).order(:title)
+  @set_lists = filter_by_current_band(SetList).where('performance_date IS NULL OR performance_date >= ?', Date.current).order(:performance_date, :name)
   erb :index
 end
 
 # Songs routes
 get '/songs' do
-  @search = params[:search]
-  @band_filter = params[:band_id]
-  @bands = Band.order(:name)
+  require_login
+  return redirect '/' unless current_band
   
-  @songs = Song.order('LOWER(title)')
+  @search = params[:search]
+  @bands = user_bands
+  
+  @songs = filter_by_current_band(Song).order('LOWER(title)')
   
   # Apply search filter
   if @search.present?
     @songs = @songs.where('LOWER(title) LIKE ? OR LOWER(artist) LIKE ?', "%#{@search.downcase}%", "%#{@search.downcase}%")
   end
   
-  # Apply band filter
-  if @band_filter.present?
-    @songs = @songs.joins(:bands).where(bands: { id: @band_filter })
-  end
-  
   erb :songs
 end
 
 get '/songs/new' do
-  @bands = Band.order(:name)
+  require_login
+  return redirect '/' unless current_band
   erb :new_song
 end
 
 post '/songs' do
-  song = Song.new(params[:song])
+  require_login
+  return redirect '/' unless current_band
   
-  # Handle band associations
-  if params[:song] && params[:song][:band_ids]
-    band_ids = params[:song][:band_ids].reject(&:blank?)
-    song.band_ids = band_ids
-  end
+  song = Song.new(params[:song])
+  song.bands = [current_band]
   
   if song.save
     redirect '/songs'
   else
     @errors = song.errors.full_messages
-    @bands = Band.order(:name)
     erb :new_song
   end
 end
 
 get '/songs/:id' do
-  @song = Song.find(params[:id])
+  require_login
+  @song = current_band.songs.find(params[:id])
   erb :show_song
 end
 
 get '/songs/:id/edit' do
-  @song = Song.find(params[:id])
-  @bands = Band.order(:name)
+  require_login
+  @song = current_band.songs.find(params[:id])
   erb :edit_song
 end
 
 put '/songs/:id' do
-  @song = Song.find(params[:id])
-  
-  # Handle band associations
-  if params[:song] && params[:song][:band_ids]
-    band_ids = params[:song][:band_ids].reject(&:blank?)
-    @song.band_ids = band_ids
-  end
+  require_login
+  @song = current_band.songs.find(params[:id])
   
   if @song.update(params[:song])
     redirect "/songs/#{@song.id}"
   else
     @errors = @song.errors.full_messages
-    @bands = Band.order(:name)
     erb :edit_song
   end
 end
 
 delete '/songs/:id' do
-  song = Song.find(params[:id])
+  require_login
+  song = current_band.songs.find(params[:id])
   song.destroy
   redirect '/songs'
 end
 
+# Global songs routes
+get '/global_songs' do
+  require_login
+  
+  @search = params[:search]
+  @global_songs = GlobalSong.order('LOWER(title)')
+  
+  # Apply search filter
+  if @search.present?
+    @global_songs = @global_songs.search(@search)
+  end
+  
+  erb :global_songs
+end
+
+get '/global_songs/new' do
+  require_login
+  erb :new_global_song
+end
+
+post '/global_songs' do
+  require_login
+  global_song = GlobalSong.new(params[:global_song])
+  
+  if global_song.save
+    redirect '/global_songs'
+  else
+    @errors = global_song.errors.full_messages
+    erb :new_global_song
+  end
+end
+
+get '/global_songs/:id' do
+  require_login
+  @global_song = GlobalSong.find(params[:id])
+  @bands = user_bands
+  erb :show_global_song
+end
+
+get '/global_songs/:id/edit' do
+  require_login
+  @global_song = GlobalSong.find(params[:id])
+  erb :edit_global_song
+end
+
+put '/global_songs/:id' do
+  require_login
+  @global_song = GlobalSong.find(params[:id])
+  
+  if @global_song.update(params[:global_song])
+    redirect "/global_songs/#{@global_song.id}"
+  else
+    @errors = @global_song.errors.full_messages
+    erb :edit_global_song
+  end
+end
+
+delete '/global_songs/:id' do
+  require_login
+  global_song = GlobalSong.find(params[:id])
+  global_song.destroy
+  redirect '/global_songs'
+end
+
+# Copy global song to band
+get '/bands/:band_id/copy_songs' do
+  require_login
+  @band = user_bands.find(params[:band_id])
+  @search = params[:search]
+  @global_songs = GlobalSong.order('LOWER(title)')
+  
+  # Apply search filter
+  if @search.present?
+    @global_songs = @global_songs.search(@search)
+  end
+  
+  # Exclude songs already copied to this band based on global_song_id
+  existing_global_song_ids = @band.songs.where.not(global_song_id: nil).pluck(:global_song_id)
+  @global_songs = @global_songs.where.not(id: existing_global_song_ids)
+  
+  erb :copy_songs_to_band
+end
+
+post '/bands/:band_id/copy_songs' do
+  require_login
+  @band = user_bands.find(params[:band_id])
+  global_song_ids = params[:global_song_ids] || []
+  
+  copied_count = 0
+  global_song_ids.each do |global_song_id|
+    global_song = GlobalSong.find(global_song_id)
+    song = Song.create_from_global_song(global_song, [@band.id])
+    
+    if song.save
+      copied_count += 1
+    end
+  end
+  
+  redirect "/bands/#{@band.id}?copied=#{copied_count}"
+end
+
 # Set lists routes
 get '/set_lists' do
-  @set_lists = SetList.includes(:venue).order(:name)
+  require_login
+  return redirect '/' unless current_band
+  
+  @set_lists = filter_by_current_band(SetList).includes(:venue).order(:name)
   erb :set_lists
 end
 
 get '/set_lists/new' do
-  @bands = Band.order(:name)
+  require_login
+  return redirect '/' unless current_band
+  
+  @bands = [current_band]
   @venues = Venue.order(:name)
-  @songs = Song.order(:title)
+  @songs = filter_by_current_band(Song).order(:title)
   erb :new_set_list
 end
 
 post '/set_lists' do
+  require_login
+  return redirect '/' unless current_band
+  
   set_list_params = {
     name: params[:name], 
-    band_id: params[:band_id],
+    band_id: current_band.id,
     venue_id: params[:venue_id].presence,
     performance_date: params[:performance_date].presence,
     start_time: params[:start_time].presence,
@@ -192,32 +463,34 @@ post '/set_lists' do
     redirect '/set_lists'
   else
     @errors = set_list.errors.full_messages
-    @bands = Band.order(:name)
+    @bands = [current_band]
     @venues = Venue.order(:name)
-    @songs = Song.order(:title)
+    @songs = filter_by_current_band(Song).order(:title)
     erb :new_set_list
   end
 end
 
 get '/set_lists/:id' do
-  @set_list = SetList.includes(:venue).find(params[:id])
-  # Get songs from the same band for adding to set list
-  @available_songs = Song.joins(:bands).where(bands: { id: @set_list.band.id }).where.not(id: @set_list.song_ids).order(:title)
+  require_login
+  @set_list = filter_by_current_band(SetList).includes(:venue).find(params[:id])
+  @available_songs = filter_by_current_band(Song).where.not(id: @set_list.song_ids).order(:title)
   erb :show_set_list
 end
 
 get '/set_lists/:id/edit' do
-  @set_list = SetList.find(params[:id])
-  @bands = Band.order(:name)
+  require_login
+  @set_list = filter_by_current_band(SetList).find(params[:id])
+  @bands = [current_band]
   @venues = Venue.order(:name)
   erb :edit_set_list
 end
 
 put '/set_lists/:id' do
-  @set_list = SetList.find(params[:id])
+  require_login
+  @set_list = filter_by_current_band(SetList).find(params[:id])
   set_list_params = {
     name: params[:name], 
-    band_id: params[:band_id],
+    band_id: current_band.id,
     venue_id: params[:venue_id].presence,
     performance_date: params[:performance_date].presence,
     start_time: params[:start_time].presence,
@@ -228,22 +501,24 @@ put '/set_lists/:id' do
     redirect "/set_lists/#{@set_list.id}"
   else
     @errors = @set_list.errors.full_messages
-    @bands = Band.order(:name)
+    @bands = [current_band]
     @venues = Venue.order(:name)
     erb :edit_set_list
   end
 end
 
 delete '/set_lists/:id' do
-  set_list = SetList.find(params[:id])
+  require_login
+  set_list = filter_by_current_band(SetList).find(params[:id])
   set_list.destroy
   redirect '/set_lists'
 end
 
 # Add song to set list
 post '/set_lists/:id/songs' do
-  set_list = SetList.find(params[:id])
-  song = Song.find(params[:song_id])
+  require_login
+  set_list = filter_by_current_band(SetList).find(params[:id])
+  song = filter_by_current_band(Song).find(params[:song_id])
   position = set_list.set_list_songs.count + 1
   
   set_list_song = SetListSong.new(
@@ -263,7 +538,8 @@ end
 
 # Remove song from set list
 delete '/set_lists/:set_list_id/songs/:song_id' do
-  set_list = SetList.find(params[:set_list_id])
+  require_login
+  set_list = filter_by_current_band(SetList).find(params[:set_list_id])
   set_list_song = set_list.set_list_songs.find_by(song_id: params[:song_id])
   set_list_song.destroy if set_list_song
   
@@ -277,13 +553,15 @@ end
 
 # Print set list
 get '/set_lists/:id/print' do
-  @set_list = SetList.find(params[:id])
+  require_login
+  @set_list = filter_by_current_band(SetList).find(params[:id])
   erb :print_set_list, layout: false
 end
 
 # Reorder songs in set list
 post '/set_lists/:id/reorder' do
-  set_list = SetList.find(params[:id])
+  require_login
+  set_list = filter_by_current_band(SetList).find(params[:id])
   song_order = params[:song_order]
   
   if song_order && song_order.is_a?(Array)
@@ -299,8 +577,9 @@ end
 
 # Copy set list
 post '/set_lists/:id/copy' do
+  require_login
   begin
-    original_set_list = SetList.find(params[:id])
+    original_set_list = filter_by_current_band(SetList).find(params[:id])
     
     # Create new set list with copied name and notes
     new_name = "Copy - #{original_set_list.name}"
@@ -328,23 +607,32 @@ end
 
 # Bands routes
 get '/bands' do
-  @bands = Band.order(:name)
+  require_login
+  @bands = user_bands.order(:name)
   erb :bands
 end
 
 get '/bands/new' do
+  require_login
   erb :new_band
 end
 
 post '/bands' do
+  require_login
+  
   band = Band.new(params[:band])
   if band.save
-    # If this is the first band, redirect to home page
-    if Band.count == 1
-      redirect '/'
-    else
-      redirect '/bands'
+    # Associate the current user with the new band
+    current_user.bands << band
+    
+    # Set this as the current band if it's the user's first band
+    if current_user.bands.count == 1
+      session[:band_id] = band.id
+      # Save this as the user's preferred band
+      current_user.update(last_selected_band_id: band.id)
     end
+    
+    redirect '/bands'
   else
     @errors = band.errors.full_messages
     erb :new_band
@@ -352,17 +640,20 @@ post '/bands' do
 end
 
 get '/bands/:id' do
-  @band = Band.find(params[:id])
+  require_login
+  @band = user_bands.find(params[:id])
   erb :show_band
 end
 
 get '/bands/:id/edit' do
-  @band = Band.find(params[:id])
+  require_login
+  @band = user_bands.find(params[:id])
   erb :edit_band
 end
 
 put '/bands/:id' do
-  @band = Band.find(params[:id])
+  require_login
+  @band = user_bands.find(params[:id])
   if @band.update(params[:band])
     redirect "/bands/#{@band.id}"
   else
@@ -372,22 +663,99 @@ put '/bands/:id' do
 end
 
 delete '/bands/:id' do
-  band = Band.find(params[:id])
-  band.destroy
+  require_login
+  band = user_bands.find(params[:id])
+  
+  # If this was the current band, clear the session
+  if current_band&.id == band.id
+    session[:band_id] = nil
+  end
+  
+  # Remove user's association with the band
+  current_user.bands.delete(band)
+  
+  # If no other users are associated with this band, delete the band
+  if band.users.empty?
+    band.destroy
+  end
+  
   redirect '/bands'
+end
+
+# Add user to band
+post '/bands/:id/add_user' do
+  require_login
+  @band = user_bands.find(params[:id])
+  username = params[:username]&.strip
+  
+  if username.blank?
+    @user_error = "Username cannot be empty"
+    return erb :edit_band
+  end
+  
+  # Find user by username (case insensitive)
+  user = User.where('LOWER(username) = ?', username.downcase).first
+  
+  if user.nil?
+    @user_error = "User '#{username}' not found"
+    return erb :edit_band
+  end
+  
+  if @band.users.include?(user)
+    @user_error = "User '#{username}' is already a member of this band"
+    return erb :edit_band
+  end
+  
+  # Add user to band
+  @band.users << user
+  @user_success = "Successfully added '#{username}' to the band"
+  
+  erb :edit_band
+end
+
+# Remove user from band
+post '/bands/:id/remove_user' do
+  require_login
+  @band = user_bands.find(params[:id])
+  user_to_remove = User.find(params[:user_id])
+  
+  # Prevent removing the last user from the band
+  if @band.users.count <= 1
+    @user_error = "Cannot remove the last member from the band"
+    return erb :edit_band
+  end
+  
+  if @band.users.include?(user_to_remove)
+    @band.users.delete(user_to_remove)
+    
+    if user_to_remove == current_user
+      # User is removing themselves - redirect to bands list with message
+      redirect '/bands?left_band=true'
+    else
+      # Admin removing another user - stay on edit page with success message
+      @user_success = "Successfully removed '#{user_to_remove.username}' from the band"
+      erb :edit_band
+    end
+  else
+    @user_error = "User is not a member of this band"
+    erb :edit_band
+  end
 end
 
 # Venues routes
 get '/venues' do
+  require_login
   @venues = Venue.order(:name)
   erb :venues
 end
 
 get '/venues/new' do
+  require_login
   erb :new_venue
 end
 
 post '/venues' do
+  require_login
   venue = Venue.new(params[:venue])
   if venue.save
     redirect '/venues'
@@ -398,16 +766,19 @@ post '/venues' do
 end
 
 get '/venues/:id' do
+  require_login
   @venue = Venue.find(params[:id])
   erb :show_venue
 end
 
 get '/venues/:id/edit' do
+  require_login
   @venue = Venue.find(params[:id])
   erb :edit_venue
 end
 
 put '/venues/:id' do
+  require_login
   @venue = Venue.find(params[:id])
   if @venue.update(params[:venue])
     redirect "/venues/#{@venue.id}"
@@ -418,6 +789,7 @@ put '/venues/:id' do
 end
 
 delete '/venues/:id' do
+  require_login
   venue = Venue.find(params[:id])
   venue.destroy
   redirect '/venues'
@@ -425,14 +797,245 @@ end
 
 # API routes for AJAX
 get '/api/songs' do
+  require_login
   content_type :json
-  band_id = params[:band_id]
-  if band_id.present?
-    songs = Song.joins(:bands).where(bands: { id: band_id }).order(:title)
+  
+  if current_band
+    songs = filter_by_current_band(Song).order(:title)
   else
-    songs = Song.order(:title)
+    songs = []
   end
   songs.map { |song| { id: song.id, title: song.title, artist: song.artist } }.to_json
+end
+
+# Song lookup from songbpm.com
+get '/api/lookup_song' do
+  require_login
+  content_type :json
+  
+  title = params[:title]
+  artist = params[:artist] || ''
+  
+  if title.blank?
+    return { error: 'Title is required' }.to_json
+  end
+  
+  begin
+    # First try the mock database for demo purposes
+    mock_data = get_mock_song_data(title, artist)
+    if mock_data[:found]
+      return {
+        success: true,
+        data: mock_data
+      }.to_json
+    end
+    
+    # If not in mock data, try songbpm.com
+    require 'net/http'
+    require 'uri'
+    require 'json'
+    
+    # Construct search query for songbpm.com
+    query = "#{title} #{artist}".strip
+    search_url = "https://songbpm.com/#{URI.encode_www_form_component(title.downcase.gsub(/\s+/, '-'))}"
+    
+    # Set up HTTP request with proper headers
+    uri = URI(search_url)
+    http = Net::HTTP.new(uri.host, uri.port)
+    http.use_ssl = true
+    
+    request = Net::HTTP::Get.new(uri)
+    request['User-Agent'] = 'Mozilla/5.0 (compatible; Bandage/1.0)'
+    
+    response = http.request(request)
+    
+    if response.code == '200'
+      # Parse the HTML response to extract song data
+      html = response.body
+      song_data = parse_songbpm_response(html, title, artist)
+      
+      if song_data[:found]
+        {
+          success: true,
+          data: song_data
+        }.to_json
+      else
+        {
+          success: false,
+          error: 'Song not found on songbpm.com'
+        }.to_json
+      end
+    else
+      {
+        success: false,
+        error: 'Failed to fetch data from songbpm.com'
+      }.to_json
+    end
+  rescue => e
+    {
+      success: false,
+      error: "Lookup failed: #{e.message}"
+    }.to_json
+  end
+end
+
+private
+
+def get_mock_song_data(title, artist)
+  # Mock database of popular songs for demonstration
+  # In a real implementation, this could be a local database or multiple API sources
+  mock_songs = {
+    'billie jean' => {
+      artist: 'Michael Jackson',
+      key: 'F#/Gb',
+      tempo: 117,
+      duration: '4:54'
+    },
+    'bohemian rhapsody' => {
+      artist: 'Queen',
+      key: 'A#/Bb',
+      tempo: 72,
+      duration: '5:55'
+    },
+    'hotel california' => {
+      artist: 'Eagles',
+      key: 'B',
+      tempo: 75,
+      duration: '6:30'
+    },
+    'stairway to heaven' => {
+      artist: 'Led Zeppelin',
+      key: 'A',
+      tempo: 82,
+      duration: '8:02'
+    },
+    'sweet child o mine' => {
+      artist: 'Guns N\' Roses',
+      key: 'D',
+      tempo: 125,
+      duration: '5:03'
+    },
+    'wonderwall' => {
+      artist: 'Oasis',
+      key: 'F#/Gb',
+      tempo: 87,
+      duration: '4:18'
+    },
+    'hey jude' => {
+      artist: 'The Beatles',
+      key: 'F',
+      tempo: 75,
+      duration: '7:11'
+    },
+    'imagine' => {
+      artist: 'John Lennon',
+      key: 'C',
+      tempo: 76,
+      duration: '3:03'
+    },
+    'smells like teen spirit' => {
+      artist: 'Nirvana',
+      key: 'F',
+      tempo: 117,
+      duration: '5:01'
+    },
+    'purple rain' => {
+      artist: 'Prince',
+      key: 'A#/Bb',
+      tempo: 110,
+      duration: '8:41'
+    }
+  }
+  
+  # Normalize title for lookup
+  normalized_title = title.downcase.strip
+  
+  # Look for exact match or partial match
+  song_data = mock_songs[normalized_title]
+  
+  if song_data
+    # If artist is provided and doesn't match, don't use this data
+    if artist.present? && !artist.downcase.include?(song_data[:artist].downcase.split.first.downcase)
+      return { found: false }
+    end
+    
+    {
+      found: true,
+      artist: song_data[:artist],
+      key: song_data[:key],
+      tempo: song_data[:tempo],
+      duration: song_data[:duration]
+    }
+  else
+    { found: false }
+  end
+end
+
+def parse_songbpm_response(html, title, artist)
+  # Simple HTML parsing to extract song information
+  # This looks for common patterns in songbpm.com HTML structure
+  
+  begin
+    # Look for BPM information
+    bpm_match = html.match(/(\d+)\s*BPM/i)
+    tempo = bpm_match ? bpm_match[1].to_i : nil
+    
+    # Look for key information
+    key_match = html.match(/Key[:\s]*([A-G][#♯♭b]?\s*(?:major|minor|maj|min)?)/i)
+    key = key_match ? normalize_key(key_match[1].strip) : nil
+    
+    # Look for duration information
+    duration_match = html.match(/(\d{1,2}):(\d{2})/i)
+    duration = duration_match ? "#{duration_match[1]}:#{duration_match[2]}" : nil
+    
+    # Extract artist name from the page if not provided
+    if artist.blank?
+      artist_match = html.match(/<h2[^>]*>([^<]+)<\/h2>/i) || 
+                     html.match(/by\s+([^<\n]+)/i) ||
+                     html.match(/artist[:\s]*([^<\n]+)/i)
+      artist = artist_match ? artist_match[1].strip : nil
+    end
+    
+    # Check if we found any useful data
+    found = tempo || key || duration || artist
+    
+    {
+      found: !!found,
+      artist: artist,
+      key: key,
+      tempo: tempo,
+      duration: duration
+    }
+  rescue => e
+    {
+      found: false,
+      error: "Parsing error: #{e.message}"
+    }
+  end
+end
+
+def normalize_key(key_string)
+  # Normalize key format to match our application's format
+  key_string = key_string.gsub(/♯/, '#').gsub(/♭/, 'b')
+  
+  # Remove major/minor designations since our app only stores the root key
+  key_string = key_string.gsub(/\s*(major|maj|minor|min|m)\s*/i, '').strip
+  
+  # Map common variations to our dropdown format
+  key_mappings = {
+    'Db' => 'C#/Db',
+    'C#' => 'C#/Db',
+    'Eb' => 'D#/Eb',
+    'D#' => 'D#/Eb',
+    'Gb' => 'F#/Gb',
+    'F#' => 'F#/Gb',
+    'Ab' => 'G#/Ab',
+    'G#' => 'G#/Ab',
+    'Bb' => 'A#/Bb',
+    'A#' => 'A#/Bb'
+  }
+  
+  key_mappings[key_string] || key_string
 end
 
 # Database setup route (legacy support)

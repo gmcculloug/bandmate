@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(bundle exec rake:*)",
+      "Bash(bundle exec rspec:*)",
+      "Bash(RAILS_ENV=test bundle exec rake db:migrate:*)",
+      "Bash(sqlite3:*)",
+      "Bash(RAILS_ENV=test bundle exec rake:*)",
+      "Bash(ruby:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

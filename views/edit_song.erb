@@ -23,26 +23,27 @@
         <input type="text" id="song_artist" name="song[artist]" value="<%= @song.artist %>" required>
     </div>
 
-    <div class="form-group">
-        <label>Bands *</label>
-        <div class="checkbox-group" style="border: 1px solid #e2e8f0; border-radius: 8px; padding: 15px;">
-            <div style="display: flex; flex-wrap: wrap; gap: 15px;">
-                <% @bands.each do |band| %>
-                    <div class="checkbox-item">
-                        <label style="display: flex; align-items: center; cursor: pointer; font-size: 16px; justify-content: flex-start; min-height: 44px;">
-                            <input type="checkbox" 
-                                   name="song[band_ids][]" 
-                                   value="<%= band.id %>" 
-                                   <%= 'checked' if @song.band_ids.include?(band.id) %>
-                                   style="margin-right: 8px; transform: scale(1.2); min-width: 20px; min-height: 20px;">
-                            <%= band.name %>
-                        </label>
-                    </div>
+    <% if @song.bands.any? %>
+        <div style="margin-bottom: 20px; padding: 15px; background: #f0f4f8; border-radius: 8px; border-left: 4px solid #667eea;">
+            <h4 style="margin: 0 0 8px 0; color: #4a5568;">Associated Bands</h4>
+            <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                <% @song.bands.each do |band| %>
+                    <span style="background: #ed8936; color: white; padding: 4px 8px; border-radius: 12px; font-size: 0.9rem;">
+                        <%= band.name %>
+                    </span>
                 <% end %>
             </div>
+            <p style="margin: 8px 0 0 0; color: #666; font-size: 0.9rem;">
+                Band associations are managed through the copy process from the Global Songs library.
+            </p>
         </div>
-        <small style="color: #666;">Select one or more bands for this song</small>
-    </div>
+    <% else %>
+        <div style="margin-bottom: 20px; padding: 15px; background: #e6fffa; border-radius: 8px; border-left: 4px solid #38a169;">
+            <p style="margin: 0; color: #2f855a; font-weight: 500;">
+                ℹ️ This song is not yet associated with any bands. Bands can copy this song from the Global Songs library.
+            </p>
+        </div>
+    <% end %>
 
     <div style="display: grid; grid-template-columns: 1fr; gap: 20px;">
         <style>
@@ -115,7 +116,12 @@
 
     <div class="form-group">
         <label for="song_notes">Notes</label>
-        <textarea id="song_notes" name="song[notes]" rows="4" placeholder="Any additional notes about the song, chords, lyrics, etc."><%= @song.notes %></textarea>
+        <textarea id="song_notes" name="song[notes]" rows="4" placeholder="Any additional notes about the song, chords, etc."><%= @song.notes %></textarea>
+    </div>
+
+    <div class="form-group">
+        <label for="song_lyrics">Lyrics</label>
+        <textarea id="song_lyrics" name="song[lyrics]" rows="8" placeholder="Song lyrics..."><%= @song.lyrics %></textarea>
     </div>
 
     <div class="actions">

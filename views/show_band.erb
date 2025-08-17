@@ -6,6 +6,12 @@
     </div>
 </div>
 
+<% if params[:copied].present? %>
+    <div class="success" style="margin-bottom: 20px;">
+        Successfully copied <%= params[:copied] %> song<%= params[:copied].to_i == 1 ? '' : 's' %> to <%= @band.name %>!
+    </div>
+<% end %>
+
 <div class="card">
     <% if @band.notes.present? %>
         <div style="margin-bottom: 20px; padding: 15px; background: #f7fafc; border-radius: 8px;">
@@ -14,9 +20,12 @@
         </div>
     <% end %>
 
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
         <h3>Songs (<%= @band.songs.count %>)</h3>
-        <a href="/songs/new" class="btn btn-success">➕ Add Song</a>
+        <div class="actions">
+            <a href="/bands/<%= @band.id %>/copy_songs" class="btn">📋 Copy from Global Library</a>
+            <a href="/songs/new" class="btn btn-success">➕ Add Song</a>
+        </div>
     </div>
 
     <% if @band.songs.any? %>
@@ -70,7 +79,22 @@
                             <div style="margin-top: 4px; display: flex; gap: 15px; font-size: 0.85rem; color: #4a5568;">
                                 <span><strong>Songs:</strong> <%= set_list.songs.count %></span>
                                 <span><strong>Duration:</strong> 
-                                    <% total_minutes = set_list.songs.sum { |s| s.duration ? s.duration.split(':').map(&:to_i).then { |m, s| m + s/60.0 } : 0 } %>
+                                    <% 
+                                      total_minutes = set_list.songs.sum do |s| 
+                                        if s.duration && s.duration.include?(':')
+                                          parts = s.duration.split(':')
+                                          if parts.length >= 2
+                                            minutes = parts[0].to_i
+                                            seconds = parts[1].to_i
+                                            minutes + seconds/60.0
+                                          else
+                                            0
+                                          end
+                                        else
+                                          0
+                                        end
+                                      end
+                                    %>
                                     <%= total_minutes > 0 ? "#{total_minutes.to_i}:#{((total_minutes % 1) * 60).round.to_s.rjust(2, '0')}" : 'N/A' %>
                                 </span>
                             </div>
@@ -97,6 +121,41 @@
             <h3>No set lists for this band yet</h3>
             <p>Create a set list to get started!</p>
             <a href="/set_lists/new" class="btn btn-success">Create Set List</a>
+        </div>
+    <% end %>
+</div>
+
+<div class="card" style="margin-top: 30px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h3>👥 Band Members (<%= @band.users.count %>)</h3>
+        <a href="/bands/<%= @band.id %>/edit" class="btn">➕ Manage Members</a>
+    </div>
+
+    <% if @band.users.any? %>
+        <div style="margin-bottom: 15px;">
+            <% @band.users.order(:username).each do |user| %>
+                <div class="user-card" style="margin-bottom: 8px; padding: 10px; border: 1px solid #e2e8f0; border-radius: 6px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div style="flex: 1;">
+                            <div style="font-weight: 600; font-size: 1rem;">
+                                <%= user.username %>
+                                <% if user == current_user %>
+                                    <span style="background: #667eea; color: white; padding: 2px 6px; border-radius: 10px; font-size: 0.75rem; margin-left: 8px;">You</span>
+                                <% end %>
+                            </div>
+                            <div style="margin-top: 4px; font-size: 0.85rem; color: #4a5568;">
+                                Member since <%= user.user_bands.find_by(band: @band)&.created_at&.strftime('%B %Y') || 'Unknown' %>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            <% end %>
+        </div>
+    <% else %>
+        <div style="text-align: center; padding: 40px;">
+            <h3>No members yet</h3>
+            <p>Add some members to get started!</p>
+            <a href="/bands/<%= @band.id %>/edit" class="btn btn-success">Add Members</a>
         </div>
     <% end %>
 </div> 

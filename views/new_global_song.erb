@@ -1,0 +1,276 @@
+<h2>➕ Add New Global Song</h2>
+
+<% if defined?(@errors) && @errors.any? %>
+    <div class="errors">
+        <ul>
+            <% @errors.each do |error| %>
+                <li><%= error %></li>
+            <% end %>
+        </ul>
+    </div>
+<% end %>
+
+<div style="margin-bottom: 20px; padding: 15px; background: #e6fffa; border-radius: 8px; border-left: 4px solid #38a169;">
+    <p style="margin: 0; color: #2f855a; font-weight: 500;">
+        ℹ️ You're adding a song to the global library. This will make it available for all bands to copy and use in their repertoires.
+    </p>
+</div>
+
+<form method="POST" action="/global_songs" class="card">
+    <div class="form-group">
+        <label for="global_song_title">Title *</label>
+        <div style="display: flex; gap: 10px; align-items: end;">
+            <input type="text" id="global_song_title" name="global_song[title]" required style="flex: 1;">
+            <button type="button" id="lookup-btn" class="btn" style="white-space: nowrap; padding: 15px 20px;" onclick="lookupSongData()">
+                🔍 Auto-fill from songbpm.com
+            </button>
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label for="global_song_artist">Artist *</label>
+        <input type="text" id="global_song_artist" name="global_song[artist]" required>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 1fr; gap: 20px;">
+        <style>
+            @media (min-width: 768px) {
+                .form-grid {
+                    grid-template-columns: 1fr 1fr !important;
+                }
+            }
+        </style>
+        <div class="form-grid" style="display: grid; grid-template-columns: 1fr; gap: 20px;">
+            <div class="form-group">
+                <label for="global_song_key">Key *</label>
+                <select id="global_song_key" name="global_song[key]" required>
+                    <option value="">Select Key</option>
+                    <option value="C">C</option>
+                    <option value="C#/Db">C#/Db</option>
+                    <option value="D">D</option>
+                    <option value="D#/Eb">D#/Eb</option>
+                    <option value="E">E</option>
+                    <option value="F">F</option>
+                    <option value="F#/Gb">F#/Gb</option>
+                    <option value="G">G</option>
+                    <option value="G#/Ab">G#/Ab</option>
+                    <option value="A">A</option>
+                    <option value="A#/Bb">A#/Bb</option>
+                    <option value="B">B</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="global_song_original_key">Original Key</label>
+                <select id="global_song_original_key" name="global_song[original_key]">
+                    <option value="">Select Original Key</option>
+                    <option value="C">C</option>
+                    <option value="C#/Db">C#/Db</option>
+                    <option value="D">D</option>
+                    <option value="D#/Eb">D#/Eb</option>
+                    <option value="E">E</option>
+                    <option value="F">F</option>
+                    <option value="F#/Gb">F#/Gb</option>
+                    <option value="G">G</option>
+                    <option value="G#/Ab">G#/Ab</option>
+                    <option value="A">A</option>
+                    <option value="A#/Bb">A#/Bb</option>
+                    <option value="B">B</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 1fr; gap: 20px;">
+        <div class="form-grid" style="display: grid; grid-template-columns: 1fr; gap: 20px;">
+            <div class="form-group">
+                <label for="global_song_tempo">Tempo (BPM)</label>
+                <input type="number" id="global_song_tempo" name="global_song[tempo]" min="1" max="300">
+            </div>
+
+            <div class="form-group">
+                <label for="global_song_genre">Genre</label>
+                <input type="text" id="global_song_genre" name="global_song[genre]" placeholder="e.g., Rock, Jazz, Pop">
+            </div>
+        </div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 1fr; gap: 20px;">
+        <div class="form-grid" style="display: grid; grid-template-columns: 1fr; gap: 20px;">
+            <div class="form-group">
+                <label for="global_song_duration">Duration</label>
+                <input type="text" id="global_song_duration" name="global_song[duration]" placeholder="e.g., 3:45">
+            </div>
+
+            <div class="form-group">
+                <label for="global_song_year">Year</label>
+                <input type="number" id="global_song_year" name="global_song[year]" min="1900" max="2030" placeholder="e.g., 2020">
+            </div>
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label for="global_song_album">Album</label>
+        <input type="text" id="global_song_album" name="global_song[album]" placeholder="Album name">
+    </div>
+
+    <div class="form-group">
+        <label for="global_song_url">Streaming URL</label>
+        <input type="url" id="global_song_url" name="global_song[url]" placeholder="https://www.youtube.com/watch?v=... or Spotify/Apple Music link">
+    </div>
+
+    <div class="form-group">
+        <label for="global_song_notes">Notes</label>
+        <textarea id="global_song_notes" name="global_song[notes]" rows="4" placeholder="Any additional notes about the song, chords, etc."></textarea>
+    </div>
+
+    <div class="form-group">
+        <label for="global_song_lyrics">Lyrics</label>
+        <textarea id="global_song_lyrics" name="global_song[lyrics]" rows="8" placeholder="Song lyrics..."></textarea>
+    </div>
+
+    <div class="actions">
+        <button type="submit" class="btn btn-success">Save Global Song</button>
+        <a href="/global_songs" class="btn">Cancel</a>
+    </div>
+</form>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const keySelect = document.getElementById('global_song_key');
+    const originalKeySelect = document.getElementById('global_song_original_key');
+    
+    keySelect.addEventListener('change', function() {
+        // Only set original key if it hasn't been set yet (is empty)
+        if (originalKeySelect.value === '') {
+            originalKeySelect.value = this.value;
+        }
+    });
+});
+
+async function lookupSongData() {
+    const titleInput = document.getElementById('global_song_title');
+    const artistInput = document.getElementById('global_song_artist');
+    const keySelect = document.getElementById('global_song_key');
+    const tempoInput = document.getElementById('global_song_tempo');
+    const durationInput = document.getElementById('global_song_duration');
+    const lookupBtn = document.getElementById('lookup-btn');
+    
+    const title = titleInput.value.trim();
+    const artist = artistInput.value.trim();
+    
+    if (!title) {
+        alert('Please enter a song title first');
+        titleInput.focus();
+        return;
+    }
+    
+    // Show loading state
+    const originalText = lookupBtn.innerHTML;
+    lookupBtn.innerHTML = '⏳ Looking up...';
+    lookupBtn.disabled = true;
+    
+    try {
+        const params = new URLSearchParams();
+        params.append('title', title);
+        if (artist) {
+            params.append('artist', artist);
+        }
+        
+        const response = await fetch(`/api/lookup_song?${params}`);
+        const result = await response.json();
+        
+        if (result.success && result.data) {
+            const data = result.data;
+            let fieldsUpdated = [];
+            
+            // Update artist if found and current field is empty
+            if (data.artist && !artistInput.value.trim()) {
+                artistInput.value = data.artist;
+                fieldsUpdated.push('artist');
+            }
+            
+            // Update key if found and current field is empty
+            if (data.key && !keySelect.value) {
+                // Try to find matching option in select
+                const keyOptions = Array.from(keySelect.options);
+                const matchingOption = keyOptions.find(option => 
+                    option.value.toLowerCase() === data.key.toLowerCase() ||
+                    option.textContent.toLowerCase() === data.key.toLowerCase()
+                );
+                if (matchingOption) {
+                    keySelect.value = matchingOption.value;
+                    fieldsUpdated.push('key');
+                    
+                    // Also update original key if it's empty
+                    const originalKeySelect = document.getElementById('global_song_original_key');
+                    if (!originalKeySelect.value) {
+                        originalKeySelect.value = matchingOption.value;
+                    }
+                }
+            }
+            
+            // Update tempo if found and current field is empty
+            if (data.tempo && !tempoInput.value) {
+                tempoInput.value = data.tempo;
+                fieldsUpdated.push('tempo');
+            }
+            
+            // Update duration if found and current field is empty
+            if (data.duration && !durationInput.value) {
+                durationInput.value = data.duration;
+                fieldsUpdated.push('duration');
+            }
+            
+            if (fieldsUpdated.length > 0) {
+                showMessage(`✅ Found and updated: ${fieldsUpdated.join(', ')}`, 'success');
+            } else {
+                showMessage('ℹ️ Song found but no new data to update (fields already filled)', 'info');
+            }
+        } else {
+            showMessage(`❌ ${result.error || 'Song not found on songbpm.com'}`, 'error');
+        }
+    } catch (error) {
+        console.error('Lookup error:', error);
+        showMessage('❌ Network error during lookup', 'error');
+    } finally {
+        // Restore button state
+        lookupBtn.innerHTML = originalText;
+        lookupBtn.disabled = false;
+    }
+}
+
+function showMessage(text, type) {
+    // Remove any existing message
+    const existingMessage = document.getElementById('lookup-message');
+    if (existingMessage) {
+        existingMessage.remove();
+    }
+    
+    // Create new message
+    const message = document.createElement('div');
+    message.id = 'lookup-message';
+    message.style.cssText = `
+        margin: 10px 0;
+        padding: 10px 15px;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        font-weight: 500;
+        ${type === 'success' ? 'background: #c6f6d5; color: #2f855a; border-left: 4px solid #38a169;' : ''}
+        ${type === 'error' ? 'background: #fed7d7; color: #c53030; border-left: 4px solid #e53e3e;' : ''}
+        ${type === 'info' ? 'background: #bee3f8; color: #2b6cb0; border-left: 4px solid #3182ce;' : ''}
+    `;
+    message.textContent = text;
+    
+    // Insert after the lookup button
+    const lookupBtn = document.getElementById('lookup-btn');
+    lookupBtn.parentNode.parentNode.insertAdjacentElement('afterend', message);
+    
+    // Auto-remove after 5 seconds
+    setTimeout(() => {
+        if (message.parentNode) {
+            message.remove();
+        }
+    }, 5000);
+}
+</script>
