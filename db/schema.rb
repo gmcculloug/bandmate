@@ -112,6 +112,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_08_17_225240) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.integer "last_selected_band_id"
+    t.string "email"
+    t.index ["email"], name: "index_users_on_email", unique: true
     t.index ["last_selected_band_id"], name: "index_users_on_last_selected_band_id"
     t.index ["username"], name: "index_users_on_username", unique: true
   end

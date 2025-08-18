@@ -29,6 +29,17 @@ This will:
 #### Alternative Setup (Legacy)
 You can still use the web interface at `http://localhost:4567/setup` for first-time setup.
 
+### Environment Variables
+The application requires certain environment variables to be set for security and functionality:
+
+- **SESSION_SECRET**: A secure random string for session encryption (at least 64 characters)
+- **BANDAGE_LOGIN_SECRET**: A secret code required for new user registration
+
+You can set these in several ways:
+1. Create a `.env` file in the project root (copy from `env.example`)
+2. Export them in your shell: `export BANDAGE_LOGIN_SECRET=your_secret_code`
+3. Set them when running the app: `BANDAGE_LOGIN_SECRET=your_secret_code ruby app.rb`
+
 ### Running the Application
 ```bash
 ruby app.rb

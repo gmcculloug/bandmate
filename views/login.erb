@@ -6,6 +6,12 @@
   </div>
 <% end %>
 
+<% if params[:account_deleted] == 'true' %>
+  <div class="success">
+    ✅ Your account has been successfully deleted. Thank you for using Bandage.
+  </div>
+<% end %>
+
 <form method="post" action="/login">
   <div class="form-group">
     <label for="username">Username:</label>

@@ -343,6 +343,19 @@
                 margin: 3px;
             }
             
+            .profile-icon {
+                width: 28px;
+                height: 28px;
+                font-size: 14px;
+                margin-left: 8px;
+            }
+            
+            .current-band-display {
+                padding: 6px 10px;
+                font-size: 13px;
+                margin: 0 8px;
+            }
+            
             .song-grid {
                 grid-template-columns: 1fr;
                 gap: 10px;
@@ -428,6 +441,19 @@
             .actions .btn {
                 width: 100%;
             }
+            
+            .profile-icon {
+                width: 24px;
+                height: 24px;
+                font-size: 12px;
+                margin-left: 6px;
+            }
+            
+            .current-band-display {
+                padding: 5px 8px;
+                font-size: 12px;
+                margin: 0 6px;
+            }
         }
         
         /* Tablet styles */
@@ -450,6 +476,10 @@
             .card:hover {
                 transform: none;
             }
+            
+            .profile-icon:hover {
+                transform: none;
+            }
         }
         
         /* High contrast mode support */
@@ -463,6 +493,48 @@
             .form-group select {
                 border-width: 2px;
             }
+            
+            .profile-icon {
+                border: 2px solid currentColor;
+                background: white;
+                color: black;
+            }
+        }
+        
+        /* Current band display styling */
+        .current-band-display {
+            display: inline-flex;
+            align-items: center;
+            padding: 8px 12px;
+            background: rgba(102, 126, 234, 0.1);
+            color: #667eea;
+            border-radius: 6px;
+            font-weight: 500;
+            font-size: 14px;
+            margin: 0 10px;
+        }
+        
+        /* Profile icon styling */
+        .profile-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            background: white;
+            color: black;
+            text-decoration: none;
+            border-radius: 50%;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            margin-left: 10px;
+            border: 2px solid #e5e7eb;
+        }
+        
+        .profile-icon:hover {
+            background: #f9fafb;
+            border-color: #d1d5db;
+            transform: scale(1.1);
         }
         
         /* Reduced motion support */
@@ -494,7 +566,7 @@
             <% if logged_in? %>
                 <div class="user-info">
                     <span>Welcome, <%= current_user.username %>!</span>
-                    <% if user_bands.any? %>
+                    <% if user_bands.count > 1 %>
                         <form method="post" action="/select_band" style="display: inline;">
                             <select name="band_id" onchange="this.form.submit()" class="band-selector">
                                 <option value="">Select Band</option>
@@ -503,8 +575,11 @@
                                 <% end %>
                             </select>
                         </form>
+                    <% elsif user_bands.count == 1 %>
+                        <span class="current-band-display">🎸 <%= user_bands.first.name %></span>
                     <% end %>
                     <a href="/logout" class="btn btn-danger">Logout</a>
+                    <a href="/profile" class="profile-icon" title="User Profile">⚙️</a>
                 </div>
             <% end %>
             <button class="mobile-menu-toggle" onclick="toggleMobileMenu()">☰</button>

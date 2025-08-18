@@ -3,9 +3,14 @@ require 'sinatra/activerecord'
 require 'json'
 require 'erb'
 require 'bcrypt'
+require 'rack/method_override'
 
 enable :sessions
+use Rack::MethodOverride
 set :session_secret, ENV['SESSION_SECRET'] || 'your_secret_key_here_that_is_very_long_and_secure_at_least_64_chars'
+
+# Login secret for user registration (required)
+# Set BANDAGE_LOGIN_SECRET environment variable to enable signup
 
 # Database configuration
 configure :development do
@@ -37,6 +42,8 @@ class User < ActiveRecord::Base
   
   validates :username, presence: true, uniqueness: { case_sensitive: false }
   validates :password, length: { minimum: 6 }, if: :password_digest_changed?
+  validates :email, uniqueness: { case_sensitive: false }, allow_blank: true
+  validates :email, format: { with: URI::MailTo::EMAIL_REGEXP }, allow_blank: true
 end
 
 class UserBand < ActiveRecord::Base
@@ -200,7 +207,19 @@ get '/signup' do
 end
 
 post '/signup' do
-  user = User.new(username: params[:username], password: params[:password])
+  # Validate login secret
+  login_secret = ENV['BANDAGE_LOGIN_SECRET']
+  if login_secret.nil? || login_secret.empty?
+    @errors = ["Login secret not configured. Please contact administrator."]
+    return erb :signup, layout: :layout
+  end
+  
+  if params[:login_secret] != login_secret
+    @errors = ["Invalid login secret. Please check your code and try again."]
+    return erb :signup, layout: :layout
+  end
+  
+  user = User.new(username: params[:username], password: params[:password], email: params[:email].presence)
   
   if user.save
     session[:user_id] = user.id
@@ -219,6 +238,91 @@ get '/logout' do
   
   session.clear
   redirect '/login'
+end
+
+# Account deletion
+get '/account/delete' do
+  require_login
+  erb :delete_account
+end
+
+post '/account/delete' do
+  require_login
+  
+  # Verify password for security
+  unless current_user.authenticate(params[:password])
+    @errors = ["Incorrect password. Please try again."]
+    return erb :delete_account
+  end
+  
+  user = current_user
+  
+  begin
+    # Clear session first
+    session.clear
+    
+    # Remove user from all bands first
+    user.user_bands.destroy_all
+    
+    # Clear last selected band reference
+    user.update(last_selected_band_id: nil)
+    
+    # Delete the user
+    user.destroy
+    
+    redirect '/login?account_deleted=true'
+  rescue => e
+    # If something goes wrong, restore the session
+    session[:user_id] = user.id
+    @errors = ["Failed to delete account. Please try again or contact support."]
+    erb :delete_account
+  end
+end
+
+# User profile routes
+get '/profile' do
+  require_login
+  erb :profile
+end
+
+put '/profile' do
+  require_login
+  
+  user = current_user
+  
+  # Update user attributes
+  if user.update(params[:user])
+    @success = "Profile updated successfully!"
+    erb :profile
+  else
+    @errors = user.errors.full_messages
+    erb :profile
+  end
+end
+
+post '/profile/change_password' do
+  require_login
+  
+  user = current_user
+  
+  # Verify current password
+  unless user.authenticate(params[:current_password])
+    @errors = ["Current password is incorrect"]
+    return erb :profile
+  end
+  
+  # Update password
+  if params[:new_password] == params[:confirm_password]
+    if user.update(password: params[:new_password])
+      @success = "Password changed successfully!"
+    else
+      @errors = user.errors.full_messages
+    end
+  else
+    @errors = ["New passwords don't match"]
+  end
+  
+  erb :profile
 end
 
 post '/select_band' do

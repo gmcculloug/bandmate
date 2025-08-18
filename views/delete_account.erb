@@ -1,0 +1,60 @@
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+    <h2>🗑️ Delete Account</h2>
+    <a href="/" class="btn">Back to Home</a>
+</div>
+
+<div style="margin-bottom: 20px; padding: 15px; background: #fef2f2; border-radius: 8px; border-left: 4px solid #dc2626;">
+    <p style="margin: 0; color: #991b1b; font-weight: 500;">
+        ⚠️ <strong>Warning:</strong> This action cannot be undone. Deleting your account will permanently remove:
+    </p>
+    <ul style="margin: 10px 0 0 20px; color: #991b1b;">
+        <li>All your user data and preferences</li>
+        <li>Your membership in all bands</li>
+        <li>Any songs or set lists you've created</li>
+        <li>All associated data and history</li>
+    </ul>
+</div>
+
+<% if @errors && @errors.any? %>
+    <div class="errors">
+        <% @errors.each do |error| %>
+            <p><%= error %></p>
+        <% end %>
+    </div>
+<% end %>
+
+<div class="card">
+    <h3>Confirm Account Deletion</h3>
+    <p style="color: #666; margin-bottom: 20px;">
+        To confirm you want to delete your account, please enter your password below. 
+        This action will immediately log you out and permanently delete your account.
+    </p>
+
+    <form method="POST" action="/account/delete" onsubmit="return confirmAccountDeletion()">
+        
+        <div class="form-group">
+            <label for="password">Password:</label>
+            <input type="password" id="password" name="password" required>
+            <small>Enter your current password to confirm deletion</small>
+        </div>
+
+        <div class="actions">
+            <button type="submit" class="btn btn-danger" style="background: #dc2626;">
+                🗑️ Permanently Delete My Account
+            </button>
+            <a href="/" class="btn">Cancel</a>
+        </div>
+    </form>
+</div>
+
+<script>
+function confirmAccountDeletion() {
+    const password = document.getElementById('password').value;
+    if (!password) {
+        alert('Please enter your password to confirm account deletion.');
+        return false;
+    }
+    
+    return confirm('Are you absolutely sure you want to delete your account? This action cannot be undone and all your data will be permanently lost.');
+}
+</script>

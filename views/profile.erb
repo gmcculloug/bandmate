@@ -1,0 +1,134 @@
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+    <h2>⚙️ User Profile</h2>
+    <a href="/" class="btn">Back to Home</a>
+</div>
+
+<% if @success %>
+    <div class="success">
+        <%= @success %>
+    </div>
+<% end %>
+
+<% if @errors && @errors.any? %>
+    <div class="errors">
+        <% @errors.each do |error| %>
+            <p><%= error %></p>
+        <% end %>
+    </div>
+<% end %>
+
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px;">
+    <!-- Profile Information -->
+    <div class="card">
+        <h3>Profile Information</h3>
+        <form method="POST" action="/profile">
+            <input type="hidden" name="_method" value="PUT">
+            
+            <div class="form-group">
+                <label for="username">Username:</label>
+                <input type="text" id="username" name="user[username]" value="<%= current_user.username %>" readonly style="background-color: #f3f4f6;">
+                <small>Username cannot be changed</small>
+            </div>
+
+            <div class="form-group">
+                <label for="email">Email Address:</label>
+                <input type="email" id="email" name="user[email]" value="<%= current_user.email %>" placeholder="Enter your email address">
+                <small>Optional - for account recovery and notifications</small>
+            </div>
+
+            <div class="actions">
+                <button type="submit" class="btn btn-success">Update Profile</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Change Password -->
+    <div class="card">
+        <h3>Change Password</h3>
+        <form method="POST" action="/profile/change_password">
+            <div class="form-group">
+                <label for="current_password">Current Password:</label>
+                <input type="password" id="current_password" name="current_password" required>
+            </div>
+
+            <div class="form-group">
+                <label for="new_password">New Password:</label>
+                <input type="password" id="new_password" name="new_password" required minlength="6">
+                <small>Password must be at least 6 characters long</small>
+            </div>
+
+            <div class="form-group">
+                <label for="confirm_password">Confirm New Password:</label>
+                <input type="password" id="confirm_password" name="confirm_password" required minlength="6">
+            </div>
+
+            <div class="actions">
+                <button type="submit" class="btn">Change Password</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Account Management -->
+<div class="card" style="margin-top: 30px;">
+    <h3>Account Management</h3>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px;">
+        <div>
+            <h4>Account Statistics</h4>
+            <div class="detail-item">
+                <span class="detail-label">Member since:</span> 
+                <%= current_user.created_at.strftime("%B %d, %Y") %>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">Bands:</span> 
+                <%= current_user.bands.count %>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">Last login:</span> 
+                <%= current_user.updated_at.strftime("%B %d, %Y at %I:%M %p") %>
+            </div>
+        </div>
+        
+        <div>
+            <h4>Danger Zone</h4>
+            <div style="padding: 15px; background: #fef2f2; border-radius: 8px; border-left: 4px solid #dc2626;">
+                <p style="margin: 0; color: #991b1b; font-weight: 500;">
+                    ⚠️ <strong>Warning:</strong> These actions cannot be undone.
+                </p>
+            </div>
+            <div style="margin-top: 15px;">
+                <a href="/account/delete" class="btn btn-danger" style="background: #dc2626;">
+                    🗑️ Delete My Account
+                </a>
+                <small style="display: block; margin-top: 5px; color: #666;">
+                    This will permanently delete your account and all associated data.
+                </small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Password confirmation validation
+document.getElementById('confirm_password').addEventListener('input', function() {
+    const newPassword = document.getElementById('new_password').value;
+    const confirmPassword = this.value;
+    
+    if (newPassword !== confirmPassword) {
+        this.setCustomValidity('Passwords do not match');
+    } else {
+        this.setCustomValidity('');
+    }
+});
+
+document.getElementById('new_password').addEventListener('input', function() {
+    const confirmPassword = document.getElementById('confirm_password');
+    if (confirmPassword.value) {
+        if (this.value !== confirmPassword.value) {
+            confirmPassword.setCustomValidity('Passwords do not match');
+        } else {
+            confirmPassword.setCustomValidity('');
+        }
+    }
+});
+</script>
