@@ -361,6 +361,22 @@
                 gap: 10px;
             }
             
+            .band-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+            
+            .band-stats {
+                margin: 0;
+                justify-content: flex-start;
+            }
+            
+            .band-actions {
+                align-self: stretch;
+                justify-content: flex-end;
+            }
+            
             .song-card {
                 padding: 15px;
             }
@@ -513,6 +529,83 @@
             font-size: 14px;
             margin: 0 10px;
         }
+
+        /* Bands management styling */
+        .bands-list {
+            margin-bottom: 20px;
+        }
+        
+        .bands-list h4 {
+            margin-bottom: 15px;
+            color: #374151;
+            border-bottom: 1px solid #e5e7eb;
+            padding-bottom: 8px;
+        }
+        
+        .band-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 15px;
+            margin-bottom: 10px;
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+        }
+        
+        .band-item:hover {
+            background: #f3f4f6;
+            border-color: #d1d5db;
+        }
+        
+        .band-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex: 1;
+        }
+        
+        .band-name {
+            font-weight: 600;
+            color: #1f2937;
+            font-size: 16px;
+        }
+        
+        .current-badge {
+            background: #10b981;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        
+        .band-stats {
+            display: flex;
+            gap: 15px;
+            margin: 0 20px;
+        }
+        
+        .stat {
+            color: #6b7280;
+            font-size: 14px;
+        }
+        
+        .stat strong {
+            color: #374151;
+        }
+        
+        .band-actions {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .btn-small {
+            padding: 6px 12px;
+            font-size: 12px;
+            border-radius: 4px;
+        }
         
         /* Profile icon styling */
         .profile-icon {
@@ -590,7 +683,6 @@
                     <a href="/songs">Songs</a>
                     <a href="/global_songs">Global Songs</a>
                     <a href="/venues">Venues</a>
-                    <a href="/bands">Bands</a>
                 <% else %>
                     <a href="/login">Login</a>
                     <a href="/signup">Sign Up</a>

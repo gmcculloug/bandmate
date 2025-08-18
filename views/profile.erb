@@ -42,6 +42,48 @@
         </form>
     </div>
 
+    <!-- Bands Management -->
+    <div class="card">
+        <h3>Bands Management</h3>
+        <% if user_bands.any? %>
+            <div class="bands-list">
+                <h4>Your Bands</h4>
+                <% user_bands.each do |band| %>
+                    <div class="band-item">
+                        <div class="band-info">
+                            <span class="band-name"><%= band.name %></span>
+                            <% if current_band&.id == band.id %>
+                                <span class="current-badge">Current</span>
+                            <% end %>
+                        </div>
+                        <div class="band-stats">
+                            <span class="stat">
+                                <strong><%= band.songs.count %></strong> songs
+                            </span>
+                            <span class="stat">
+                                <strong><%= band.set_lists.count %></strong> set lists
+                            </span>
+                        </div>
+                        <div class="band-actions">
+                            <a href="/bands/<%= band.id %>" class="btn btn-small">View</a>
+                            <a href="/bands/<%= band.id %>/edit" class="btn btn-small">Edit</a>
+                        </div>
+                    </div>
+                <% end %>
+            </div>
+        <% else %>
+            <div style="text-align: center; padding: 20px;">
+                <p style="color: #666; margin-bottom: 15px;">You haven't joined any bands yet.</p>
+                <a href="/bands/new" class="btn btn-success">Create Your First Band</a>
+            </div>
+        <% end %>
+        
+        <div class="actions" style="margin-top: 20px;">
+            <a href="/bands" class="btn">View All Bands</a>
+            <a href="/bands/new" class="btn btn-success">Create New Band</a>
+        </div>
+    </div>
+
     <!-- Change Password -->
     <div class="card">
         <h3>Change Password</h3>
