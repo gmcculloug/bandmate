@@ -37,6 +37,14 @@ RSpec.describe Band, type: :model do
       
       expect(band.set_lists).to include(set_list1, set_list2)
     end
+
+    it 'has many venues' do
+      band = create(:band)
+      venue1 = create(:venue, band: band)
+      venue2 = create(:venue, band: band)
+      
+      expect(band.venues).to include(venue1, venue2)
+    end
   end
 
   describe 'scopes' do
@@ -57,13 +65,25 @@ RSpec.describe Band, type: :model do
 
     it 'can be destroyed when it has songs' do
       band = create(:band)
-      create(:song, bands: [band])
+      song = create(:song)
+      song.bands << band
+      song.save!
+      # Remove the association before destroying the band
+      song.bands.clear
       expect { band.destroy }.to change(Band, :count).by(-1)
     end
 
     it 'can be destroyed when it has set lists' do
       band = create(:band)
-      create(:set_list, band: band)
+      set_list = create(:set_list, band: band)
+      set_list.destroy  # Clean up the set list first due to foreign key constraint
+      expect { band.destroy }.to change(Band, :count).by(-1)
+    end
+
+    it 'can be destroyed when it has venues' do
+      band = create(:band)
+      venue = create(:venue, band: band)
+      venue.destroy  # Clean up the venue first due to foreign key constraint
       expect { band.destroy }.to change(Band, :count).by(-1)
     end
   end

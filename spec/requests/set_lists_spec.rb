@@ -97,6 +97,22 @@ RSpec.describe 'Set Lists API', type: :request do
       expect(last_response).to be_ok
       expect(last_response.body).to include("can't be blank")
     end
+
+    it 'displays errors when performance_date is missing' do
+      band = create(:band)
+      set_list_params = {
+        name: 'Test Set List',
+        band_id: band.id,
+        performance_date: ''
+      }
+      
+      expect {
+        post '/set_lists', set_list_params
+      }.not_to change(SetList, :count)
+      
+      expect(last_response).to be_ok
+      expect(last_response.body).to include("Performance date can't be blank")
+    end
   end
 
   describe 'GET /set_lists/:id' do

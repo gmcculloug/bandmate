@@ -1,7 +1,19 @@
 FactoryBot.define do
+  factory :user do
+    sequence(:username) { |n| "user#{n}" }
+    password { "password123" }
+    email { Faker::Internet.email }
+  end
+
+  factory :user_band do
+    association :user
+    association :band
+  end
+
   factory :band do
     sequence(:name) { |n| "Band #{n}" }
     notes { Faker::Lorem.paragraph }
+    association :owner, factory: :user
   end
 
   factory :song do
@@ -10,12 +22,6 @@ FactoryBot.define do
     key { ['C', 'G', 'D', 'A', 'E', 'B', 'F#', 'C#', 'F', 'Bb', 'Eb', 'Ab'].sample }
     tempo { rand(60..180) }
     notes { Faker::Lorem.paragraph }
-    
-    after(:build) do |song|
-      # Create a band if none exists, or associate with existing band
-      band = Band.first || create(:band)
-      song.bands << band
-    end
   end
 
   factory :venue do
@@ -24,6 +30,8 @@ FactoryBot.define do
     contact_name { Faker::Name.name }
     phone_number { Faker::PhoneNumber.phone_number }
     website { Faker::Internet.url }
+    
+    association :band
   end
 
   factory :set_list do

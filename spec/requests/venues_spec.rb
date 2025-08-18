@@ -1,22 +1,52 @@
 require 'spec_helper'
 
 RSpec.describe 'Venues API', type: :request do
+  let(:user) { create(:user) }
+  let(:band) { create(:band, owner: user) }
+  let(:other_band) { create(:band, owner: user) }
+  
+  before do
+    create(:user_band, user: user, band: band)
+    create(:user_band, user: user, band: other_band)
+  end
+  
+  def login_as(user, band)
+    post '/login', username: user.username, password: 'password123'
+    post '/select_band', band_id: band.id
+  end
   describe 'GET /venues' do
-    it 'returns a list of all venues' do
-      venue1 = create(:venue, name: 'Venue A')
-      venue2 = create(:venue, name: 'Venue B')
+    it 'redirects to login when not authenticated' do
+      get '/venues'
+      expect(last_response).to be_redirect
+      expect(last_response.location).to end_with('/login')
+    end
+
+    it 'redirects to home when no band selected' do
+      post '/login', username: user.username, password: 'password123'
+      get '/venues'
+      expect(last_response).to be_redirect
+      expect(last_response.location).to end_with('/')
+    end
+
+    it 'returns only venues for the current band' do
+      login_as(user, band)
+      venue1 = create(:venue, name: 'Band Venue A', band: band)
+      venue2 = create(:venue, name: 'Band Venue B', band: band)
+      other_venue = create(:venue, name: 'Other Venue', band: other_band)
       
       get '/venues'
       
       expect(last_response).to be_ok
-      expect(last_response.body).to include('Venue A')
-      expect(last_response.body).to include('Venue B')
+      expect(last_response.body).to include('Band Venue A')
+      expect(last_response.body).to include('Band Venue B')
+      expect(last_response.body).not_to include('Other Venue')
     end
 
     it 'displays venues in alphabetical order' do
-      venue_c = create(:venue, name: 'C Venue')
-      venue_a = create(:venue, name: 'A Venue')
-      venue_b = create(:venue, name: 'B Venue')
+      login_as(user, band)
+      venue_c = create(:venue, name: 'C Venue', band: band)
+      venue_a = create(:venue, name: 'A Venue', band: band)
+      venue_b = create(:venue, name: 'B Venue', band: band)
       
       get '/venues'
       
@@ -32,7 +62,14 @@ RSpec.describe 'Venues API', type: :request do
   end
 
   describe 'GET /venues/new' do
-    it 'displays the new venue form' do
+    it 'requires authentication and band selection' do
+      get '/venues/new'
+      expect(last_response).to be_redirect
+      expect(last_response.location).to end_with('/login')
+    end
+
+    it 'displays the new venue form when authenticated' do
+      login_as(user, band)
       get '/venues/new'
       
       expect(last_response).to be_ok
@@ -45,25 +82,40 @@ RSpec.describe 'Venues API', type: :request do
   end
 
   describe 'POST /venues' do
-    it 'creates a new venue with valid attributes' do
+    it 'requires authentication' do
+      venue_params = { name: 'New Venue', location: '123 Main St', contact_name: 'John Doe', phone_number: '555-1234' }
+      
+      expect {
+        post '/venues', venue: venue_params
+      }.not_to change(Venue, :count)
+      
+      expect(last_response).to be_redirect
+      expect(last_response.location).to end_with('/login')
+    end
+
+    it 'creates a new venue with valid attributes and associates with current band' do
+      login_as(user, band)
       venue_params = {
         name: 'New Venue',
         location: '123 Main St, City, State',
         contact_name: 'John Doe',
         phone_number: '555-1234',
-        notes: 'A great venue'
+        website: 'http://example.com'
       }
       
       expect {
         post '/venues', venue: venue_params
       }.to change(Venue, :count).by(1)
       
+      new_venue = Venue.last
+      expect(new_venue.band).to eq(band)
       expect(last_response).to be_redirect
       follow_redirect!
       expect(last_response.body).to include('New Venue')
     end
 
     it 'displays errors for invalid attributes' do
+      login_as(user, band)
       venue_params = {
         name: '',
         location: '',
@@ -81,8 +133,9 @@ RSpec.describe 'Venues API', type: :request do
   end
 
   describe 'GET /venues/:id' do
-    it 'displays a specific venue' do
-      venue = create(:venue, name: 'Test Venue', location: 'Test Location')
+    it 'displays a venue from current band' do
+      login_as(user, band)
+      venue = create(:venue, name: 'Test Venue', location: 'Test Location', band: band)
       
       get "/venues/#{venue.id}"
       
@@ -91,8 +144,11 @@ RSpec.describe 'Venues API', type: :request do
       expect(last_response.body).to include('Test Location')
     end
 
-    it 'returns 404 for non-existent venue' do
-      get '/venues/999'
+    it 'returns 404 for venue from another band' do
+      login_as(user, band)
+      other_venue = create(:venue, name: 'Other Venue', band: other_band)
+      
+      get "/venues/#{other_venue.id}"
       
       expect(last_response).to be_not_found
     end
@@ -154,8 +210,20 @@ RSpec.describe 'Venues API', type: :request do
   end
 
   describe 'DELETE /venues/:id' do
-    it 'deletes a venue' do
-      venue = create(:venue, name: 'Delete Venue')
+    it 'requires authentication and only allows deleting current band venues' do
+      venue = create(:venue, name: 'Delete Venue', band: band)
+      
+      expect {
+        delete "/venues/#{venue.id}"
+      }.not_to change(Venue, :count)
+      
+      expect(last_response).to be_redirect
+      expect(last_response.location).to end_with('/login')
+    end
+
+    it 'deletes a venue for current band' do
+      login_as(user, band)
+      venue = create(:venue, name: 'Delete Venue', band: band)
       
       expect {
         delete "/venues/#{venue.id}"
@@ -165,10 +233,217 @@ RSpec.describe 'Venues API', type: :request do
       expect(last_response.location).to end_with('/venues')
     end
 
-    it 'returns 404 for non-existent venue' do
-      delete '/venues/999'
+    it 'cannot delete venue from another band' do
+      login_as(user, band)
+      other_venue = create(:venue, name: 'Other Band Venue', band: other_band)
+      
+      expect {
+        delete "/venues/#{other_venue.id}"
+      }.not_to change(Venue, :count)
       
       expect(last_response).to be_not_found
+    end
+  end
+
+  describe 'Venue Copying' do
+    describe 'GET /bands/:band_id/copy_venues' do
+      it 'requires authentication' do
+        get "/bands/#{band.id}/copy_venues"
+        expect(last_response).to be_redirect
+        expect(last_response.location).to end_with('/login')
+      end
+
+      it 'displays venues from other bands user is a member of' do
+        login_as(user, band)
+        venue1 = create(:venue, name: 'Other Band Venue 1', band: other_band)
+        venue2 = create(:venue, name: 'Other Band Venue 2', band: other_band)
+        current_band_venue = create(:venue, name: 'Current Band Venue', band: band)
+        
+        get "/bands/#{band.id}/copy_venues"
+        
+        expect(last_response).to be_ok
+        expect(last_response.body).to include('Other Band Venue 1')
+        expect(last_response.body).to include('Other Band Venue 2')
+        expect(last_response.body).not_to include('Current Band Venue')
+      end
+
+      it 'excludes venues already copied (by name and location)' do
+        login_as(user, band)
+        original_venue = create(:venue, name: 'Test Venue', location: 'Test Location', band: other_band)
+        copied_venue = create(:venue, name: 'Test Venue', location: 'Test Location', band: band)
+        
+        get "/bands/#{band.id}/copy_venues"
+        
+        expect(last_response).to be_ok
+        expect(last_response.body).not_to include('Test Venue')
+      end
+    end
+
+    describe 'POST /bands/:band_id/copy_venues' do
+      it 'requires authentication' do
+        venue = create(:venue, band: other_band)
+        
+        expect {
+          post "/bands/#{band.id}/copy_venues", venue_ids: [venue.id.to_s]
+        }.not_to change(Venue, :count)
+        
+        expect(last_response).to be_redirect
+        expect(last_response.location).to end_with('/login')
+      end
+
+      it 'copies selected venues to the target band' do
+        login_as(user, band)
+        venue1 = create(:venue, name: 'Venue 1', location: 'Location 1', contact_name: 'Contact 1', phone_number: '111-1111', band: other_band)
+        venue2 = create(:venue, name: 'Venue 2', location: 'Location 2', contact_name: 'Contact 2', phone_number: '222-2222', band: other_band)
+        
+        expect {
+          post "/bands/#{band.id}/copy_venues", venue_ids: [venue1.id.to_s, venue2.id.to_s]
+        }.to change(Venue, :count).by(2)
+        
+        expect(last_response).to be_redirect
+        expect(last_response.location).to end_with("/bands/#{band.id}?venues_copied=2")
+        
+        copied_venues = band.venues.reload
+        expect(copied_venues.map(&:name)).to include('Venue 1', 'Venue 2')
+        expect(copied_venues.map(&:location)).to include('Location 1', 'Location 2')
+      end
+
+      it 'only copies venues from bands the user is a member of' do
+        login_as(user, band)
+        unauthorized_band = create(:band)
+        unauthorized_venue = create(:venue, name: 'Unauthorized Venue', band: unauthorized_band)
+        
+        expect {
+          post "/bands/#{band.id}/copy_venues", venue_ids: [unauthorized_venue.id.to_s]
+        }.not_to change(Venue, :count)
+        
+        expect(last_response).to be_redirect
+        expect(last_response.location).to end_with("/bands/#{band.id}?venues_copied=0")
+      end
+    end
+  end
+
+  describe 'Single Venue Copying' do
+    describe 'GET /venues/:venue_id/copy' do
+      it 'requires authentication' do
+        venue = create(:venue, band: band)
+        
+        get "/venues/#{venue.id}/copy"
+        expect(last_response).to be_redirect
+        expect(last_response.location).to end_with('/login')
+      end
+
+      it 'displays copy form for venue with available target bands' do
+        login_as(user, band)
+        venue = create(:venue, name: 'Test Venue', band: band)
+        
+        get "/venues/#{venue.id}/copy"
+        
+        expect(last_response).to be_ok
+        expect(last_response.body).to include('Copy Venue to Another Band')
+        expect(last_response.body).to include('Test Venue')
+        expect(last_response.body).to include(other_band.name)
+      end
+
+      it 'excludes target bands that already have a venue with the same name' do
+        login_as(user, band)
+        venue = create(:venue, name: 'Duplicate Venue', band: band)
+        create(:venue, name: 'Duplicate Venue', band: other_band)
+        
+        get "/venues/#{venue.id}/copy"
+        
+        expect(last_response).to be_ok
+        expect(last_response.body).not_to include(other_band.name)
+        expect(last_response.body).to include('No Available Bands')
+      end
+
+      it 'cannot access venue from another band' do
+        login_as(user, band)
+        other_venue = create(:venue, name: 'Other Venue', band: other_band)
+        
+        get "/venues/#{other_venue.id}/copy"
+        
+        expect(last_response).to be_not_found
+      end
+    end
+
+    describe 'POST /venues/:venue_id/copy' do
+      it 'requires authentication' do
+        venue = create(:venue, band: band)
+        
+        expect {
+          post "/venues/#{venue.id}/copy", target_band_id: other_band.id.to_s
+        }.not_to change(Venue, :count)
+        
+        expect(last_response).to be_redirect
+        expect(last_response.location).to end_with('/login')
+      end
+
+      it 'copies venue to target band successfully' do
+        login_as(user, band)
+        venue = create(:venue, name: 'Copy Me', location: 'Test Location', contact_name: 'Test Contact', phone_number: '123-456-7890', band: band)
+        
+        expect {
+          post "/venues/#{venue.id}/copy", target_band_id: other_band.id.to_s
+        }.to change(Venue, :count).by(1)
+        
+        expect(last_response).to be_redirect
+        expect(last_response.location).to end_with("/venues/#{venue.id}?copied_to=#{other_band.name}")
+        
+        copied_venue = other_band.venues.find_by(name: 'Copy Me')
+        expect(copied_venue).to be_present
+        expect(copied_venue.location).to eq('Test Location')
+        expect(copied_venue.contact_name).to eq('Test Contact')
+        expect(copied_venue.phone_number).to eq('123-456-7890')
+      end
+
+      it 'shows error when no target band is selected' do
+        login_as(user, band)
+        venue = create(:venue, name: 'Test Venue', band: band)
+        
+        expect {
+          post "/venues/#{venue.id}/copy", target_band_id: ''
+        }.not_to change(Venue, :count)
+        
+        expect(last_response).to be_ok
+        expect(last_response.body).to include('Please select a band to copy the venue to')
+      end
+
+      it 'shows error when target band already has venue with same name' do
+        login_as(user, band)
+        venue = create(:venue, name: 'Duplicate Name', band: band)
+        create(:venue, name: 'Duplicate Name', band: other_band)
+        
+        expect {
+          post "/venues/#{venue.id}/copy", target_band_id: other_band.id.to_s
+        }.not_to change(Venue, :count)
+        
+        expect(last_response).to be_ok
+        expect(last_response.body).to include("already has a venue named 'Duplicate Name'")
+      end
+
+      it 'only allows copying to bands user is a member of' do
+        login_as(user, band)
+        venue = create(:venue, name: 'Test Venue', band: band)
+        unauthorized_band = create(:band)
+        
+        expect {
+          post "/venues/#{venue.id}/copy", target_band_id: unauthorized_band.id.to_s
+        }.not_to change(Venue, :count)
+        
+        expect(last_response).to be_not_found
+      end
+
+      it 'cannot copy venue from another band' do
+        login_as(user, band)
+        other_venue = create(:venue, name: 'Other Venue', band: other_band)
+        
+        expect {
+          post "/venues/#{other_venue.id}/copy", target_band_id: band.id.to_s
+        }.not_to change(Venue, :count)
+        
+        expect(last_response).to be_not_found
+      end
     end
   end
 end 

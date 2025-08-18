@@ -1,3 +1,11 @@
+<% if params[:copied] %>
+    <div style="margin-bottom: 20px; padding: 15px; background: #f0fff4; border-radius: 8px; border-left: 4px solid #38a169;">
+        <p style="margin: 0; color: #2f855a; font-weight: 500;">
+            ✅ Song successfully copied to <%= params[:copied] == '1' ? '1 band' : "#{params[:copied]} bands" %>!
+        </p>
+    </div>
+<% end %>
+
 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
     <h2>🌍 <%= @global_song.title %></h2>
     <div class="actions">
@@ -61,6 +69,7 @@
                         <% else %>
                             <form method="POST" action="/bands/<%= band.id %>/copy_songs" style="margin-bottom: 8px;">
                                 <input type="hidden" name="global_song_ids[]" value="<%= @global_song.id %>">
+                                <input type="hidden" name="from_global_song" value="<%= @global_song.id %>">
                                 <button type="submit" class="btn" style="width: 100%; text-align: left;">
                                     📋 Copy to <%= band.name %>
                                 </button>

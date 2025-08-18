@@ -10,20 +10,20 @@ use Rack::MethodOverride
 set :session_secret, ENV['SESSION_SECRET'] || 'your_secret_key_here_that_is_very_long_and_secure_at_least_64_chars'
 
 # Login secret for user registration (required)
-# Set BANDAGE_LOGIN_SECRET environment variable to enable signup
+# Set BANDMATE_LOGIN_SECRET environment variable to enable signup
 
 # Database configuration
 configure :development do
-  set :database, { adapter: 'sqlite3', database: 'bandage.db' }
+  set :database, { adapter: 'sqlite3', database: 'bandmate.db' }
 end
 
 configure :production do
-  database_path = ENV['DATABASE_PATH'] || 'bandage.db'
+  database_path = ENV['DATABASE_PATH'] || 'bandmate.db'
   set :database, { adapter: 'sqlite3', database: database_path }
 end
 
 configure :test do
-  set :database, { adapter: 'sqlite3', database: 'bandage_test.db' }
+  set :database, { adapter: 'sqlite3', database: 'bandmate_test.db' }
   set :bind, '0.0.0.0'
   set :port, 4567
   set :protection, false
@@ -52,13 +52,23 @@ class UserBand < ActiveRecord::Base
 end
 
 class Band < ActiveRecord::Base
+  belongs_to :owner, class_name: 'User', optional: true
   has_and_belongs_to_many :songs
   has_many :set_lists
+  has_many :venues
   has_many :user_bands
   has_many :users, through: :user_bands
   
   validates :name, presence: true
   validates :name, uniqueness: true
+  
+  def owner?
+    owner.present?
+  end
+  
+  def owned_by?(user)
+    owner == user
+  end
 end
 
 class GlobalSong < ActiveRecord::Base
@@ -109,6 +119,7 @@ class Song < ActiveRecord::Base
 end
 
 class Venue < ActiveRecord::Base
+  belongs_to :band, optional: true
   has_many :set_lists
   
   validates :name, presence: true
@@ -125,6 +136,7 @@ class SetList < ActiveRecord::Base
   
   validates :name, presence: true
   validates :band, presence: true
+  validates :performance_date, presence: true
 end
 
 class SetListSong < ActiveRecord::Base
@@ -161,17 +173,17 @@ helpers do
   end
 
   def filter_by_current_band(collection)
-    if current_band
-      case collection.name
-      when 'Song'
-        collection.joins(:bands).where(bands: { id: current_band.id })
-      when 'SetList'
-        collection.where(band: current_band)
-      else
-        collection
-      end
+    return collection.none unless current_band && collection.respond_to?(:where)
+    
+    case collection.name
+    when 'Song'
+      collection.joins(:bands).where(bands: { id: current_band.id })
+    when 'SetList'
+      collection.where(band: current_band)
+    when 'Venue'
+      collection.where(band: current_band)
     else
-      collection.none
+      collection
     end
   end
 end
@@ -208,7 +220,7 @@ end
 
 post '/signup' do
   # Validate login secret
-  login_secret = ENV['BANDAGE_LOGIN_SECRET']
+  login_secret = ENV['BANDMATE_LOGIN_SECRET']
   if login_secret.nil? || login_secret.empty?
     @errors = ["Login secret not configured. Please contact administrator."]
     return erb :signup, layout: :layout
@@ -365,7 +377,6 @@ get '/songs' do
   return redirect '/' unless current_band
   
   @search = params[:search]
-  @bands = user_bands
   
   @songs = filter_by_current_band(Song).order('LOWER(title)')
   
@@ -425,6 +436,13 @@ end
 delete '/songs/:id' do
   require_login
   song = current_band.songs.find(params[:id])
+  
+  # Clean up associations before deleting the song
+  song.set_list_songs.destroy_all
+  
+  # Remove the song from all bands (many-to-many relationship)
+  song.band_ids = []
+  
   song.destroy
   redirect '/songs'
 end
@@ -527,7 +545,13 @@ post '/bands/:band_id/copy_songs' do
     end
   end
   
-  redirect "/bands/#{@band.id}?copied=#{copied_count}"
+  # If copying from a specific global song page, redirect back to that song
+  if params[:from_global_song]
+    redirect "/global_songs/#{params[:from_global_song]}?copied=#{copied_count}"
+  else
+    # Otherwise redirect to the band page (bulk copy)
+    redirect "/bands/#{@band.id}?copied=#{copied_count}"
+  end
 end
 
 # Set lists routes
@@ -543,8 +567,7 @@ get '/set_lists/new' do
   require_login
   return redirect '/' unless current_band
   
-  @bands = [current_band]
-  @venues = Venue.order(:name)
+  @venues = filter_by_current_band(Venue).order(:name)
   @songs = filter_by_current_band(Song).order(:title)
   erb :new_set_list
 end
@@ -557,7 +580,7 @@ post '/set_lists' do
     name: params[:name], 
     band_id: current_band.id,
     venue_id: params[:venue_id].presence,
-    performance_date: params[:performance_date].presence,
+    performance_date: params[:performance_date],
     start_time: params[:start_time].presence,
     end_time: params[:end_time].presence
   }
@@ -567,8 +590,7 @@ post '/set_lists' do
     redirect '/set_lists'
   else
     @errors = set_list.errors.full_messages
-    @bands = [current_band]
-    @venues = Venue.order(:name)
+    @venues = filter_by_current_band(Venue).order(:name)
     @songs = filter_by_current_band(Song).order(:title)
     erb :new_set_list
   end
@@ -584,8 +606,7 @@ end
 get '/set_lists/:id/edit' do
   require_login
   @set_list = filter_by_current_band(SetList).find(params[:id])
-  @bands = [current_band]
-  @venues = Venue.order(:name)
+  @venues = filter_by_current_band(Venue).order(:name)
   erb :edit_set_list
 end
 
@@ -596,7 +617,7 @@ put '/set_lists/:id' do
     name: params[:name], 
     band_id: current_band.id,
     venue_id: params[:venue_id].presence,
-    performance_date: params[:performance_date].presence,
+    performance_date: params[:performance_date],
     start_time: params[:start_time].presence,
     end_time: params[:end_time].presence
   }
@@ -605,8 +626,7 @@ put '/set_lists/:id' do
     redirect "/set_lists/#{@set_list.id}"
   else
     @errors = @set_list.errors.full_messages
-    @bands = [current_band]
-    @venues = Venue.order(:name)
+    @venues = filter_by_current_band(Venue).order(:name)
     erb :edit_set_list
   end
 end
@@ -725,6 +745,8 @@ post '/bands' do
   require_login
   
   band = Band.new(params[:band])
+  band.owner = current_user
+  
   if band.save
     # Associate the current user with the new band
     current_user.bands << band
@@ -752,12 +774,26 @@ end
 get '/bands/:id/edit' do
   require_login
   @band = user_bands.find(params[:id])
+  
+  # Only the owner can edit the band
+  unless @band.owned_by?(current_user)
+    @errors = ["Only the band owner can edit this band"]
+    return erb :show_band
+  end
+  
   erb :edit_band
 end
 
 put '/bands/:id' do
   require_login
   @band = user_bands.find(params[:id])
+  
+  # Only the owner can edit the band
+  unless @band.owned_by?(current_user)
+    @errors = ["Only the band owner can edit this band"]
+    return erb :show_band
+  end
+  
   if @band.update(params[:band])
     redirect "/bands/#{@band.id}"
   else
@@ -770,18 +806,22 @@ delete '/bands/:id' do
   require_login
   band = user_bands.find(params[:id])
   
+  # Only the owner can delete the band
+  unless band.owned_by?(current_user)
+    @errors = ["Only the band owner can delete this band"]
+    return erb :show_band
+  end
+  
   # If this was the current band, clear the session
   if current_band&.id == band.id
     session[:band_id] = nil
   end
   
-  # Remove user's association with the band
-  current_user.bands.delete(band)
+  # Remove all user associations with the band
+  band.user_bands.destroy_all
   
-  # If no other users are associated with this band, delete the band
-  if band.users.empty?
-    band.destroy
-  end
+  # Delete the band
+  band.destroy
   
   redirect '/bands'
 end
@@ -790,6 +830,13 @@ end
 post '/bands/:id/add_user' do
   require_login
   @band = user_bands.find(params[:id])
+  
+  # Only the owner can add users
+  unless @band.owned_by?(current_user)
+    @user_error = "Only the band owner can add new members"
+    return erb :edit_band
+  end
+  
   username = params[:username]&.strip
   
   if username.blank?
@@ -823,6 +870,12 @@ post '/bands/:id/remove_user' do
   @band = user_bands.find(params[:id])
   user_to_remove = User.find(params[:user_id])
   
+  # Users can always remove themselves, but only owners can remove others
+  if user_to_remove != current_user && !@band.owned_by?(current_user)
+    @user_error = "Only the band owner can remove other members"
+    return erb :edit_band
+  end
+  
   # Prevent removing the last user from the band
   if @band.users.count <= 1
     @user_error = "Cannot remove the last member from the band"
@@ -836,7 +889,7 @@ post '/bands/:id/remove_user' do
       # User is removing themselves - redirect to bands list with message
       redirect '/bands?left_band=true'
     else
-      # Admin removing another user - stay on edit page with success message
+      # Owner removing another user - stay on edit page with success message
       @user_success = "Successfully removed '#{user_to_remove.username}' from the band"
       erb :edit_band
     end
@@ -849,18 +902,25 @@ end
 # Venues routes
 get '/venues' do
   require_login
-  @venues = Venue.order(:name)
+  return redirect '/' unless current_band
+  
+  @venues = filter_by_current_band(Venue).order(:name)
   erb :venues
 end
 
 get '/venues/new' do
   require_login
+  return redirect '/' unless current_band
   erb :new_venue
 end
 
 post '/venues' do
   require_login
+  return redirect '/' unless current_band
+  
   venue = Venue.new(params[:venue])
+  venue.band = current_band
+  
   if venue.save
     redirect '/venues'
   else
@@ -871,19 +931,26 @@ end
 
 get '/venues/:id' do
   require_login
-  @venue = Venue.find(params[:id])
+  return redirect '/' unless current_band
+  
+  @venue = filter_by_current_band(Venue).find(params[:id])
+  @bands = user_bands
   erb :show_venue
 end
 
 get '/venues/:id/edit' do
   require_login
-  @venue = Venue.find(params[:id])
+  return redirect '/' unless current_band
+  
+  @venue = filter_by_current_band(Venue).find(params[:id])
   erb :edit_venue
 end
 
 put '/venues/:id' do
   require_login
-  @venue = Venue.find(params[:id])
+  return redirect '/' unless current_band
+  
+  @venue = filter_by_current_band(Venue).find(params[:id])
   if @venue.update(params[:venue])
     redirect "/venues/#{@venue.id}"
   else
@@ -894,9 +961,132 @@ end
 
 delete '/venues/:id' do
   require_login
-  venue = Venue.find(params[:id])
+  return redirect '/' unless current_band
+  
+  venue = filter_by_current_band(Venue).find(params[:id])
   venue.destroy
   redirect '/venues'
+end
+
+# Copy venues from other bands user is a member of
+get '/bands/:band_id/copy_venues' do
+  require_login
+  @band = user_bands.find(params[:band_id])
+  
+  # Get venues from other bands the user is a member of
+  other_band_ids = current_user.bands.where.not(id: @band.id).pluck(:id)
+  @venues = Venue.where(band_id: other_band_ids).order(:name)
+  
+  # Exclude venues already copied to this band (by name and location to avoid exact duplicates)
+  existing_venue_signatures = @band.venues.pluck('name || " - " || location')
+  @venues = @venues.reject do |venue|
+    existing_venue_signatures.include?("#{venue.name} - #{venue.location}")
+  end
+  
+  erb :copy_venues_to_band
+end
+
+post '/bands/:band_id/copy_venues' do
+  require_login
+  @band = user_bands.find(params[:band_id])
+  venue_ids = params[:venue_ids] || []
+  
+  copied_count = 0
+  venue_ids.each do |venue_id|
+    source_venue = Venue.find(venue_id)
+    
+    # Verify user has access to the source venue through band membership
+    if current_user.bands.include?(source_venue.band)
+      new_venue = Venue.new(
+        name: source_venue.name,
+        location: source_venue.location,
+        contact_name: source_venue.contact_name,
+        phone_number: source_venue.phone_number,
+        website: source_venue.website,
+        band: @band
+      )
+      
+      if new_venue.save
+        copied_count += 1
+      end
+    end
+  end
+  
+  redirect "/bands/#{@band.id}?venues_copied=#{copied_count}"
+end
+
+# Copy a single venue to another band
+get '/venues/:venue_id/copy' do
+  require_login
+  return redirect '/' unless current_band
+  
+  @venue = filter_by_current_band(Venue).find(params[:venue_id])
+  
+  # Get other bands the user is a member of
+  @target_bands = current_user.bands.where.not(id: current_band.id).order(:name)
+  
+  # Filter out bands that already have a venue with the same name
+  @target_bands = @target_bands.reject do |band|
+    band.venues.where(name: @venue.name).exists?
+  end
+  
+  erb :copy_venue_to_band
+end
+
+post '/venues/:venue_id/copy' do
+  require_login
+  return redirect '/' unless current_band
+  
+  @venue = filter_by_current_band(Venue).find(params[:venue_id])
+  target_band_id = params[:target_band_id]
+  
+  if target_band_id.blank?
+    @error = "Please select a band to copy the venue to"
+    @target_bands = current_user.bands.where.not(id: current_band.id).order(:name)
+    @target_bands = @target_bands.reject do |band|
+      band.venues.where(name: @venue.name).exists?
+    end
+    return erb :copy_venue_to_band
+  end
+  
+  target_band = current_user.bands.find(target_band_id)
+  
+  # Check if target band already has a venue with the same name
+  if target_band.venues.where(name: @venue.name).exists?
+    @error = "#{target_band.name} already has a venue named '#{@venue.name}'"
+    @target_bands = current_user.bands.where.not(id: current_band.id).order(:name)
+    @target_bands = @target_bands.reject do |band|
+      band.venues.where(name: @venue.name).exists?
+    end
+    return erb :copy_venue_to_band
+  end
+  
+  # Copy the venue
+  new_venue = Venue.new(
+    name: @venue.name,
+    location: @venue.location,
+    contact_name: @venue.contact_name,
+    phone_number: @venue.phone_number,
+    website: @venue.website,
+    band: target_band
+  )
+  
+  if new_venue.save
+    # If copying from a specific venue page, redirect back to that venue
+    if params[:from_venue]
+      redirect "/venues/#{@venue.id}?copied=1"
+    else
+      # Otherwise redirect to the venue page with the old format
+      redirect "/venues/#{@venue.id}?copied_to=#{target_band.name}"
+    end
+  else
+    @error = "Failed to copy venue: #{new_venue.errors.full_messages.join(', ')}"
+    @target_bands = current_user.bands.where.not(id: current_band.id).order(:name)
+    @target_bands = @target_bands.reject do |band|
+      band.venues.where(name: @venue.name).exists?
+    end
+    erb :copy_venue_to_band
+  end
 end
 
 # API routes for AJAX
@@ -949,7 +1139,7 @@ get '/api/lookup_song' do
     http.use_ssl = true
     
     request = Net::HTTP::Get.new(uri)
-    request['User-Agent'] = 'Mozilla/5.0 (compatible; Bandage/1.0)'
+    request['User-Agent'] = 'Mozilla/5.0 (compatible; Bandmate/1.0)'
     
     response = http.request(request)
     
@@ -1164,7 +1354,7 @@ end
 
 # Start the server
 if __FILE__ == $0
-  puts "🎸 Bandage is starting up..."
+  puts "🎸 Bandmate is starting up..."
   puts "Visit http://localhost:4567 to access the application"
   puts "Visit http://localhost:4567/setup to initialize the database (first time only)"
   puts ""

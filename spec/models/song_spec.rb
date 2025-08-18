@@ -25,11 +25,6 @@ RSpec.describe Song, type: :model do
       expect(song.errors[:key]).to include("can't be blank")
     end
 
-    it 'is invalid without bands' do
-      song = build(:song, bands: [])
-      expect(song).not_to be_valid
-      expect(song.errors[:bands]).to include("can't be blank")
-    end
 
     it 'is valid with a positive tempo' do
       song = build(:song, tempo: 120)

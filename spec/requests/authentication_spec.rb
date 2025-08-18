@@ -5,7 +5,7 @@ RSpec.describe 'Authentication', type: :request do
     it 'displays the login form' do
       get '/login'
       expect(last_response).to be_ok
-      expect(last_response.body).to include('Login to Bandage')
+      expect(last_response.body).to include('Login to Bandmate')
       expect(last_response.body).to include('Username:')
       expect(last_response.body).to include('Password:')
     end
@@ -31,7 +31,7 @@ RSpec.describe 'Authentication', type: :request do
     it 'displays the signup form' do
       get '/signup'
       expect(last_response).to be_ok
-      expect(last_response.body).to include('Sign Up for Bandage')
+      expect(last_response.body).to include('Sign Up for Bandmate')
       expect(last_response.body).to include('Username:')
       expect(last_response.body).to include('Password:')
       expect(last_response.body).to include('Email Address (Optional):')
@@ -41,11 +41,11 @@ RSpec.describe 'Authentication', type: :request do
 
   describe 'POST /signup' do
     before do
-      ENV['BANDAGE_LOGIN_SECRET'] = 'test_secret_123'
+      ENV['BANDMATE_LOGIN_SECRET'] = 'test_secret_123'
     end
 
     after do
-      ENV.delete('BANDAGE_LOGIN_SECRET')
+      ENV.delete('BANDMATE_LOGIN_SECRET')
     end
 
     it 'creates a new user with valid data and correct login secret' do
@@ -81,8 +81,8 @@ RSpec.describe 'Authentication', type: :request do
       expect(last_response.body).to include('can\'t be blank')
     end
 
-    it 'rejects signup when BANDAGE_LOGIN_SECRET environment variable is not set' do
-      ENV.delete('BANDAGE_LOGIN_SECRET')
+    it 'rejects signup when BANDMATE_LOGIN_SECRET environment variable is not set' do
+      ENV.delete('BANDMATE_LOGIN_SECRET')
       
       expect {
         post '/signup', username: 'newuser', password: 'password123', email: 'test@example.com', login_secret: 'any_secret'

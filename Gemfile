@@ -6,6 +6,7 @@ gem 'sqlite3'
 gem 'rake'
 gem 'erb'
 gem 'bcrypt'
+gem 'puma'
 
 group :development, :test do
   gem 'rspec'

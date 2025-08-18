@@ -10,9 +10,9 @@
     </div>
 <% end %>
 
-<div style="margin-bottom: 20px; padding: 15px; background: #e6fffa; border-radius: 8px; border-left: 4px solid #38a169;">
-    <p style="margin: 0; color: #2f855a; font-weight: 500;">
-        ℹ️ You're editing a global song. Changes will be visible to all users but won't affect existing band-specific copies.
+<div style="margin-bottom: 20px; padding: 15px; background: #fef5e7; border-radius: 8px; border-left: 4px solid #f59e0b;">
+    <p style="margin: 0; color: #92400e; font-weight: 500;">
+        ⚠️ Warning: You are editing a global song. Changes will be visible to ALL users and will affect new copies made from this global song.
     </p>
 </div>
 
@@ -127,7 +127,13 @@
     </div>
 
     <div class="actions">
-        <button type="submit" class="btn btn-success">Update Global Song</button>
+        <button type="submit" class="btn btn-success" onclick="return confirmUpdate()">Update Global Song</button>
         <a href="/global_songs/<%= @global_song.id %>" class="btn">Cancel</a>
     </div>
 </form>
+
+<script>
+function confirmUpdate() {
+    return confirm('⚠️ Warning: You are about to update a global song.\n\nThis will change the song information for ALL users who have access to the global song library. Existing band-specific copies will not be affected, but new copies will use the updated information.\n\nAre you sure you want to continue?');
+}
+</script>

@@ -20,6 +20,11 @@
                             <span><strong>Songs:</strong> <%= band.songs.count %></span>
                             <span><strong>Set Lists:</strong> <%= band.set_lists.count %></span>
                             <span><strong>Members:</strong> <%= band.users.count %></span>
+                            <% if band.owner? %>
+                                <span style="background: #0ea5e9; color: white; padding: 2px 6px; border-radius: 10px; font-size: 0.75rem;">
+                                    👑 Owner: <%= band.owner.username %>
+                                </span>
+                            <% end %>
                         </div>
                         <% if band.notes.present? %>
                             <div style="margin-top: 4px; font-size: 0.85rem; color: #718096; font-style: italic; word-break: break-word;">
@@ -28,11 +33,13 @@
                         <% end %>
                     </div>
                     <div class="actions" onclick="event.stopPropagation();" style="display: flex; gap: 5px; flex-shrink: 0;">
-                        <a href="/bands/<%= band.id %>/edit" class="btn" style="font-size: 0.8rem; padding: 5px 10px;">Edit</a>
-                        <form method="POST" action="/bands/<%= band.id %>" style="display: inline;">
-                            <input type="hidden" name="_method" value="DELETE">
-                            <button type="submit" class="btn btn-danger" style="font-size: 0.8rem; padding: 5px 10px;" onclick="return confirm('Delete this band? This will also delete all associated songs and set lists.')">Delete</button>
-                        </form>
+                        <% if band.owned_by?(current_user) %>
+                            <a href="/bands/<%= band.id %>/edit" class="btn" style="font-size: 0.8rem; padding: 5px 10px;">Edit</a>
+                            <form method="POST" action="/bands/<%= band.id %>" style="display: inline;">
+                                <input type="hidden" name="_method" value="DELETE">
+                                <button type="submit" class="btn btn-danger" style="font-size: 0.8rem; padding: 5px 10px;" onclick="return confirm('Delete this band? This will also delete all associated songs and set lists.')">Delete</button>
+                            </form>
+                        <% end %>
                     </div>
                 </div>
             </div>

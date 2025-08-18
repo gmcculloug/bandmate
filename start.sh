@@ -1,6 +1,6 @@
 #!/bin/bash
 
-echo "🎸 Starting Bandage - Song Management System"
+echo "🎸 Starting Bandmate - Song Management System"
 echo ""
 
 # Check if Ruby is installed
@@ -22,4 +22,4 @@ bundle install
 # Start the application
 echo "🚀 Starting the application..."
 echo ""
-ruby app.rb 
+BANDMATE_LOGIN_SECRET=1234 ruby app.rb 

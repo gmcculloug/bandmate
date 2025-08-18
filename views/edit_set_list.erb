@@ -18,15 +18,7 @@
         <input type="text" id="set_list_name" name="name" value="<%= @set_list.name %>" required>
     </div>
 
-    <div class="form-group">
-        <label for="set_list_band_id">Band *</label>
-        <select id="set_list_band_id" name="band_id" required>
-            <option value="">Select Band</option>
-            <% @bands.each do |band| %>
-                <option value="<%= band.id %>" <%= 'selected' if @set_list.band_id == band.id %>><%= band.name %></option>
-            <% end %>
-        </select>
-    </div>
+
 
     <div class="form-group">
         <label for="set_list_venue_id">Venue</label>
@@ -48,8 +40,8 @@
         </style>
         <div class="form-grid" style="display: grid; grid-template-columns: 1fr; gap: 20px;">
             <div class="form-group">
-                <label for="set_list_performance_date">Performance Date</label>
-                <input type="date" id="set_list_performance_date" name="performance_date" value="<%= @set_list.performance_date&.strftime('%Y-%m-%d') %>">
+                <label for="set_list_performance_date">Performance Date *</label>
+                <input type="date" id="set_list_performance_date" name="performance_date" value="<%= @set_list.performance_date&.strftime('%Y-%m-%d') %>" required>
             </div>
 
             <div class="form-group">
@@ -275,7 +267,7 @@ function saveOrder() {
         headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
         },
-        body: 'song_order=' + songOrder.map(id => 'song_order[]=' + id).join('&')
+        body: songOrder.map(id => 'song_order[]=' + id).join('&')
     })
     .then(response => response.json())
     .then(data => {

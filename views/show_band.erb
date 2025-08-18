@@ -1,16 +1,71 @@
 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
     <h2>🎸 <%= @band.name %></h2>
-    <div class="actions">
-        <a href="/bands/<%= @band.id %>/edit" class="btn">Edit</a>
-        <a href="/bands" class="btn">Back to Bands</a>
-    </div>
+            <div class="actions">
+            <% if @band.owned_by?(current_user) %>
+                <a href="/bands/<%= @band.id %>/edit" class="btn">Edit</a>
+                <form method="POST" action="/bands/<%= @band.id %>" style="display: inline;">
+                    <input type="hidden" name="_method" value="DELETE">
+                    <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure you want to delete this band? This action cannot be undone and will remove all songs and set lists.')">Delete Band</button>
+                </form>
+            <% end %>
+            <a href="/bands" class="btn">Back to Bands</a>
+        </div>
 </div>
+
+<% if @band.owner? %>
+    <div style="margin-bottom: 20px; padding: 15px; background: #f0f9ff; border-radius: 8px; border-left: 4px solid #0ea5e9;">
+        <p style="margin: 0; color: #0c4a6e; font-weight: 500;">
+            👑 Band Owner: <strong><%= @band.owner.username %></strong>
+        </p>
+    </div>
+<% end %>
 
 <% if params[:copied].present? %>
     <div class="success" style="margin-bottom: 20px;">
         Successfully copied <%= params[:copied] %> song<%= params[:copied].to_i == 1 ? '' : 's' %> to <%= @band.name %>!
     </div>
 <% end %>
+
+<% if params[:venues_copied].present? %>
+    <div class="success" style="margin-bottom: 20px;">
+        Successfully copied <%= params[:venues_copied] %> venue<%= params[:venues_copied].to_i == 1 ? '' : 's' %> to <%= @band.name %>!
+    </div>
+<% end %>
+
+<div class="card" style="margin-bottom: 30px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h3>👥 Band Members (<%= @band.users.count %>)</h3>
+        <a href="/bands/<%= @band.id %>/edit" class="btn">➕ Manage Members</a>
+    </div>
+
+    <% if @band.users.any? %>
+        <div style="margin-bottom: 15px;">
+            <% @band.users.order(:username).each do |user| %>
+                <div class="user-card" style="margin-bottom: 8px; padding: 10px; border: 1px solid #e2e8f0; border-radius: 6px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div style="flex: 1;">
+                            <div style="font-weight: 600; font-size: 1rem;">
+                                <%= user.username %>
+                                <% if user == current_user %>
+                                    <span style="background: #667eea; color: white; padding: 2px 6px; border-radius: 10px; font-size: 0.75rem; margin-left: 8px;">You</span>
+                                <% end %>
+                            </div>
+                            <div style="margin-top: 4px; font-size: 0.85rem; color: #4a5568;">
+                                Member since <%= user.user_bands.find_by(band: @band)&.created_at&.strftime('%B %Y') || 'Unknown' %>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            <% end %>
+        </div>
+    <% else %>
+        <div style="text-align: center; padding: 40px;">
+            <h3>No members yet</h3>
+            <p>Add some members to get started!</p>
+            <a href="/bands/<%= @band.id %>/edit" class="btn btn-success">Add Members</a>
+        </div>
+    <% end %>
+</div>
 
 <div class="card">
     <% if @band.notes.present? %>
@@ -126,26 +181,38 @@
 </div>
 
 <div class="card" style="margin-top: 30px;">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-        <h3>👥 Band Members (<%= @band.users.count %>)</h3>
-        <a href="/bands/<%= @band.id %>/edit" class="btn">➕ Manage Members</a>
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
+        <h3>🏛️ Venues (<%= @band.venues.count %>)</h3>
+        <div class="actions">
+            <% if current_user.bands.count > 1 %>
+                <a href="/bands/<%= @band.id %>/copy_venues" class="btn">📋 Copy from Other Bands</a>
+            <% end %>
+            <a href="/venues/new" class="btn btn-success">➕ Add Venue</a>
+        </div>
     </div>
 
-    <% if @band.users.any? %>
+    <% if @band.venues.any? %>
         <div style="margin-bottom: 15px;">
-            <% @band.users.order(:username).each do |user| %>
-                <div class="user-card" style="margin-bottom: 8px; padding: 10px; border: 1px solid #e2e8f0; border-radius: 6px;">
+            <% @band.venues.order(:name).each do |venue| %>
+                <div class="venue-card" style="margin-bottom: 8px; padding: 10px; border: 1px solid #e2e8f0; border-radius: 6px; cursor: pointer;" onclick="window.location.href='/venues/<%= venue.id %>'">
                     <div style="display: flex; justify-content: space-between; align-items: center;">
                         <div style="flex: 1;">
-                            <div style="font-weight: 600; font-size: 1rem;">
-                                <%= user.username %>
-                                <% if user == current_user %>
-                                    <span style="background: #667eea; color: white; padding: 2px 6px; border-radius: 10px; font-size: 0.75rem; margin-left: 8px;">You</span>
+                            <div style="font-weight: 600; font-size: 1rem;"><%= venue.name %></div>
+                            <div style="color: #718096; font-size: 0.9rem;"><%= venue.location %></div>
+                            <div style="margin-top: 4px; display: flex; gap: 15px; font-size: 0.85rem; color: #4a5568;">
+                                <span><strong>Contact:</strong> <%= venue.contact_name %></span>
+                                <span><strong>Phone:</strong> <%= venue.phone_number %></span>
+                                <% if venue.website.present? %>
+                                    <span><strong>Website:</strong> <a href="<%= venue.website %>" target="_blank" onclick="event.stopPropagation();" style="color: #2563eb; text-decoration: underline;"><%= venue.website %></a></span>
                                 <% end %>
                             </div>
-                            <div style="margin-top: 4px; font-size: 0.85rem; color: #4a5568;">
-                                Member since <%= user.user_bands.find_by(band: @band)&.created_at&.strftime('%B %Y') || 'Unknown' %>
-                            </div>
+                        </div>
+                        <div class="actions" onclick="event.stopPropagation();" style="display: flex; gap: 5px;">
+                            <a href="/venues/<%= venue.id %>/edit" class="btn" style="font-size: 0.8rem; padding: 5px 10px;">Edit</a>
+                            <form method="POST" action="/venues/<%= venue.id %>" style="display: inline;">
+                                <input type="hidden" name="_method" value="DELETE">
+                                <button type="submit" class="btn btn-danger" style="font-size: 0.8rem; padding: 5px 10px;" onclick="return confirm('Delete this venue?')">Delete</button>
+                            </form>
                         </div>
                     </div>
                 </div>
@@ -153,9 +220,16 @@
         </div>
     <% else %>
         <div style="text-align: center; padding: 40px;">
-            <h3>No members yet</h3>
-            <p>Add some members to get started!</p>
-            <a href="/bands/<%= @band.id %>/edit" class="btn btn-success">Add Members</a>
+            <h3>No venues for this band yet</h3>
+            <p>Add some venues to get started!</p>
+            <div class="actions" style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
+                <% if current_user.bands.count > 1 %>
+                    <a href="/bands/<%= @band.id %>/copy_venues" class="btn">📋 Copy from Other Bands</a>
+                <% end %>
+                <a href="/venues/new" class="btn btn-success">Add Venue</a>
+            </div>
         </div>
     <% end %>
-</div> 
+</div>
+
+ 

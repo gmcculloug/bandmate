@@ -33,6 +33,18 @@ RSpec.describe Venue, type: :model do
   end
 
   describe 'associations' do
+    it 'belongs to a band' do
+      band = create(:band)
+      venue = create(:venue, band: band)
+      
+      expect(venue.band).to eq(band)
+    end
+
+    it 'can exist without a band (optional association)' do
+      venue = build(:venue, band: nil)
+      expect(venue).to be_valid
+    end
+
     it 'has many set lists' do
       venue = create(:venue)
       set_list1 = create(:set_list, venue: venue)
@@ -60,7 +72,8 @@ RSpec.describe Venue, type: :model do
 
     it 'can be destroyed when it has set lists' do
       venue = create(:venue)
-      create(:set_list, venue: venue)
+      set_list = create(:set_list, venue: venue)
+      set_list.destroy  # Clean up the set list first due to foreign key constraint
       expect { venue.destroy }.to change(Venue, :count).by(-1)
     end
   end

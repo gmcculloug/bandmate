@@ -1,6 +1,6 @@
-# Bandage Test Suite
+# Bandmate Test Suite
 
-This directory contains comprehensive tests for the Bandage application, a Sinatra-based band management system.
+This directory contains comprehensive tests for the Bandmate application, a Sinatra-based band management system.
 
 ## Test Structure
 
@@ -122,7 +122,7 @@ Tests use FactoryBot factories to generate realistic test data:
 
 ## Database Testing
 
-- Tests use a separate SQLite test database (`bandage_test.db`)
+- Tests use a separate SQLite test database (`bandmate_test.db`)
 - Database is cleaned between tests using DatabaseCleaner
 - Migrations are automatically run for the test environment
 - Test database is cleaned up after all tests complete
@@ -174,7 +174,7 @@ bundle install
 
 **Slow tests**: Check for database cleanup issues
 ```bash
-rm bandage_test.db  # Remove test database
+rm bandmate_test.db  # Remove test database
 bundle exec rspec    # Recreate and run tests
 ```
 

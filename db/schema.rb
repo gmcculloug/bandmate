@@ -10,13 +10,15 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_08_17_225240) do
+ActiveRecord::Schema[8.0].define(version: 2025_08_18_124525) do
   create_table "bands", force: :cascade do |t|
     t.string "name", null: false
     t.text "notes"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "owner_id"
     t.index ["name"], name: "index_bands_on_name", unique: true
+    t.index ["owner_id"], name: "index_bands_on_owner_id"
   end
 
   create_table "bands_songs", id: false, force: :cascade do |t|
@@ -126,9 +128,12 @@ ActiveRecord::Schema[8.0].define(version: 2025_08_17_225240) do
     t.string "website"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "band_id"
+    t.index ["band_id"], name: "index_venues_on_band_id"
     t.index ["name"], name: "index_venues_on_name"
   end
 
+  add_foreign_key "bands", "users", column: "owner_id"
   add_foreign_key "bands_songs", "bands"
   add_foreign_key "bands_songs", "songs"
   add_foreign_key "set_list_songs", "set_lists"
@@ -139,4 +144,5 @@ ActiveRecord::Schema[8.0].define(version: 2025_08_17_225240) do
   add_foreign_key "user_bands", "bands"
   add_foreign_key "user_bands", "users"
   add_foreign_key "users", "bands", column: "last_selected_band_id"
+  add_foreign_key "venues", "bands"
 end

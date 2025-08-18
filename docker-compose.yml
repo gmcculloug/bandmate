@@ -1,5 +1,5 @@
 services:
-  bandage:
+  bandmate:
     build: .
     ports:
       - "0.0.0.0:4567:4567"  # Bind to all interfaces

@@ -23,6 +23,12 @@ RSpec.describe SetList, type: :model do
       set_list = build(:set_list, venue: nil)
       expect(set_list).to be_valid
     end
+
+    it 'is invalid without a performance_date' do
+      set_list = build(:set_list, performance_date: nil)
+      expect(set_list).not_to be_valid
+      expect(set_list.errors[:performance_date]).to include("can't be blank")
+    end
   end
 
   describe 'associations' do

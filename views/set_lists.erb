@@ -7,22 +7,27 @@
     <% @set_lists.each do |set_list| %>
         <div class="set-list-item" style="cursor: pointer;" onclick="window.location.href='/set_lists/<%= set_list.id %>'">
             <div class="set-list-info" style="flex: 1; min-width: 0;">
-                <h3 style="word-break: break-word;"><%= set_list.name %></h3>
+                <h3 style="word-break: break-word;">
+                    <%= set_list.name %>
+                    <% if set_list.performance_date.present? %>
+                        <span style="font-weight: normal; color: #718096; font-size: 0.9em;">
+                            - <%= set_list.performance_date.strftime('%b %d') %>
+                            <% if set_list.start_time.present? %>
+                                - <%= set_list.start_time.strftime('%I:%M %p') %>
+                                <% if set_list.end_time.present? %>
+                                    - <%= set_list.end_time.strftime('%I:%M %p') %>
+                                <% end %>
+                            <% end %>
+                        </span>
+                    <% end %>
+                </h3>
                 <p style="display: flex; gap: 8px; flex-wrap: wrap;">
                     <span style="background: #667eea; color: white; padding: 2px 6px; border-radius: 10px;">
                         <%= set_list.songs.count %> songs
                     </span>
-                    <span style="background: #ed8936; color: white; padding: 2px 6px; border-radius: 10px;">
-                        <%= set_list.band.name %>
-                    </span>
                     <% if set_list.venue && set_list.venue.present? %>
                         <span style="background: #9f7aea; color: white; padding: 2px 6px; border-radius: 10px;">
                             <%= set_list.venue.name %>
-                        </span>
-                    <% end %>
-                    <% if set_list.performance_date.present? %>
-                        <span style="background: #38a169; color: white; padding: 2px 6px; border-radius: 10px;">
-                            <%= set_list.performance_date.strftime('%b %d') %>
                         </span>
                     <% end %>
                 </p>

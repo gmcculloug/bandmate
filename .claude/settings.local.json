@@ -6,7 +6,8 @@
       "Bash(RAILS_ENV=test bundle exec rake db:migrate:*)",
       "Bash(sqlite3:*)",
       "Bash(RAILS_ENV=test bundle exec rake:*)",
-      "Bash(ruby:*)"
+      "Bash(ruby:*)",
+      "Bash(rake db:create_migration:*)"
     ],
     "deny": [],
     "ask": []

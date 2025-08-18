@@ -16,10 +16,12 @@ COPY Gemfile Gemfile.lock ./
 
 # Install Ruby gems
 RUN bundle install
-RUN rake db:migrate
 
 # Copy application code
 COPY . .
+
+# Run database migrations
+RUN rake db:migrate
 
 # Create directory for SQLite database
 RUN mkdir -p /app/data
@@ -32,9 +34,9 @@ ENV PORT=4567
 EXPOSE 4567
 
 # Create a non-root user for security
-RUN useradd -m -u 1000 bandage && \
-    chown -R bandage:bandage /app
-USER bandage
+RUN useradd -m -u 1000 bandmate && \
+    chown -R bandmate:bandmate /app
+USER bandmate
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \

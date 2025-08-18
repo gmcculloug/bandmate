@@ -22,14 +22,19 @@ RSpec.configure do |config|
   end
 
   config.before(:each) do
+    # Clear in proper order to respect foreign key constraints
     SetListSong.delete_all
     SetList.delete_all
     UserBand.delete_all
+    # Clear many-to-many relationships first
+    ActiveRecord::Base.connection.execute("DELETE FROM bands_songs")
     Song.delete_all
+    Venue.delete_all
+    # Clear user's last_selected_band_id reference before deleting bands
+    User.update_all(last_selected_band_id: nil)
     Band.delete_all
     User.delete_all
     GlobalSong.delete_all
-    Venue.delete_all
   end
 end
 

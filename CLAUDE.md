@@ -39,9 +39,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **SetListSong**: Join table with position ordering for songs in set lists
 
 ### Database Configuration
-- Development: `bandage.db`
-- Test: `bandage_test.db`
-- Production: Uses `DATABASE_PATH` environment variable or defaults to `bandage.db`
+- Development: `bandmate.db`
+- Test: `bandmate_test.db`
+- Production: Uses `DATABASE_PATH` environment variable or defaults to `bandmate.db`
 
 ### Custom Migration System
 This project implements a custom migration system (not Rails migrations):
