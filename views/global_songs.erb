@@ -88,11 +88,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             <span style="background: #667eea; color: white; padding: 2px 6px; border-radius: 10px;">
                                 <%= global_song.key %>
                             </span>
-                            <% if global_song.original_key.present? %>
-                                <span style="background: #9f7aea; color: white; padding: 2px 6px; border-radius: 10px;">
-                                    Orig: <%= global_song.original_key %>
-                                </span>
-                            <% end %>
+
                             <% if global_song.tempo %>
                                 <span style="background: #38a169; color: white; padding: 2px 6px; border-radius: 10px;">
                                     <%= global_song.tempo %> BPM

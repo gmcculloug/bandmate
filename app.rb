@@ -592,7 +592,7 @@ get '/set_lists' do
     redirect '/bands'
   end
   
-  @set_lists = filter_by_current_band(SetList).includes(:venue).order(:name)
+  @set_lists = filter_by_current_band(SetList).includes(:venue).order(:performance_date)
   erb :set_lists
 end
 

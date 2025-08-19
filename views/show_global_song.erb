@@ -21,6 +21,9 @@
             <div class="song-details">
                 <div class="detail-item">
                     <span class="detail-label">Artist:</span> <%= @global_song.artist %>
+                    <% if @global_song.album.present? %>
+                        <span style="color: #718096; margin-left: 10px;">• Album: <%= @global_song.album %></span>
+                    <% end %>
                 </div>
                 <div class="detail-item">
                     <span class="detail-label">Key:</span> <%= @global_song.key %>
@@ -39,9 +42,6 @@
                 </div>
                 <div class="detail-item">
                     <span class="detail-label">Year:</span> <%= @global_song.year || 'N/A' %>
-                </div>
-                <div class="detail-item">
-                    <span class="detail-label">Album:</span> <%= @global_song.album || 'N/A' %>
                 </div>
             </div>
         </div>

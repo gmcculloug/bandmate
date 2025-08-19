@@ -130,7 +130,7 @@
 
     <% if @band.set_lists.any? %>
         <div style="margin-bottom: 15px;">
-            <% @band.set_lists.order(:name).each do |set_list| %>
+            <% @band.set_lists.order(:performance_date).each do |set_list| %>
                 <div class="set-list-card" style="margin-bottom: 8px; padding: 10px; border: 1px solid #e2e8f0; border-radius: 6px; cursor: pointer;" onclick="window.location.href='/set_lists/<%= set_list.id %>'">
                     <div style="display: flex; justify-content: space-between; align-items: center;">
                         <div style="flex: 1;">
