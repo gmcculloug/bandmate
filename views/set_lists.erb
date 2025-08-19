@@ -6,6 +6,8 @@
     <a href="/set_lists/new" class="btn btn-success">➕ Create New Set List</a>
 </div>
 
+
+
 <% if @set_lists.any? %>
     <% @set_lists.each do |set_list| %>
         <div class="set-list-item" style="cursor: pointer;" onclick="window.location.href='/set_lists/<%= set_list.id %>'">
