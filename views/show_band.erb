@@ -89,8 +89,12 @@
                 <div class="song-card" style="margin-bottom: 8px; padding: 10px; border: 1px solid #e2e8f0; border-radius: 6px; cursor: pointer;" onclick="window.location.href='/songs/<%= song.id %>'">
                     <div style="display: flex; justify-content: space-between; align-items: center;">
                         <div style="flex: 1;">
-                            <div style="font-weight: 600; font-size: 1rem;"><%= song.title %></div>
-                            <div style="color: #718096; font-size: 0.9rem;"><%= song.artist %></div>
+                            <div style="font-weight: 600; font-size: 1rem;">
+                                <%= song.title %>
+                                <% if song.artist.present? %>
+                                    <span style="color: #718096; font-weight: normal; font-size: 0.9rem;"> • <%= song.artist %></span>
+                                <% end %>
+                            </div>
                             <div style="margin-top: 4px; display: flex; gap: 15px; font-size: 0.85rem; color: #4a5568;">
                                 <span><strong>Key:</strong> <%= song.key %></span>
                                 <span><strong>Tempo:</strong> <%= song.tempo ? "#{song.tempo} BPM" : 'N/A' %></span>

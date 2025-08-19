@@ -71,8 +71,12 @@ document.addEventListener('DOMContentLoaded', function() {
             <div class="song-card" style="padding: 15px; margin-bottom: 0; cursor: pointer;" onclick="window.location.href='/songs/<%= song.id %>'">
                 <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
                     <div style="flex: 1; min-width: 0;">
-                        <div style="font-weight: bold; color: #2d3748; margin-bottom: 3px; word-break: break-word;"><%= song.title %></div>
-                        <div style="color: #718096; font-size: 0.9rem; margin-bottom: 5px; word-break: break-word;"><%= song.artist %></div>
+                        <div style="font-weight: bold; color: #2d3748; margin-bottom: 5px; word-break: break-word;">
+                            <%= song.title %>
+                            <% if song.artist.present? %>
+                                <span style="color: #718096; font-weight: normal; font-size: 0.9rem;"> • <%= song.artist %></span>
+                            <% end %>
+                        </div>
                         <div style="font-size: 0.8rem; color: #a0aec0; display: flex; flex-wrap: wrap; gap: 5px;">
                             <span style="background: #667eea; color: white; padding: 2px 6px; border-radius: 10px;">
                                 <%= song.key %>

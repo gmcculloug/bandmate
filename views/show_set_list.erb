@@ -77,8 +77,12 @@
                                     <%= index + 1 %>
                                 </span>
                                 <div style="flex: 1; min-width: 0;">
-                                    <div style="font-weight: 600; font-size: 1rem; word-break: break-word;"><%= set_list_song.song.title %></div>
-                                    <div style="color: #718096; font-size: 0.9rem; word-break: break-word;"><%= set_list_song.song.artist %></div>
+                                    <div style="font-weight: 600; font-size: 1rem; word-break: break-word;">
+                                        <%= set_list_song.song.title %>
+                                        <% if set_list_song.song.artist.present? %>
+                                            <span style="color: #718096; font-weight: normal; font-size: 0.9rem;"> • <%= set_list_song.song.artist %></span>
+                                        <% end %>
+                                    </div>
                                     <div style="margin-top: 4px; display: flex; gap: 15px; font-size: 0.85rem; color: #4a5568; flex-wrap: wrap;">
                                         <span><strong>Key:</strong> <%= set_list_song.song.key %></span>
                                         <span><strong>Tempo:</strong> <%= set_list_song.song.tempo ? "#{set_list_song.song.tempo} BPM" : 'N/A' %></span>
@@ -144,7 +148,12 @@
                 <input type="hidden" name="song_id" value="<%= song.id %>">
                 <button type="submit" class="btn" style="width: 100%; text-align: left; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
                     <span style="flex: 1; min-width: 0;">
-                        <strong style="word-break: break-word;"><%= song.title %></strong> - <span style="word-break: break-word;"><%= song.artist %></span>
+                        <strong style="word-break: break-word;">
+                            <%= song.title %>
+                            <% if song.artist.present? %>
+                                <span style="color: #718096; font-weight: normal;"> • <%= song.artist %></span>
+                            <% end %>
+                        </strong>
                         <span style="color: #718096; font-size: 0.9rem; display: block; margin-top: 2px;">
                             (<%= song.key %> • <%= song.tempo ? "#{song.tempo} BPM" : 'N/A' %>)
                         </span>

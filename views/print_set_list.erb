@@ -247,7 +247,12 @@
                 <div class="song-item">
                     <div class="song-number"><%= index + 1 %></div>
                     <div class="song-info">
-                        <div class="song-title"><%= set_list_song.song.title %></div>
+                        <div class="song-title">
+                            <%= set_list_song.song.title %>
+                            <% if set_list_song.song.artist.present? %>
+                                <span style="color: #666; font-weight: normal; font-size: 0.9rem;"> • <%= set_list_song.song.artist %></span>
+                            <% end %>
+                        </div>
                         <div class="song-key">(<%= set_list_song.song.key %>)</div>
                     </div>
                 </div>

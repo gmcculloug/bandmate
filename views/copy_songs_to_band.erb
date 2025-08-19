@@ -121,8 +121,12 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <input type="checkbox" name="global_song_ids[]" value="<%= global_song.id %>" style="transform: scale(1.2); min-width: 20px; min-height: 20px;">
                             </label>
                             <div style="flex: 1; min-width: 0;">
-                                <div style="font-weight: bold; color: #2d3748; margin-bottom: 3px; word-break: break-word;"><%= global_song.title %></div>
-                                <div style="color: #718096; font-size: 0.9rem; margin-bottom: 5px; word-break: break-word;"><%= global_song.artist %></div>
+                                <div style="font-weight: bold; color: #2d3748; margin-bottom: 5px; word-break: break-word;">
+                                    <%= global_song.title %>
+                                    <% if global_song.artist.present? %>
+                                        <span style="color: #718096; font-weight: normal; font-size: 0.9rem;"> • <%= global_song.artist %></span>
+                                    <% end %>
+                                </div>
                                 <div style="font-size: 0.8rem; color: #a0aec0; display: flex; flex-wrap: wrap; gap: 5px;">
                                     <span style="background: #667eea; color: white; padding: 2px 6px; border-radius: 10px;">
                                         <%= global_song.key %>
