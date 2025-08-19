@@ -21,12 +21,12 @@ RSpec.describe 'Venues API', type: :request do
       expect(last_response.location).to end_with('/login')
     end
 
-    it 'redirects to home when no band selected' do
+    it 'redirects to set lists when no band selected' do
       # Login without selecting a band
       post '/test_login', user_id: user.id
       get '/venues'
       expect(last_response).to be_redirect
-      expect(last_response.location).to end_with('/')
+      expect(last_response.location).to end_with('/set_lists')
     end
 
     it 'returns only venues for the current band' do

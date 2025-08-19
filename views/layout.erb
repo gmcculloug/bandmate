@@ -36,25 +36,62 @@
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
         }
         
-        .header h1 {
-            color: #4a5568;
-            text-align: center;
-            font-size: 2rem;
-            margin-bottom: 10px;
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+            gap: 15px;
         }
         
-        .user-info {
+        .header h1 {
+            color: #4a5568;
+            font-size: 2rem;
+            margin: 0;
+        }
+        
+        .band-section {
             display: flex;
             align-items: center;
-            justify-content: center;
-            gap: 15px;
-            margin-bottom: 10px;
+            gap: 10px;
+        }
+        
+        .user-controls {
+            display: flex;
+            align-items: center;
+            gap: 20px;
             flex-wrap: wrap;
         }
         
-        .user-info span {
+        .band-section {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .user-actions {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .welcome-text {
             color: #4a5568;
             font-weight: 500;
+        }
+        
+        .logout-link {
+            color: #e53e3e;
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+        
+        .logout-link:hover {
+            color: #c53030;
+            text-decoration: underline;
         }
         
         .band-selector {
@@ -63,7 +100,7 @@
             border-radius: 6px;
             background: white;
             color: #4a5568;
-            font-size: 14px;
+            font-size: 18px;
             cursor: pointer;
         }
         
@@ -318,8 +355,29 @@
                 margin-bottom: 15px;
             }
             
+            .header-top {
+                flex-direction: column;
+                align-items: center;
+                text-align: center;
+                gap: 10px;
+            }
+            
             .header h1 {
                 font-size: 1.8rem;
+            }
+            
+            .user-controls {
+                flex-direction: column;
+                align-items: center;
+                gap: 15px;
+            }
+            
+            .band-section {
+                justify-content: center;
+            }
+            
+            .user-actions {
+                justify-content: center;
             }
             
             .nav {
@@ -415,8 +473,26 @@
         
         /* Small mobile devices */
         @media (max-width: 480px) {
+            .header-top {
+                flex-direction: column;
+                gap: 8px;
+            }
+            
             .header h1 {
                 font-size: 1.5rem;
+            }
+            
+            .user-controls {
+                flex-direction: column;
+                gap: 12px;
+            }
+            
+            .band-section {
+                justify-content: center;
+            }
+            
+            .user-actions {
+                justify-content: center;
             }
             
             .mobile-menu-toggle {
@@ -618,7 +694,7 @@
             color: black;
             text-decoration: none;
             border-radius: 50%;
-            font-size: 16px;
+            font-size: 22px;
             transition: all 0.3s ease;
             margin-left: 10px;
             border: 2px solid #e5e7eb;
@@ -655,34 +731,38 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>🎸 Bandmate</h1>
-            <% if logged_in? %>
-                <div class="user-info">
-                    <span>Welcome, <%= current_user.username %>!</span>
-                    <% if user_bands.count > 1 %>
-                        <form method="post" action="/select_band" style="display: inline;">
-                            <select name="band_id" onchange="this.form.submit()" class="band-selector">
-                                <option value="">Select Band</option>
-                                <% user_bands.each do |band| %>
-                                    <option value="<%= band.id %>" <%= 'selected' if current_band&.id == band.id %>><%= band.name %></option>
-                                <% end %>
-                            </select>
-                        </form>
-                    <% elsif user_bands.count == 1 %>
-                        <span class="current-band-display">🎸 <%= user_bands.first.name %></span>
-                    <% end %>
-                    <a href="/logout" class="btn btn-danger">Logout</a>
-                    <a href="/profile" class="profile-icon" title="User Profile">⚙️</a>
-                </div>
-            <% end %>
+            <div class="header-top">
+                <h1>🎸 Bandmate</h1>
+                <% if logged_in? %>
+                    <div class="user-controls">
+                        <div class="band-section">
+                                                    <% if user_bands.count > 1 %>
+                            <form method="post" action="/select_band" style="display: inline;">
+                                <select name="band_id" onchange="this.form.submit()" class="band-selector">
+                                    <% user_bands.each do |band| %>
+                                        <option value="<%= band.id %>" <%= 'selected' if current_band&.id == band.id %>><%= band.name %></option>
+                                    <% end %>
+                                </select>
+                            </form>
+                        <% elsif user_bands.count == 1 %>
+                            <span class="current-band-display">🎸 <%= user_bands.first.name %></span>
+                        <% end %>
+                        </div>
+                        <div class="user-actions">
+                            <span class="welcome-text">Welcome, <%= current_user.username %>!</span>
+                            <a href="/logout" class="logout-link">Logout</a>
+                            <a href="/profile" class="profile-icon" title="User Profile">⚙️</a>
+                        </div>
+                    </div>
+                <% end %>
+            </div>
             <button class="mobile-menu-toggle" onclick="toggleMobileMenu()">☰</button>
             <nav class="nav" id="mobile-nav">
                 <% if logged_in? %>
-                    <a href="/">Home</a>
-                    <a href="/set_lists">Set Lists</a>
-                    <a href="/songs">Songs</a>
-                    <a href="/global_songs">Global Songs</a>
-                    <a href="/venues">Venues</a>
+                    <a href="/set_lists">📋 Set Lists</a>
+                    <a href="/songs">🎵 Songs</a>
+                    <a href="/global_songs">🌐 Global Songs</a>
+                    <a href="/venues">🏢 Venues</a>
                 <% else %>
                     <a href="/login">Login</a>
                     <a href="/signup">Sign Up</a>

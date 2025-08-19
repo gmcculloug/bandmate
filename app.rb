@@ -9,8 +9,8 @@ enable :sessions
 use Rack::MethodOverride
 set :session_secret, ENV['SESSION_SECRET'] || 'your_secret_key_here_that_is_very_long_and_secure_at_least_64_chars'
 
-# Login secret for user registration (required)
-# Set BANDMATE_LOGIN_SECRET environment variable to enable signup
+# Account creation code for user registration (required)
+# Set BANDMATE_ACCT_CREATION_SECRET environment variable to enable account creation
 
 # Database configuration
 configure :development do
@@ -233,7 +233,7 @@ post '/login' do
       session[:band_id] = user.bands.first.id
     end
     
-    redirect '/'
+    redirect '/set_lists'
   else
     @error = "Invalid username or password"
     erb :login, layout: :layout
@@ -245,15 +245,15 @@ get '/signup' do
 end
 
 post '/signup' do
-  # Validate login secret
-  login_secret = ENV['BANDMATE_LOGIN_SECRET']
+  # Validate account creation code
+  login_secret = ENV['BANDMATE_ACCT_CREATION_SECRET']
   if login_secret.nil? || login_secret.empty?
-    @errors = ["Login secret not configured. Please contact administrator."]
+    @errors = ["Account creation code not configured. Please contact administrator."]
     return erb :signup, layout: :layout
   end
   
   if params[:login_secret] != login_secret
-    @errors = ["Invalid login secret. Please check your code and try again."]
+    @errors = ["Invalid account creation code. Please check your code and try again."]
     return erb :signup, layout: :layout
   end
   
@@ -261,7 +261,7 @@ post '/signup' do
   
   if user.save
     session[:user_id] = user.id
-    redirect '/'
+    redirect '/set_lists'
   else
     @errors = user.errors.full_messages
     erb :signup, layout: :layout
@@ -383,24 +383,14 @@ get '/' do
     redirect '/bands/new?first_band=true'
   end
   
-  @bands = user_bands
-  
-  # If no band is selected, show empty collections
-  unless current_band
-    @songs = Song.none
-    @set_lists = SetList.none
-    return erb :index
-  end
-  
-  @songs = filter_by_current_band(Song).order(:title)
-  @set_lists = filter_by_current_band(SetList).where('performance_date IS NULL OR performance_date >= ?', Date.current).order(:performance_date, :name)
-  erb :index
+  # Redirect to set lists as the main screen
+  redirect '/set_lists'
 end
 
 # Songs routes
 get '/songs' do
   require_login
-  return redirect '/' unless current_band
+  return redirect '/set_lists' unless current_band
   
   @search = params[:search]
   
@@ -416,13 +406,13 @@ end
 
 get '/songs/new' do
   require_login
-  return redirect '/' unless current_band
+  return redirect '/set_lists' unless current_band
   erb :new_song
 end
 
 post '/songs' do
   require_login
-  return redirect '/' unless current_band
+  return redirect '/set_lists' unless current_band
   
   song = Song.new(params[:song])
   # If band_ids provided, associate accordingly but ensure current_band is included by default
@@ -591,7 +581,16 @@ end
 # Set lists routes
 get '/set_lists' do
   require_login
-  return redirect '/' unless current_band
+  
+  # If user has no bands, redirect to create or join a band
+  if user_bands.empty?
+    redirect '/bands/new?first_band=true'
+  end
+  
+  # If no band is selected, redirect to band selection
+  unless current_band
+    redirect '/bands'
+  end
   
   @set_lists = filter_by_current_band(SetList).includes(:venue).order(:name)
   erb :set_lists
@@ -599,7 +598,7 @@ end
 
 get '/set_lists/new' do
   require_login
-  return redirect '/' unless current_band
+  return redirect '/set_lists' unless current_band
   
   @venues = filter_by_current_band(Venue).order(:name)
   @songs = filter_by_current_band(Song).order(:title)
@@ -608,7 +607,7 @@ end
 
 post '/set_lists' do
   require_login
-  return redirect '/' unless current_band
+  return redirect '/set_lists' unless current_band
   
   set_list_params = {
     name: params[:name], 
@@ -792,7 +791,7 @@ post '/bands' do
       session[:band_id] = band.id
       # Save this as the user's preferred band
       current_user.update(last_selected_band_id: band.id)
-      redirect '/'
+      redirect '/set_lists'
     else
       redirect '/bands'
     end
@@ -939,7 +938,7 @@ end
 # Venues routes
 get '/venues' do
   require_login
-  return redirect '/' unless current_band
+  return redirect '/set_lists' unless current_band
   
   @venues = filter_by_current_band(Venue).order(:name)
   erb :venues
@@ -947,13 +946,13 @@ end
 
 get '/venues/new' do
   require_login
-  return redirect '/' unless current_band
+  return redirect '/set_lists' unless current_band
   erb :new_venue
 end
 
 post '/venues' do
   require_login
-  return redirect '/' unless current_band
+  return redirect '/set_lists' unless current_band
   
   venue = Venue.new(params[:venue])
   venue.band = current_band
@@ -968,7 +967,7 @@ end
 
 get '/venues/:id' do
   require_login
-  return redirect '/' unless current_band
+  return redirect '/set_lists' unless current_band
   
   @venue = filter_by_current_band(Venue).find(params[:id])
   @bands = user_bands
@@ -977,7 +976,7 @@ end
 
 get '/venues/:id/edit' do
   require_login
-  return redirect '/' unless current_band
+  return redirect '/set_lists' unless current_band
   
   @venue = filter_by_current_band(Venue).find(params[:id])
   erb :edit_venue
@@ -985,7 +984,7 @@ end
 
 put '/venues/:id' do
   require_login
-  return redirect '/' unless current_band
+  return redirect '/set_lists' unless current_band
   
   @venue = filter_by_current_band(Venue).find(params[:id])
   if @venue.update(params[:venue])
@@ -998,7 +997,7 @@ end
 
 delete '/venues/:id' do
   require_login
-  return redirect '/' unless current_band
+  return redirect '/set_lists' unless current_band
   
   venue = filter_by_current_band(Venue).find(params[:id])
   venue.destroy
@@ -1055,7 +1054,7 @@ end
 # Copy a single venue to another band
 get '/venues/:venue_id/copy' do
   require_login
-  return redirect '/' unless current_band
+  return redirect '/set_lists' unless current_band
   
   @venue = filter_by_current_band(Venue).find(params[:venue_id])
   
@@ -1072,7 +1071,7 @@ end
 
 post '/venues/:venue_id/copy' do
   require_login
-  return redirect '/' unless current_band
+  return redirect '/set_lists' unless current_band
   
   @venue = filter_by_current_band(Venue).find(params[:venue_id])
   target_band_id = params[:target_band_id]

@@ -119,7 +119,7 @@ RSpec.describe 'API Endpoints', type: :request do
       expect(last_response.location).to include('first_band=true')
     end
 
-    it 'displays the home page when bands exist' do
+    it 'redirects to set lists when bands exist' do
       user = create(:user)
       band = create(:band, owner: user)
       song = create(:song, bands: [band])
@@ -128,10 +128,8 @@ RSpec.describe 'API Endpoints', type: :request do
       login_as(user, band)
       get '/'
       
-      expect(last_response).to be_ok
-      expect(last_response.body).to include(band.name)
-      expect(last_response.body).to include(song.title)
-      expect(last_response.body).to include(set_list.name)
+      expect(last_response).to be_redirect
+      expect(last_response.location).to end_with('/set_lists')
     end
   end
 end 

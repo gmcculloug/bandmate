@@ -16,3 +16,5 @@ group :development, :test do
   gem 'faker'
   gem 'database_cleaner-active_record'
 end
+
+gem "rackup", "~> 2.2"

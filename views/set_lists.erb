@@ -1,5 +1,8 @@
 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; flex-wrap: wrap; gap: 10px;">
-    <h2>📋 Set Lists</h2>
+    <div>
+        <h2>📋 Set Lists</h2>
+        <p style="color: #718096; margin: 5px 0 0 0;">Welcome to Bandmate! Manage your set lists, songs, and performances.</p>
+    </div>
     <a href="/set_lists/new" class="btn btn-success">➕ Create New Set List</a>
 </div>
 
@@ -52,6 +55,10 @@
     <div class="card">
         <h3>No set lists yet!</h3>
         <p>Create your first set list to start organizing your songs for performances.</p>
-        <a href="/set_lists/new" class="btn btn-success">Create Your First Set List</a>
+        <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 15px;">
+            <a href="/set_lists/new" class="btn btn-success">Create Your First Set List</a>
+            <a href="/songs/new" class="btn">Add Your First Song</a>
+            <a href="/venues/new" class="btn">Add Your First Venue</a>
+        </div>
     </div>
 <% end %> 

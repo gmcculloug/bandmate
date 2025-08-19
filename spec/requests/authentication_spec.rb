@@ -35,20 +35,20 @@ RSpec.describe 'Authentication', type: :request do
       expect(last_response.body).to include('Username:')
       expect(last_response.body).to include('Password:')
       expect(last_response.body).to include('Email Address (Optional):')
-      expect(last_response.body).to include('Login Secret:')
+      expect(last_response.body).to include('Account Creation Code:')
     end
   end
 
   describe 'POST /signup' do
     before do
-      ENV['BANDMATE_LOGIN_SECRET'] = 'test_secret_123'
+      ENV['BANDMATE_ACCT_CREATION_SECRET'] = 'test_secret_123'
     end
 
     after do
-      ENV.delete('BANDMATE_LOGIN_SECRET')
+      ENV.delete('BANDMATE_ACCT_CREATION_SECRET')
     end
 
-    it 'creates a new user with valid data and correct login secret' do
+    it 'creates a new user with valid data and correct account creation code' do
       expect {
         post '/signup', username: 'newuser', password: 'password123', email: 'test@example.com', login_secret: 'test_secret_123'
       }.to change(User, :count).by(1)
@@ -57,22 +57,22 @@ RSpec.describe 'Authentication', type: :request do
       expect(last_response.headers['Location']).to include('/')
     end
 
-    it 'rejects signup with incorrect login secret' do
+    it 'rejects signup with incorrect account creation code' do
       expect {
         post '/signup', username: 'newuser', password: 'password123', email: 'test@example.com', login_secret: 'wrong_secret'
       }.not_to change(User, :count)
       
       expect(last_response).to be_ok
-      expect(last_response.body).to include('Invalid login secret')
+      expect(last_response.body).to include('Invalid account creation code')
     end
 
-    it 'rejects signup without login secret' do
+    it 'rejects signup without account creation code' do
       expect {
         post '/signup', username: 'newuser', password: 'password123', email: 'test@example.com'
       }.not_to change(User, :count)
       
       expect(last_response).to be_ok
-      expect(last_response.body).to include('Invalid login secret')
+      expect(last_response.body).to include('Invalid account creation code')
     end
 
     it 'rejects invalid data' do
@@ -81,15 +81,15 @@ RSpec.describe 'Authentication', type: :request do
       expect(last_response.body).to include('can\'t be blank')
     end
 
-    it 'rejects signup when BANDMATE_LOGIN_SECRET environment variable is not set' do
-      ENV.delete('BANDMATE_LOGIN_SECRET')
+    it 'rejects signup when BANDMATE_ACCT_CREATION_SECRET environment variable is not set' do
+      ENV.delete('BANDMATE_ACCT_CREATION_SECRET')
       
       expect {
         post '/signup', username: 'newuser', password: 'password123', email: 'test@example.com', login_secret: 'any_secret'
       }.not_to change(User, :count)
       
       expect(last_response).to be_ok
-      expect(last_response.body).to include('Login secret not configured')
+      expect(last_response.body).to include('Account creation code not configured')
     end
   end
 

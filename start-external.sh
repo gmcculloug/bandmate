@@ -41,4 +41,4 @@ echo "🔒 Make sure your firewall allows connections on port 4567"
 echo ""
 
 # Start the application
-BANDMATE_LOGIN_SECRET=1234 ruby app.rb 
+BANDMATE_ACCT_CREATION_SECRET=1234 ruby app.rb 

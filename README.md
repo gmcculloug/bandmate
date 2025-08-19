@@ -33,12 +33,12 @@ You can still use the web interface at `http://localhost:4567/setup` for first-t
 The application requires certain environment variables to be set for security and functionality:
 
 - **SESSION_SECRET**: A secure random string for session encryption (at least 64 characters)
-- **BANDMATE_LOGIN_SECRET**: A secret code required for new user registration
+- **BANDMATE_ACCT_CREATION_SECRET**: An account creation code required for new user registration
 
 You can set these in several ways:
 1. Create a `.env` file in the project root (copy from `env.example`)
-2. Export them in your shell: `export BANDMATE_LOGIN_SECRET=your_secret_code`
-3. Set them when running the app: `BANDMATE_LOGIN_SECRET=your_secret_code ruby app.rb`
+2. Export them in your shell: `export BANDMATE_ACCT_CREATION_SECRET=your_account_creation_code`
+3. Set them when running the app: `BANDMATE_ACCT_CREATION_SECRET=your_account_creation_code ruby app.rb`
 
 ### Running the Application
 ```bash
