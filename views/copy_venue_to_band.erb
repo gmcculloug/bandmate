@@ -1,0 +1,67 @@
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
+    <h2>📋 Copy Venue to Another Band</h2>
+    <a href="/venues/<%= @venue.id %>" class="btn">Back to Venue</a>
+</div>
+
+<% if @error %>
+    <div class="error" style="margin-bottom: 20px; padding: 15px; background: #fee; border-radius: 8px; border-left: 4px solid #dc2626; color: #dc2626;">
+        <%= @error %>
+    </div>
+<% end %>
+
+<div class="card">
+    <h3>Venue to Copy</h3>
+    <div style="padding: 15px; background: #f7fafc; border-radius: 8px; margin-bottom: 20px;">
+        <div style="font-weight: 600; font-size: 1.1rem; margin-bottom: 8px;">🏢 <%= @venue.name %></div>
+        <div style="color: #718096; margin-bottom: 4px;"><strong>Location:</strong> <%= @venue.location %></div>
+        <div style="color: #718096; margin-bottom: 4px;"><strong>Contact:</strong> <%= @venue.contact_name %></div>
+        <div style="color: #718096; margin-bottom: 4px;"><strong>Phone:</strong> <%= @venue.phone_number %></div>
+        <% if @venue.website.present? %>
+            <div style="color: #718096;"><strong>Website:</strong> <%= @venue.website %></div>
+        <% end %>
+    </div>
+
+    <% if @target_bands.any? %>
+        <form method="POST" action="/venues/<%= @venue.id %>/copy">
+            <div style="margin-bottom: 20px;">
+                <label for="target_band_id" style="display: block; font-weight: 600; margin-bottom: 8px;">
+                    Select Band to Copy To:
+                </label>
+                <select id="target_band_id" name="target_band_id" required style="width: 100%; padding: 10px; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 16px;">
+                    <option value="">-- Select a Band --</option>
+                    <% @target_bands.each do |band| %>
+                        <option value="<%= band.id %>"><%= band.name %></option>
+                    <% end %>
+                </select>
+            </div>
+
+            <div style="margin-bottom: 20px; padding: 15px; background: #e6fffa; border-radius: 8px; border-left: 4px solid #38a169;">
+                <p style="margin: 0; color: #2f855a; font-weight: 500;">
+                    ℹ️ The venue will be copied with all its details. Only bands where no venue with the same name exists are shown.
+                </p>
+            </div>
+
+            <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                <a href="/venues/<%= @venue.id %>" class="btn">Cancel</a>
+                <button type="submit" class="btn btn-success">📋 Copy Venue</button>
+            </div>
+        </form>
+    <% else %>
+        <div style="text-align: center; padding: 40px;">
+            <h3>No Available Bands</h3>
+            <p style="color: #718096; margin-bottom: 20px;">
+                <% if current_user.bands.count <= 1 %>
+                    You need to be a member of multiple bands to copy venues between them.
+                <% else %>
+                    All your other bands already have a venue named '<%= @venue.name %>'.
+                <% end %>
+            </p>
+            <div class="actions">
+                <a href="/venues/<%= @venue.id %>" class="btn">Back to Venue</a>
+                <% if current_user.bands.count <= 1 %>
+                    <a href="/bands/new" class="btn btn-success">Create New Band</a>
+                <% end %>
+            </div>
+        </div>
+    <% end %>
+</div>

@@ -137,7 +137,8 @@ RSpec.describe SetList, type: :model do
       new_set_list = SetList.create!(
         name: new_name,
         notes: original_set_list.notes,
-        band: original_set_list.band
+        band: original_set_list.band,
+        performance_date: original_set_list.performance_date
       )
       
       # Copy all songs with their positions

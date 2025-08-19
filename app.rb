@@ -149,7 +149,13 @@ end
 # Authentication helpers
 helpers do
   def current_user
-    @current_user ||= User.find(session[:user_id]) if session[:user_id]
+    if settings.test?
+      # In test mode, try to get user from test session
+      test_user_id = @test_session&.dig(:user_id) || session[:user_id]
+      @current_user ||= User.find(test_user_id) if test_user_id
+    else
+      @current_user ||= User.find(session[:user_id]) if session[:user_id]
+    end
   end
 
   def logged_in?
@@ -163,7 +169,13 @@ helpers do
   end
 
   def current_band
-    if session[:band_id] && logged_in?
+    if settings.test?
+      # In test mode, try to get band from test session
+      test_band_id = @test_session&.dig(:band_id) || session[:band_id]
+      if test_band_id && logged_in?
+        current_user.bands.find_by(id: test_band_id)
+      end
+    elsif session[:band_id] && logged_in?
       current_user.bands.find_by(id: session[:band_id])
     end
   end
@@ -185,6 +197,20 @@ helpers do
     else
       collection
     end
+  end
+end
+
+# Test authentication route (only available in test mode)
+if settings.test?
+  post '/test_login' do
+    user = User.find(params[:user_id])
+    band = params[:band_id] ? Band.find(params[:band_id]) : nil
+    
+    session[:user_id] = user.id
+    session[:band_id] = band.id if band
+    
+    content_type :json
+    { success: true, user_id: user.id, band_id: band&.id }.to_json
   end
 end
 
@@ -399,7 +425,15 @@ post '/songs' do
   return redirect '/' unless current_band
   
   song = Song.new(params[:song])
-  song.bands = [current_band]
+  # If band_ids provided, associate accordingly but ensure current_band is included by default
+  provided_band_ids = params.dig(:song, :band_ids)
+  if provided_band_ids.is_a?(Array) && provided_band_ids.any?
+    # Filter to bands the current user is a member of
+    allowed_band_ids = current_user.bands.where(id: provided_band_ids).pluck(:id)
+    song.band_ids = (allowed_band_ids + [current_band.id]).uniq
+  else
+    song.bands = [current_band]
+  end
   
   if song.save
     redirect '/songs'
@@ -615,6 +649,7 @@ put '/set_lists/:id' do
   @set_list = filter_by_current_band(SetList).find(params[:id])
   set_list_params = {
     name: params[:name], 
+    notes: params[:notes],
     band_id: current_band.id,
     venue_id: params[:venue_id].presence,
     performance_date: params[:performance_date],
@@ -710,7 +745,8 @@ post '/set_lists/:id/copy' do
     new_set_list = SetList.create!(
       name: new_name,
       notes: original_set_list.notes,
-      band: original_set_list.band
+      band: original_set_list.band,
+      performance_date: original_set_list.performance_date || Date.current
     )
     
     # Copy all songs with their positions
@@ -756,9 +792,10 @@ post '/bands' do
       session[:band_id] = band.id
       # Save this as the user's preferred band
       current_user.update(last_selected_band_id: band.id)
+      redirect '/'
+    else
+      redirect '/bands'
     end
-    
-    redirect '/bands'
   else
     @errors = band.errors.full_messages
     erb :new_band
@@ -978,7 +1015,7 @@ get '/bands/:band_id/copy_venues' do
   @venues = Venue.where(band_id: other_band_ids).order(:name)
   
   # Exclude venues already copied to this band (by name and location to avoid exact duplicates)
-  existing_venue_signatures = @band.venues.pluck('name || " - " || location')
+  existing_venue_signatures = @band.venues.pluck(:name, :location).map { |name, location| "#{name} - #{location}" }
   @venues = @venues.reject do |venue|
     existing_venue_signatures.include?("#{venue.name} - #{venue.location}")
   end

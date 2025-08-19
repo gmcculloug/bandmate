@@ -1,0 +1,100 @@
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
+    <h2>🏛️ Copy Venues to <%= @band.name %></h2>
+    <a href="/bands/<%= @band.id %>" class="btn">Back to Band</a>
+</div>
+
+<div style="margin-bottom: 20px; padding: 15px; background: #e6fffa; border-radius: 8px; border-left: 4px solid #38a169;">
+    <p style="margin: 0; color: #2f855a; font-weight: 500;">
+        ℹ️ Select venues from your other bands to copy to <%= @band.name %>. Each venue will be duplicated with all its contact information.
+    </p>
+</div>
+
+<% if @venues.any? %>
+    <form method="POST" action="/bands/<%= @band.id %>/copy_venues">
+        <div style="margin-bottom: 20px; padding: 15px; background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                <label style="display: flex; align-items: center; cursor: pointer; font-size: 16px;">
+                    <input type="checkbox" id="select-all" onchange="selectAll()" style="margin-right: 8px; transform: scale(1.2);">
+                    Select All (<span id="selected-count">0</span> selected)
+                </label>
+                <button type="submit" id="copy-button" class="btn btn-success" data-band-name="<%= @band.name %>" disabled>
+                    Select venues to copy
+                </button>
+            </div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+            <% @venues.each do |venue| %>
+                <div class="venue-card" style="padding: 15px; margin-bottom: 0; border: 1px solid #e2e8f0; border-radius: 6px; background: white;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                        <div style="display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0;">
+                            <label style="display: flex; align-items: center; cursor: pointer;">
+                                <input type="checkbox" name="venue_ids[]" value="<%= venue.id %>" style="transform: scale(1.2); min-width: 20px; min-height: 20px;">
+                            </label>
+                            <div style="flex: 1; min-width: 0;">
+                                <div style="font-weight: bold; color: #2d3748; margin-bottom: 3px; word-break: break-word;"><%= venue.name %></div>
+                                <div style="color: #718096; font-size: 0.9rem; margin-bottom: 5px; word-break: break-word;"><%= venue.location %></div>
+                                <div style="font-size: 0.8rem; color: #4a5568; display: flex; flex-wrap: wrap; gap: 10px;">
+                                    <span><strong>Contact:</strong> <%= venue.contact_name %></span>
+                                    <span><strong>Phone:</strong> <%= venue.phone_number %></span>
+                                    <% if venue.website.present? %>
+                                        <span><strong>Website:</strong> <a href="<%= venue.website %>" target="_blank" style="color: #2563eb; text-decoration: underline;"><%= venue.website %></a></span>
+                                    <% end %>
+                                </div>
+                                <div style="font-size: 0.75rem; color: #a0aec0; margin-top: 4px;">
+                                    From: <strong><%= venue.band.name %></strong>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="actions" style="margin-left: 15px; display: flex; gap: 5px; flex-shrink: 0;">
+                            <a href="/venues/<%= venue.id %>" class="btn" style="padding: 6px 12px; font-size: 0.8rem;">View</a>
+                        </div>
+                    </div>
+                </div>
+            <% end %>
+        </div>
+    </form>
+<% else %>
+    <div class="card">
+        <h3>No venues available to copy!</h3>
+        <p>
+            You don't have any venues in your other bands to copy, or all venues have already been copied to <%= @band.name %>.
+        </p>
+        <div class="actions">
+            <a href="/venues/new" class="btn btn-success">Add New Venue</a>
+            <a href="/bands/<%= @band.id %>" class="btn">Back to Band</a>
+        </div>
+    </div>
+<% end %>
+
+<script>
+function selectAll() {
+    const checkboxes = document.querySelectorAll('input[name="venue_ids[]"]');
+    const selectAllCheckbox = document.getElementById('select-all');
+    checkboxes.forEach(cb => cb.checked = selectAllCheckbox.checked);
+    updateSelectedCount();
+}
+
+function updateSelectedCount() {
+    const checkboxes = document.querySelectorAll('input[name="venue_ids[]"]:checked');
+    const count = checkboxes.length;
+    const button = document.getElementById('copy-button');
+    const countSpan = document.getElementById('selected-count');
+    
+    if (countSpan) countSpan.textContent = count;
+    if (button) {
+        button.disabled = count === 0;
+        button.textContent = count === 0 ? 'Select venues to copy' : `Copy ${count} venue${count === 1 ? '' : 's'} to ${button.dataset.bandName}`;
+    }
+}
+
+// Add event listeners when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    const checkboxes = document.querySelectorAll('input[name="venue_ids[]"]');
+    checkboxes.forEach(cb => {
+        cb.addEventListener('change', updateSelectedCount);
+    });
+    
+    updateSelectedCount();
+});
+</script>

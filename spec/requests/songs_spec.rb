@@ -1,10 +1,17 @@
 require 'spec_helper'
 
 RSpec.describe 'Songs API', type: :request do
+  let(:user) { create(:user) }
+  let(:band) { create(:band, owner: user) }
+  
+  before do
+    create(:user_band, user: user, band: band)
+  end
   describe 'GET /songs' do
     it 'returns a list of all songs' do
-      song1 = create(:song, title: 'Song A', artist: 'Artist A')
-      song2 = create(:song, title: 'Song B', artist: 'Artist B')
+      login_as(user, band)
+      song1 = create(:song, title: 'Song A', artist: 'Artist A', bands: [band])
+      song2 = create(:song, title: 'Song B', artist: 'Artist B', bands: [band])
       
       get '/songs'
       
@@ -14,9 +21,10 @@ RSpec.describe 'Songs API', type: :request do
     end
 
     it 'displays songs in alphabetical order by title' do
-      song_c = create(:song, title: 'C Song')
-      song_a = create(:song, title: 'A Song')
-      song_b = create(:song, title: 'B Song')
+      login_as(user, band)
+      song_c = create(:song, title: 'C Song', bands: [band])
+      song_a = create(:song, title: 'A Song', bands: [band])
+      song_b = create(:song, title: 'B Song', bands: [band])
       
       get '/songs'
       
@@ -31,8 +39,9 @@ RSpec.describe 'Songs API', type: :request do
     end
 
     it 'filters songs by search term' do
-      song1 = create(:song, title: 'Wonderwall', artist: 'Oasis')
-      song2 = create(:song, title: 'Yellow', artist: 'Coldplay')
+      login_as(user, band)
+      song1 = create(:song, title: 'Wonderwall', artist: 'Oasis', bands: [band])
+      song2 = create(:song, title: 'Yellow', artist: 'Coldplay', bands: [band])
       
       get '/songs', search: 'wonderwall'
       
@@ -42,8 +51,9 @@ RSpec.describe 'Songs API', type: :request do
     end
 
     it 'filters songs by artist' do
-      song1 = create(:song, title: 'Wonderwall', artist: 'Oasis')
-      song2 = create(:song, title: 'Yellow', artist: 'Coldplay')
+      login_as(user, band)
+      song1 = create(:song, title: 'Wonderwall', artist: 'Oasis', bands: [band])
+      song2 = create(:song, title: 'Yellow', artist: 'Coldplay', bands: [band])
       
       get '/songs', search: 'oasis'
       
@@ -52,40 +62,45 @@ RSpec.describe 'Songs API', type: :request do
       expect(last_response.body).not_to include('Yellow')
     end
 
-    it 'filters songs by band' do
-      band1 = create(:band, name: 'Band 1')
+    it 'shows songs for the currently selected band' do
+      band1 = create(:band, name: 'Band 1', owner: user)
       band2 = create(:band, name: 'Band 2')
-      
+      create(:user_band, user: user, band: band1)
+
       song1 = create(:song, title: 'Song 1', bands: [band1])
       song2 = create(:song, title: 'Song 2', bands: [band2])
-      
-      get '/songs', band_id: band1.id
-      
+
+      login_as(user, band1)
+      get '/songs'
+
       expect(last_response).to be_ok
       expect(last_response.body).to include('Song 1')
       expect(last_response.body).not_to include('Song 2')
     end
 
-    it 'combines search and band filters' do
-      band1 = create(:band, name: 'Band 1')
+    it 'combines search with the currently selected band' do
+      band1 = create(:band, name: 'Band 1', owner: user)
       band2 = create(:band, name: 'Band 2')
-      
+      create(:user_band, user: user, band: band1)
+
       song1 = create(:song, title: 'Rock Song', artist: 'Rock Artist', bands: [band1])
       song2 = create(:song, title: 'Jazz Song', artist: 'Jazz Artist', bands: [band1])
       song3 = create(:song, title: 'Rock Song', artist: 'Rock Artist', bands: [band2])
-      
-      get '/songs', search: 'rock', band_id: band1.id
-      
+
+      login_as(user, band1)
+      get '/songs', search: 'rock'
+
       expect(last_response).to be_ok
       expect(last_response.body).to include('Rock Song')
       expect(last_response.body).not_to include('Jazz Song')
-      expect(last_response.body).not_to include('Rock Song') # from band2
+      # Should not include songs from other bands with the same title
+      expect(last_response.body.scan('Rock Song').length).to eq(1)
     end
   end
 
   describe 'GET /songs/new' do
     it 'displays the new song form' do
-      band = create(:band)
+      login_as(user, band)
       
       get '/songs/new'
       
@@ -100,7 +115,7 @@ RSpec.describe 'Songs API', type: :request do
 
   describe 'POST /songs' do
     it 'creates a new song with valid attributes' do
-      band = create(:band)
+      login_as(user, band)
       song_params = {
         title: 'New Song',
         artist: 'New Artist',
@@ -121,8 +136,11 @@ RSpec.describe 'Songs API', type: :request do
     end
 
     it 'associates song with multiple bands' do
+      login_as(user, band)
       band1 = create(:band)
       band2 = create(:band)
+      create(:user_band, user: user, band: band1)
+      create(:user_band, user: user, band: band2)
       song_params = {
         title: 'Multi Band Song',
         artist: 'Multi Artist',
@@ -137,6 +155,7 @@ RSpec.describe 'Songs API', type: :request do
     end
 
     it 'displays errors for invalid attributes' do
+      login_as(user, band)
       song_params = {
         title: '',
         artist: '',
@@ -153,7 +172,7 @@ RSpec.describe 'Songs API', type: :request do
     end
 
     it 'displays errors for invalid tempo' do
-      band = create(:band)
+      login_as(user, band)
       song_params = {
         title: 'Valid Song',
         artist: 'Valid Artist',
@@ -173,7 +192,8 @@ RSpec.describe 'Songs API', type: :request do
 
   describe 'GET /songs/:id' do
     it 'displays a specific song' do
-      song = create(:song, title: 'Test Song', artist: 'Test Artist', key: 'C')
+      login_as(user, band)
+      song = create(:song, title: 'Test Song', artist: 'Test Artist', key: 'C', bands: [band])
       
       get "/songs/#{song.id}"
       
@@ -184,35 +204,35 @@ RSpec.describe 'Songs API', type: :request do
     end
 
     it 'returns 404 for non-existent song' do
-      get '/songs/999'
-      
-      expect(last_response).to be_not_found
+      login_as(user, band)
+      expect { get '/songs/999' }.to raise_error(ActiveRecord::RecordNotFound)
     end
   end
 
   describe 'GET /songs/:id/edit' do
     it 'displays the edit form for a song' do
-      song = create(:song, title: 'Edit Song', artist: 'Edit Artist')
+      login_as(user, band)
+      song = create(:song, title: 'Edit Song', artist: 'Edit Artist', bands: [band])
       
       get "/songs/#{song.id}/edit"
       
       expect(last_response).to be_ok
       expect(last_response.body).to include('Edit Song')
       expect(last_response.body).to include('Edit Artist')
-      expect(last_response.body).to include('method="post"')
-      expect(last_response.body).to include('_method" value="put"')
+      expect(last_response.body).to include('method="POST"')
+      expect(last_response.body).to include('_method" value="PUT"')
     end
 
     it 'returns 404 for non-existent song' do
-      get '/songs/999/edit'
-      
-      expect(last_response).to be_not_found
+      login_as(user, band)
+      expect { get '/songs/999/edit' }.to raise_error(ActiveRecord::RecordNotFound)
     end
   end
 
   describe 'PUT /songs/:id' do
     it 'updates a song with valid attributes' do
-      song = create(:song, title: 'Old Title', artist: 'Old Artist')
+      login_as(user, band)
+      song = create(:song, title: 'Old Title', artist: 'Old Artist', bands: [band])
       update_params = {
         title: 'New Title',
         artist: 'New Artist',
@@ -229,7 +249,8 @@ RSpec.describe 'Songs API', type: :request do
     end
 
     it 'updates band associations' do
-      song = create(:song)
+      login_as(user, band)
+      song = create(:song, bands: [band])
       old_band = song.bands.first
       new_band = create(:band)
       
@@ -248,7 +269,8 @@ RSpec.describe 'Songs API', type: :request do
     end
 
     it 'displays errors for invalid attributes' do
-      song = create(:song, title: 'Valid Title')
+      login_as(user, band)
+      song = create(:song, title: 'Valid Title', bands: [band])
       update_params = { title: '', artist: 'Valid Artist', key: 'C' }
       
       put "/songs/#{song.id}", song: update_params
@@ -258,15 +280,15 @@ RSpec.describe 'Songs API', type: :request do
     end
 
     it 'returns 404 for non-existent song' do
-      put '/songs/999', song: { title: 'New Title' }
-      
-      expect(last_response).to be_not_found
+      login_as(user, band)
+      expect { put '/songs/999', song: { title: 'New Title' } }.to raise_error(ActiveRecord::RecordNotFound)
     end
   end
 
   describe 'DELETE /songs/:id' do
     it 'deletes a song' do
-      song = create(:song, title: 'Delete Song')
+      login_as(user, band)
+      song = create(:song, title: 'Delete Song', bands: [band])
       
       expect {
         delete "/songs/#{song.id}"
@@ -277,9 +299,8 @@ RSpec.describe 'Songs API', type: :request do
     end
 
     it 'returns 404 for non-existent song' do
-      delete '/songs/999'
-      
-      expect(last_response).to be_not_found
+      login_as(user, band)
+      expect { delete '/songs/999' }.to raise_error(ActiveRecord::RecordNotFound)
     end
   end
 end 

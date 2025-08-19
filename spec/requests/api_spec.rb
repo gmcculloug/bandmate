@@ -3,9 +3,12 @@ require 'spec_helper'
 RSpec.describe 'API Endpoints', type: :request do
   describe 'GET /api/songs' do
     it 'returns songs as JSON' do
-      song1 = create(:song, title: 'Song 1', artist: 'Artist 1')
-      song2 = create(:song, title: 'Song 2', artist: 'Artist 2')
+      user = create(:user)
+      band = create(:band, owner: user)
+      song1 = create(:song, title: 'Song 1', artist: 'Artist 1', bands: [band])
+      song2 = create(:song, title: 'Song 2', artist: 'Artist 2', bands: [band])
       
+      login_as(user, band)
       get '/api/songs'
       
       expect(last_response).to be_ok
@@ -18,12 +21,14 @@ RSpec.describe 'API Endpoints', type: :request do
     end
 
     it 'filters songs by band when band_id is provided' do
-      band1 = create(:band, name: 'Band 1')
-      band2 = create(:band, name: 'Band 2')
+      user = create(:user)
+      band1 = create(:band, name: 'Band 1', owner: user)
+      band2 = create(:band, name: 'Band 2', owner: user)
       
       song1 = create(:song, title: 'Song 1', artist: 'Artist 1', bands: [band1])
       song2 = create(:song, title: 'Song 2', artist: 'Artist 2', bands: [band2])
       
+      login_as(user, band1)
       get '/api/songs', band_id: band1.id
       
       expect(last_response).to be_ok
@@ -33,8 +38,10 @@ RSpec.describe 'API Endpoints', type: :request do
     end
 
     it 'returns empty array when no songs match band filter' do
-      band = create(:band)
+      user = create(:user)
+      band = create(:band, owner: user)
       
+      login_as(user, band)
       get '/api/songs', band_id: band.id
       
       expect(last_response).to be_ok
@@ -43,9 +50,12 @@ RSpec.describe 'API Endpoints', type: :request do
     end
 
     it 'returns all songs when band_id is not provided' do
-      song1 = create(:song, title: 'Song 1')
-      song2 = create(:song, title: 'Song 2')
+      user = create(:user)
+      band = create(:band, owner: user)
+      song1 = create(:song, title: 'Song 1', bands: [band])
+      song2 = create(:song, title: 'Song 2', bands: [band])
       
+      login_as(user, band)
       get '/api/songs'
       
       expect(last_response).to be_ok
@@ -98,8 +108,10 @@ RSpec.describe 'API Endpoints', type: :request do
 
   describe 'GET /' do
     it 'redirects to create first band when no bands exist' do
+      user = create(:user)
       Band.destroy_all
       
+      login_as(user)
       get '/'
       
       expect(last_response).to be_redirect
@@ -108,10 +120,12 @@ RSpec.describe 'API Endpoints', type: :request do
     end
 
     it 'displays the home page when bands exist' do
-      band = create(:band)
-      song = create(:song)
-      set_list = create(:set_list)
+      user = create(:user)
+      band = create(:band, owner: user)
+      song = create(:song, bands: [band])
+      set_list = create(:set_list, band: band)
       
+      login_as(user, band)
       get '/'
       
       expect(last_response).to be_ok

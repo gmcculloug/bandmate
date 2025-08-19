@@ -140,11 +140,7 @@ RSpec.describe 'Authentication', type: :request do
 
     describe 'POST /account/delete' do
       it 'deletes the account with correct password' do
-        # Debug: check what the response looks like
         post '/account/delete', password: 'password123'
-        puts "Response status: #{last_response.status}"
-        puts "Response body: #{last_response.body}"
-        puts "Response headers: #{last_response.headers}"
         
         expect(last_response.status).to eq(302)
         expect(last_response.headers['Location']).to include('/login?account_deleted=true')
