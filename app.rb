@@ -435,33 +435,21 @@ end
 
 get '/songs/:id' do
   require_login
-  @song = current_band.songs.find_by(id: params[:id])
-  
-  unless @song
-    redirect '/songs'
-  end
+  @song = current_band.songs.find(params[:id])
   
   erb :show_song
 end
 
 get '/songs/:id/edit' do
   require_login
-  @song = current_band.songs.find_by(id: params[:id])
-  
-  unless @song
-    redirect '/songs'
-  end
+  @song = current_band.songs.find(params[:id])
   
   erb :edit_song
 end
 
 put '/songs/:id' do
   require_login
-  @song = current_band.songs.find_by(id: params[:id])
-  
-  unless @song
-    redirect '/songs'
-  end
+  @song = current_band.songs.find(params[:id])
   
   if @song.update(params[:song])
     redirect "/songs/#{@song.id}"
@@ -473,17 +461,15 @@ end
 
 delete '/songs/:id' do
   require_login
-  song = current_band.songs.find_by(id: params[:id])
+  song = current_band.songs.find(params[:id])
   
-  if song
-    # Clean up associations before deleting the song
-    song.set_list_songs.destroy_all
-    
-    # Remove the song from all bands (many-to-many relationship)
-    song.band_ids = []
-    
-    song.destroy
-  end
+  # Clean up associations before deleting the song
+  song.set_list_songs.destroy_all
+  
+  # Remove the song from all bands (many-to-many relationship)
+  song.band_ids = []
+  
+  song.destroy
   
   redirect '/songs'
 end
@@ -609,7 +595,7 @@ get '/set_lists' do
     redirect '/bands'
   end
   
-  @set_lists = filter_by_current_band(SetList).includes(:venue).order(:performance_date)
+  @set_lists = filter_by_current_band(SetList).includes(:venue).order(:name)
   erb :set_lists
 end
 
@@ -648,11 +634,7 @@ end
 
 get '/set_lists/:id' do
   require_login
-  @set_list = filter_by_current_band(SetList).includes(:venue).find_by(id: params[:id])
-  
-  unless @set_list
-    redirect '/set_lists'
-  end
+  @set_list = filter_by_current_band(SetList).includes(:venue).find(params[:id])
   
   @available_songs = filter_by_current_band(Song).where.not(id: @set_list.song_ids).order(:title)
   erb :show_set_list
@@ -660,11 +642,7 @@ end
 
 get '/set_lists/:id/edit' do
   require_login
-  @set_list = filter_by_current_band(SetList).find_by(id: params[:id])
-  
-  unless @set_list
-    redirect '/set_lists'
-  end
+  @set_list = filter_by_current_band(SetList).find(params[:id])
   
   @venues = filter_by_current_band(Venue).order(:name)
   erb :edit_set_list
@@ -672,11 +650,8 @@ end
 
 put '/set_lists/:id' do
   require_login
-  @set_list = filter_by_current_band(SetList).find_by(id: params[:id])
+  @set_list = filter_by_current_band(SetList).find(params[:id])
   
-  unless @set_list
-    redirect '/set_lists'
-  end
   set_list_params = {
     name: params[:name], 
     notes: params[:notes],
@@ -698,28 +673,18 @@ end
 
 delete '/set_lists/:id' do
   require_login
-  set_list = filter_by_current_band(SetList).find_by(id: params[:id])
+  set_list = filter_by_current_band(SetList).find(params[:id])
   
-  if set_list
-    set_list.destroy
-  end
-  
+  set_list.destroy
   redirect '/set_lists'
 end
 
 # Add song to set list
 post '/set_lists/:id/songs' do
   require_login
-  set_list = filter_by_current_band(SetList).find_by(id: params[:id])
+  set_list = filter_by_current_band(SetList).find(params[:id])
   
-  unless set_list
-    redirect '/set_lists'
-  end
-  song = filter_by_current_band(Song).find_by(id: params[:song_id])
-  
-  unless song
-    redirect '/set_lists'
-  end
+  song = filter_by_current_band(Song).find(params[:song_id])
   position = set_list.set_list_songs.count + 1
   
   set_list_song = SetListSong.new(
@@ -740,11 +705,8 @@ end
 # Remove song from set list
 delete '/set_lists/:set_list_id/songs/:song_id' do
   require_login
-  set_list = filter_by_current_band(SetList).find_by(id: params[:set_list_id])
+  set_list = filter_by_current_band(SetList).find(params[:set_list_id])
   
-  unless set_list
-    redirect '/set_lists'
-  end
   set_list_song = set_list.set_list_songs.find_by(song_id: params[:song_id])
   set_list_song.destroy if set_list_song
   
@@ -759,23 +721,15 @@ end
 # Print set list
 get '/set_lists/:id/print' do
   require_login
-  @set_list = filter_by_current_band(SetList).find_by(id: params[:id])
+  @set_list = filter_by_current_band(SetList).find(params[:id])
   
-  unless @set_list
-    redirect '/set_lists'
-  end
   erb :print_set_list, layout: false
 end
 
 # Reorder songs in set list
 post '/set_lists/:id/reorder' do
   require_login
-  set_list = filter_by_current_band(SetList).find_by(id: params[:id])
-  
-  unless set_list
-    content_type :json
-    return { success: false, error: "Set list not found" }.to_json
-  end
+  set_list = filter_by_current_band(SetList).find(params[:id])
   song_order = params[:song_order]
   
   if song_order && song_order.is_a?(Array)
@@ -793,11 +747,7 @@ end
 post '/set_lists/:id/copy' do
   require_login
   begin
-    original_set_list = filter_by_current_band(SetList).find_by(id: params[:id])
-    
-    unless original_set_list
-      redirect '/set_lists'
-    end
+    original_set_list = filter_by_current_band(SetList).find(params[:id])
     
     # Create new set list with copied name and notes
     new_name = "Copy - #{original_set_list.name}"
@@ -871,9 +821,9 @@ get '/bands/:id/edit' do
   require_login
   @band = user_bands.find(params[:id])
   
-  # Only the owner can edit the band
-  unless @band.owned_by?(current_user)
-    @errors = ["Only the band owner can edit this band"]
+  # Any band member can edit the band
+  unless @band.users.include?(current_user)
+    @errors = ["You must be a member of this band to edit it"]
     return erb :show_band
   end
   
@@ -884,9 +834,9 @@ put '/bands/:id' do
   require_login
   @band = user_bands.find(params[:id])
   
-  # Only the owner can edit the band
-  unless @band.owned_by?(current_user)
-    @errors = ["Only the band owner can edit this band"]
+  # Any band member can edit the band
+  unless @band.users.include?(current_user)
+    @errors = ["You must be a member of this band to edit it"]
     return erb :show_band
   end
   
@@ -927,9 +877,9 @@ post '/bands/:id/add_user' do
   require_login
   @band = user_bands.find(params[:id])
   
-  # Only the owner can add users
-  unless @band.owned_by?(current_user)
-    @user_error = "Only the band owner can add new members"
+  # Any band member can add users
+  unless @band.users.include?(current_user)
+    @user_error = "You must be a member of this band to add new members"
     return erb :edit_band
   end
   
@@ -966,9 +916,15 @@ post '/bands/:id/remove_user' do
   @band = user_bands.find(params[:id])
   user_to_remove = User.find(params[:user_id])
   
-  # Users can always remove themselves, but only owners can remove others
-  if user_to_remove != current_user && !@band.owned_by?(current_user)
-    @user_error = "Only the band owner can remove other members"
+  # Any band member can remove other members, but users can always remove themselves
+  if user_to_remove != current_user && !@band.users.include?(current_user)
+    @user_error = "You must be a member of this band to remove other members"
+    return erb :edit_band
+  end
+  
+  # Prevent removing the band owner
+  if user_to_remove == @band.owner
+    @user_error = "Cannot remove the band owner. The owner must transfer ownership first."
     return erb :edit_band
   end
   
@@ -985,7 +941,7 @@ post '/bands/:id/remove_user' do
       # User is removing themselves - redirect to bands list with message
       redirect '/bands?left_band=true'
     else
-      # Owner removing another user - stay on edit page with success message
+      # Member removing another user - stay on edit page with success message
       @user_success = "Successfully removed '#{user_to_remove.username}' from the band"
       erb :edit_band
     end
@@ -993,6 +949,37 @@ post '/bands/:id/remove_user' do
     @user_error = "User is not a member of this band"
     erb :edit_band
   end
+end
+
+# Transfer band ownership
+post '/bands/:id/transfer_ownership' do
+  require_login
+  @band = user_bands.find(params[:id])
+  new_owner = User.find(params[:new_owner_id])
+  
+  # Only the current owner can transfer ownership
+  unless @band.owned_by?(current_user)
+    @user_error = "Only the band owner can transfer ownership"
+    return erb :edit_band
+  end
+  
+  # New owner must be a member of the band
+  unless @band.users.include?(new_owner)
+    @user_error = "The new owner must be a member of this band"
+    return erb :edit_band
+  end
+  
+  # Cannot transfer ownership to yourself
+  if new_owner == current_user
+    @user_error = "You are already the owner of this band"
+    return erb :edit_band
+  end
+  
+  # Transfer ownership
+  @band.update(owner: new_owner)
+  @user_success = "Successfully transferred ownership to '#{new_owner.username}'"
+  
+  erb :edit_band
 end
 
 # Venues routes
@@ -1029,11 +1016,7 @@ get '/venues/:id' do
   require_login
   return redirect '/set_lists' unless current_band
   
-  @venue = filter_by_current_band(Venue).find_by(id: params[:id])
-  
-  unless @venue
-    redirect '/venues'
-  end
+  @venue = filter_by_current_band(Venue).find(params[:id])
   
   @bands = user_bands
   erb :show_venue
@@ -1043,11 +1026,7 @@ get '/venues/:id/edit' do
   require_login
   return redirect '/set_lists' unless current_band
   
-  @venue = filter_by_current_band(Venue).find_by(id: params[:id])
-  
-  unless @venue
-    redirect '/venues'
-  end
+  @venue = filter_by_current_band(Venue).find(params[:id])
   
   erb :edit_venue
 end
@@ -1056,11 +1035,8 @@ put '/venues/:id' do
   require_login
   return redirect '/set_lists' unless current_band
   
-  @venue = filter_by_current_band(Venue).find_by(id: params[:id])
+  @venue = filter_by_current_band(Venue).find(params[:id])
   
-  unless @venue
-    redirect '/venues'
-  end
   if @venue.update(params[:venue])
     redirect "/venues/#{@venue.id}"
   else
@@ -1073,11 +1049,9 @@ delete '/venues/:id' do
   require_login
   return redirect '/set_lists' unless current_band
   
-  venue = filter_by_current_band(Venue).find_by(id: params[:id])
+  venue = filter_by_current_band(Venue).find(params[:id])
   
-  if venue
-    venue.destroy
-  end
+  venue.destroy
   
   redirect '/venues'
 end
@@ -1134,11 +1108,7 @@ get '/venues/:venue_id/copy' do
   require_login
   return redirect '/set_lists' unless current_band
   
-  @venue = filter_by_current_band(Venue).find_by(id: params[:venue_id])
-  
-  unless @venue
-    redirect '/venues'
-  end
+  @venue = filter_by_current_band(Venue).find(params[:venue_id])
   
   # Get other bands the user is a member of
   @target_bands = current_user.bands.where.not(id: current_band.id).order(:name)
@@ -1155,11 +1125,8 @@ post '/venues/:venue_id/copy' do
   require_login
   return redirect '/set_lists' unless current_band
   
-  @venue = filter_by_current_band(Venue).find_by(id: params[:venue_id])
+  @venue = filter_by_current_band(Venue).find(params[:venue_id])
   
-  unless @venue
-    redirect '/venues'
-  end
   target_band_id = params[:target_band_id]
   
   if target_band_id.blank?
