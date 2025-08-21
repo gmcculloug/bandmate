@@ -8,7 +8,9 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y \
     build-essential \
     pkg-config \
-    sqlite3 \
+    postgresql-client \
+    libpq-dev \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy Gemfile and Gemfile.lock
@@ -20,11 +22,8 @@ RUN bundle install
 # Copy application code
 COPY . .
 
-# Run database migrations
-RUN rake db:migrate
-
-# Create directory for SQLite database
-RUN mkdir -p /app/data
+# Create directory for logs
+RUN mkdir -p /app/logs
 
 # Set environment variables
 ENV RACK_ENV=production
@@ -39,7 +38,7 @@ RUN useradd -m -u 1000 bandmate && \
 USER bandmate
 
 # Health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+HEALTHCHECK --interval=30s --timeout=3s --start-period=30s --retries=3 \
     CMD curl -f http://localhost:4567/ || exit 1
 
 # Start the application

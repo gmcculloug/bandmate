@@ -20,22 +20,24 @@ RSpec.describe 'Gigs API', type: :request do
       expect(last_response.body).to include('Gig B')
     end
 
-    it 'displays gigs in alphabetical order' do
+    it 'displays upcoming gigs in chronological order' do
       login_as(user, band)
-      gig_c = create(:gig, name: 'C Gig', band: band)
-      gig_a = create(:gig, name: 'A Gig', band: band)
-      gig_b = create(:gig, name: 'B Gig', band: band)
+      # Create gigs with specific dates to test ordering
+      gig_later = create(:gig, name: 'Later Gig', band: band, performance_date: Date.current + 3.days)
+      gig_sooner = create(:gig, name: 'Sooner Gig', band: band, performance_date: Date.current + 1.day)
+      gig_middle = create(:gig, name: 'Middle Gig', band: band, performance_date: Date.current + 2.days)
       
       get '/gigs'
       
       expect(last_response).to be_ok
       body = last_response.body
-      a_index = body.index('A Gig')
-      b_index = body.index('B Gig')
-      c_index = body.index('C Gig')
+      sooner_index = body.index('Sooner Gig')
+      middle_index = body.index('Middle Gig')
+      later_index = body.index('Later Gig')
       
-      expect(a_index).to be < b_index
-      expect(b_index).to be < c_index
+      # Should appear in chronological order: sooner, then middle, then later
+      expect(sooner_index).to be < middle_index
+      expect(middle_index).to be < later_index
     end
   end
 

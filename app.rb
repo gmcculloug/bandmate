@@ -14,20 +14,44 @@ set :session_secret, ENV['SESSION_SECRET'] || 'your_secret_key_here_that_is_very
 
 # Database configuration
 configure :development do
-  set :database, { adapter: 'sqlite3', database: 'bandmate.db' }
+  set :database, {
+    adapter: 'postgresql',
+    host: ENV['DATABASE_HOST'] || 'localhost',
+    port: ENV['DATABASE_PORT'] || 5432,
+    database: ENV['DATABASE_NAME'] || 'bandmate_development',
+    username: ENV['DATABASE_USERNAME'] || 'postgres',
+    password: ENV['DATABASE_PASSWORD'] || ''
+  }
 end
 
 configure :production do
-  database_path = ENV['DATABASE_PATH'] || 'bandmate.db'
-  set :database, { adapter: 'sqlite3', database: database_path }
+  # Use DATABASE_URL if available (common on Heroku), otherwise use individual env vars
+  if ENV['DATABASE_URL']
+    set :database, ENV['DATABASE_URL']
+  else
+    set :database, {
+      adapter: 'postgresql',
+      host: ENV['DATABASE_HOST'] || 'localhost',
+      port: ENV['DATABASE_PORT'] || 5432,
+      database: ENV['DATABASE_NAME'] || 'bandmate_production',
+      username: ENV['DATABASE_USERNAME'] || 'postgres',
+      password: ENV['DATABASE_PASSWORD'] || ''
+    }
+  end
 end
 
 configure :test do
-  set :database, { adapter: 'sqlite3', database: 'bandmate_test.db' }
+  set :database, {
+    adapter: 'postgresql',
+    host: ENV['DATABASE_HOST'] || 'localhost',
+    port: ENV['DATABASE_PORT'] || 5432,
+    database: ENV['DATABASE_NAME'] || 'bandmate_test',
+    username: ENV['DATABASE_USERNAME'] || 'postgres',
+    password: ENV['DATABASE_PASSWORD'] || ''
+  }
   set :bind, '0.0.0.0'
   set :port, 4567
   set :protection, false
-  set :environment, :test
   set :dump_errors, false
   set :raise_errors, true
   set :show_exceptions, false
@@ -54,7 +78,7 @@ end
 
 class Band < ActiveRecord::Base
   belongs_to :owner, class_name: 'User', optional: true
-  has_and_belongs_to_many :songs
+  has_and_belongs_to_many :songs, join_table: 'songs_bands'
   has_many :gigs
   has_many :venues
   has_many :user_bands
@@ -88,7 +112,7 @@ end
 
 class Song < ActiveRecord::Base
   belongs_to :global_song, optional: true
-  has_and_belongs_to_many :bands
+  has_and_belongs_to_many :bands, join_table: 'songs_bands'
   has_many :gig_songs
   has_many :gigs, through: :gig_songs
   
