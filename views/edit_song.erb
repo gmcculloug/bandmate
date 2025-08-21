@@ -1,4 +1,11 @@
-<h2>✏️ Edit Song: <%= @song.title %></h2>
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
+    <h2>✏️ Edit Song: <%= @song.title %></h2>
+    <div class="actions">
+        <button type="submit" form="edit-song-form" class="btn btn-success">Update Song</button>
+        <a href="/songs/<%= @song.id %>" class="btn">Cancel</a>
+        <a href="/songs/<%= @song.id %>" class="btn">Back</a>
+    </div>
+</div>
 
 <% if defined?(@errors) && @errors.any? %>
     <div class="errors">
@@ -10,7 +17,7 @@
     </div>
 <% end %>
 
-<form method="POST" action="/songs/<%= @song.id %>" class="card">
+<form method="POST" action="/songs/<%= @song.id %>" class="card" id="edit-song-form">
     <input type="hidden" name="_method" value="PUT">
     
     <div class="form-group">

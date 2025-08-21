@@ -114,7 +114,7 @@ RSpec.describe 'Authentication', type: :request do
       expect(last_response.status).to eq(302)
       expect(last_response.headers['Location']).to include('/login')
       
-      get '/set_lists'
+      get '/gigs'
       expect(last_response.status).to eq(302)
       expect(last_response.headers['Location']).to include('/login')
     end

@@ -1,4 +1,11 @@
-<h2>✏️ Edit Global Song</h2>
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
+    <h2>✏️ Edit Global Song</h2>
+    <div class="actions">
+        <button type="submit" form="edit-global-song-form" class="btn btn-success" onclick="return confirmUpdate()">Update Global Song</button>
+        <a href="/global_songs/<%= @global_song.id %>" class="btn">Cancel</a>
+        <a href="/global_songs/<%= @global_song.id %>" class="btn">Back</a>
+    </div>
+</div>
 
 <% if defined?(@errors) && @errors.any? %>
     <div class="errors">
@@ -16,7 +23,7 @@
     </p>
 </div>
 
-<form method="POST" action="/global_songs/<%= @global_song.id %>" class="card">
+<form method="POST" action="/global_songs/<%= @global_song.id %>" class="card" id="edit-global-song-form">
     <input type="hidden" name="_method" value="PUT">
     
     <div class="form-group">
@@ -132,9 +139,17 @@
 
     <div class="actions">
         <button type="submit" class="btn btn-success" onclick="return confirmUpdate()">Update Global Song</button>
-        <a href="/global_songs/<%= @global_song.id %>" class="btn">Cancel</a>
+        <a href="/global_songs" class="btn">Cancel</a>
     </div>
 </form>
+
+<div class="card" style="margin-top: 20px;">
+    <h3>Song Management</h3>
+    <form method="POST" action="/global_songs/<%= @global_song.id %>" style="margin-top: 15px;">
+        <input type="hidden" name="_method" value="DELETE">
+        <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure you want to delete this global song? This will permanently remove it from the global library.')">🗑️ Delete Global Song</button>
+    </form>
+</div>
 
 <script>
 function confirmUpdate() {

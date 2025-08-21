@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_08_18_124525) do
+ActiveRecord::Schema[8.0].define(version: 2025_08_20_010531) do
   create_table "bands", force: :cascade do |t|
     t.string "name", null: false
     t.text "notes"
@@ -29,6 +29,43 @@ ActiveRecord::Schema[8.0].define(version: 2025_08_18_124525) do
     t.index ["band_id", "song_id"], name: "index_bands_songs_on_band_id_and_song_id", unique: true
     t.index ["band_id"], name: "index_bands_songs_on_band_id"
     t.index ["song_id"], name: "index_bands_songs_on_song_id"
+  end
+
+  create_table "blackout_dates", force: :cascade do |t|
+    t.integer "user_id", null: false
+    t.date "blackout_date", null: false
+    t.string "reason"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["blackout_date"], name: "index_blackout_dates_on_blackout_date"
+    t.index ["user_id", "blackout_date"], name: "index_blackout_dates_on_user_id_and_blackout_date", unique: true
+    t.index ["user_id"], name: "index_blackout_dates_on_user_id"
+  end
+
+  create_table "gig_songs", force: :cascade do |t|
+    t.integer "gig_id", null: false
+    t.integer "song_id", null: false
+    t.integer "position", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["gig_id"], name: "index_gig_songs_on_gig_id"
+    t.index ["position"], name: "index_gig_songs_on_position"
+    t.index ["song_id"], name: "index_gig_songs_on_song_id"
+  end
+
+  create_table "gigs", force: :cascade do |t|
+    t.string "name", null: false
+    t.text "notes"
+    t.integer "band_id", null: false
+    t.integer "venue_id"
+    t.date "performance_date"
+    t.time "start_time"
+    t.time "end_time"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["band_id"], name: "index_gigs_on_band_id"
+    t.index ["name"], name: "index_gigs_on_name"
+    t.index ["venue_id"], name: "index_gigs_on_venue_id"
   end
 
   create_table "global_songs", force: :cascade do |t|
@@ -136,6 +173,11 @@ ActiveRecord::Schema[8.0].define(version: 2025_08_18_124525) do
   add_foreign_key "bands", "users", column: "owner_id"
   add_foreign_key "bands_songs", "bands"
   add_foreign_key "bands_songs", "songs"
+  add_foreign_key "blackout_dates", "users"
+  add_foreign_key "gig_songs", "gigs"
+  add_foreign_key "gig_songs", "songs"
+  add_foreign_key "gigs", "bands"
+  add_foreign_key "gigs", "venues"
   add_foreign_key "set_list_songs", "set_lists"
   add_foreign_key "set_list_songs", "songs"
   add_foreign_key "set_lists", "bands"

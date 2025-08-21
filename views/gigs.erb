@@ -1,0 +1,104 @@
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; flex-wrap: wrap; gap: 10px;">
+    <div>
+        <h2>📋 Gigs</h2>
+        <p style="color: #718096; margin: 5px 0 0 0;">Welcome to Bandmate! Manage your gigs, songs, and performances.</p>
+    </div>
+    <a href="/gigs/new" class="btn btn-success">➕ Create New Gig</a>
+</div>
+
+
+
+<% if @upcoming_gigs.any? || @past_gigs.any? %>
+    <!-- Upcoming Gigs Section -->
+    <% if @upcoming_gigs.any? %>
+        <div style="margin-bottom: 40px;">
+            <h3 style="margin-bottom: 20px; color: #2d3748;">Upcoming Gigs</h3>
+            <% @upcoming_gigs.each do |set_list| %>
+                <div class="set-list-item" style="cursor: pointer;" onclick="window.location.href='/gigs/<%= set_list.id %>'">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; width: 100%;">
+                        <div class="set-list-info" style="flex: 1; min-width: 0;">
+                            <h3 style="word-break: break-word;">
+                                <% if set_list.performance_date.present? %>
+                                    <span style="font-weight: normal; color: #718096; font-size: 0.9em;">
+                                        <%= set_list.performance_date.strftime('%a, %b %d') %> - 
+                                    </span>
+                                <% end %>
+                                <%= set_list.name %>
+                                <% if set_list.start_time.present? %>
+                                    <span style="font-weight: normal; color: #718096; font-size: 0.9em;">
+                                        - <%= set_list.start_time.strftime('%I:%M %p') %>
+                                        <% if set_list.end_time.present? %>
+                                            - <%= set_list.end_time.strftime('%I:%M %p') %>
+                                        <% end %>
+                                    </span>
+                                <% end %>
+                            </h3>
+                            <% if set_list.notes.present? %>
+                                <p style="font-style: italic; color: #718096; word-break: break-word;"><%= set_list.notes %></p>
+                            <% end %>
+                        </div>
+                        <div class="actions" onclick="event.stopPropagation();" style="flex-shrink: 0;">
+                            <a href="/gigs/<%= set_list.id %>/print" class="btn" target="_blank">Print Set List</a>
+                        </div>
+                    </div>
+                </div>
+            <% end %>
+        </div>
+    <% end %>
+
+    <!-- Past Gigs Section -->
+    <% if @past_gigs.any? %>
+        <div>
+            <h3 style="margin-bottom: 20px; color: #718096;">Past Gigs</h3>
+            <% @past_gigs.each do |set_list| %>
+                <div class="set-list-item" style="cursor: pointer; opacity: 0.7;" onclick="window.location.href='/gigs/<%= set_list.id %>'">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; width: 100%;">
+                        <div class="set-list-info" style="flex: 1; min-width: 0;">
+                            <h3 style="word-break: break-word;">
+                                <% if set_list.performance_date.present? %>
+                                    <span style="font-weight: normal; color: #718096; font-size: 0.9em;">
+                                        <%= set_list.performance_date.strftime('%a, %b %d') %> - 
+                                    </span>
+                                <% end %>
+                                <%= set_list.name %>
+                                <% if set_list.start_time.present? %>
+                                    <span style="font-weight: normal; color: #718096; font-size: 0.9em;">
+                                        - <%= set_list.start_time.strftime('%I:%M %p') %>
+                                        <% if set_list.end_time.present? %>
+                                            - <%= set_list.end_time.strftime('%I:%M %p') %>
+                                        <% end %>
+                                    </span>
+                                <% end %>
+                            </h3>
+                            <% if set_list.notes.present? %>
+                                <p style="font-style: italic; color: #718096; word-break: break-word;"><%= set_list.notes %></p>
+                            <% end %>
+                        </div>
+                        <div class="actions" onclick="event.stopPropagation();" style="flex-shrink: 0;">
+                            <a href="/gigs/<%= set_list.id %>/print" class="btn" target="_blank">Print Set List</a>
+                        </div>
+                    </div>
+                </div>
+            <% end %>
+        </div>
+    <% end %>
+
+    <!-- No upcoming gigs message -->
+    <% if @upcoming_gigs.empty? && @past_gigs.any? %>
+        <div class="card" style="margin-bottom: 40px;">
+            <h3>No upcoming gigs scheduled</h3>
+            <p>All your gigs are in the past. Create a new gig to schedule your next performance.</p>
+            <a href="/gigs/new" class="btn btn-success">Create New Gig</a>
+        </div>
+    <% end %>
+<% else %>
+    <div class="card">
+        <h3>No gigs yet!</h3>
+        <p>Create your first gig to start organizing your songs for performances.</p>
+        <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 15px;">
+            <a href="/gigs/new" class="btn btn-success">Create Your First Gig</a>
+            <a href="/songs/new" class="btn">Add Your First Song</a>
+            <a href="/venues/new" class="btn">Add Your First Venue</a>
+        </div>
+    </div>
+<% end %> 

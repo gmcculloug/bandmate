@@ -45,12 +45,12 @@ RSpec.describe Venue, type: :model do
       expect(venue).to be_valid
     end
 
-    it 'has many set lists' do
+    it 'has many gigs' do
       venue = create(:venue)
-      set_list1 = create(:set_list, venue: venue)
-      set_list2 = create(:set_list, venue: venue)
+      gig1 = create(:gig, venue: venue)
+      gig2 = create(:gig, venue: venue)
       
-      expect(venue.set_lists).to include(set_list1, set_list2)
+      expect(venue.gigs).to include(gig1, gig2)
     end
   end
 
@@ -70,10 +70,10 @@ RSpec.describe Venue, type: :model do
       expect { venue.destroy }.to change(Venue, :count).by(-1)
     end
 
-    it 'can be destroyed when it has set lists' do
+    it 'can be destroyed when it has gigs' do
       venue = create(:venue)
-      set_list = create(:set_list, venue: venue)
-      set_list.destroy  # Clean up the set list first due to foreign key constraint
+      gig = create(:gig, venue: venue)
+      gig.destroy  # Clean up the set list first due to foreign key constraint
       expect { venue.destroy }.to change(Venue, :count).by(-1)
     end
   end

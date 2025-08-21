@@ -1,6 +1,6 @@
 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
     <h2>⚙️ User Profile</h2>
-    <a href="/set_lists" class="btn">Back to Set Lists</a>
+    <a href="/gigs" class="btn">Back to Set Lists</a>
 </div>
 
 <% if @success %>
@@ -61,7 +61,7 @@
                                 <strong><%= band.songs.count %></strong> songs
                             </span>
                             <span class="stat">
-                                <strong><%= band.set_lists.count %></strong> set lists
+                                <strong><%= band.gigs.count %></strong> set lists
                             </span>
                         </div>
                         <div class="band-actions">

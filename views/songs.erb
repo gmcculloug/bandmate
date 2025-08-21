@@ -3,11 +3,10 @@
 </div>
 
 <div style="margin-bottom: 20px;">
-    <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-        <input type="text" id="search-input" value="<%= @search %>" placeholder="Search songs by title or artist..." style="flex: 1; min-width: 200px; padding: 10px; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 16px;">
-        <button type="button" onclick="filterSongs()" class="btn" style="padding: 10px 20px;">🔍 Filter</button>
+    <div style="position: relative; max-width: 400px;">
+        <input type="text" id="search-input" value="<%= @search %>" placeholder="Search songs by title or artist..." style="width: 100%; padding: 10px 40px 10px 10px; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 16px;">
         <% if @search.present? %>
-            <a href="/songs" class="btn" style="padding: 10px 20px;">Clear</a>
+            <a href="/songs" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; color: #718096; font-size: 18px; cursor: pointer; text-decoration: none; display: flex; align-items: center; justify-content: center; width: 20px; height: 20px;">✕</a>
         <% end %>
     </div>
 </div>
@@ -94,11 +93,6 @@ document.addEventListener('DOMContentLoaded', function() {
                         <% if song.url.present? %>
                             <a href="<%= song.url %>" target="_blank" class="btn" style="padding: 6px 12px; font-size: 0.8rem;">🎵</a>
                         <% end %>
-                        <a href="/songs/<%= song.id %>/edit" class="btn" style="padding: 6px 12px; font-size: 0.8rem;">Edit</a>
-                        <form method="POST" action="/songs/<%= song.id %>" style="display: inline;">
-                            <input type="hidden" name="_method" value="DELETE">
-                            <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure you want to delete this song?')" style="padding: 6px 12px; font-size: 0.8rem;">Delete</button>
-                        </form>
                     </div>
                 </div>
             </div>

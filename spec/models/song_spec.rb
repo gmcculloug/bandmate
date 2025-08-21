@@ -61,23 +61,23 @@ RSpec.describe Song, type: :model do
       expect(song.bands).to include(band1, band2)
     end
 
-    it 'has many set list songs' do
+    it 'has many gig songs' do
       song = create(:song)
-      set_list_song1 = create(:set_list_song, song: song)
-      set_list_song2 = create(:set_list_song, song: song)
+      gig_song1 = create(:gig_song, song: song)
+      gig_song2 = create(:gig_song, song: song)
       
-      expect(song.set_list_songs).to include(set_list_song1, set_list_song2)
+      expect(song.gig_songs).to include(gig_song1, gig_song2)
     end
 
-    it 'has many set lists through set list songs' do
+    it 'has many gigs through gig songs' do
       song = create(:song)
-      set_list1 = create(:set_list)
-      set_list2 = create(:set_list)
+      gig1 = create(:gig)
+      gig2 = create(:gig)
       
-      create(:set_list_song, song: song, set_list: set_list1)
-      create(:set_list_song, song: song, set_list: set_list2)
+      create(:gig_song, song: song, gig: gig1)
+      create(:gig_song, song: song, gig: gig2)
       
-      expect(song.set_lists).to include(set_list1, set_list2)
+      expect(song.gigs).to include(gig1, gig2)
     end
   end
 

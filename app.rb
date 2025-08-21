@@ -38,6 +38,7 @@ class User < ActiveRecord::Base
   has_secure_password
   has_many :user_bands
   has_many :bands, through: :user_bands
+  has_many :blackout_dates, dependent: :destroy
   belongs_to :last_selected_band, class_name: 'Band', optional: true
   
   validates :username, presence: true, uniqueness: { case_sensitive: false }
@@ -54,7 +55,7 @@ end
 class Band < ActiveRecord::Base
   belongs_to :owner, class_name: 'User', optional: true
   has_and_belongs_to_many :songs
-  has_many :set_lists
+  has_many :gigs
   has_many :venues
   has_many :user_bands
   has_many :users, through: :user_bands
@@ -88,8 +89,8 @@ end
 class Song < ActiveRecord::Base
   belongs_to :global_song, optional: true
   has_and_belongs_to_many :bands
-  has_many :set_list_songs
-  has_many :set_lists, through: :set_list_songs
+  has_many :gig_songs
+  has_many :gigs, through: :gig_songs
   
   validates :title, presence: true
   validates :artist, presence: true
@@ -120,7 +121,7 @@ end
 
 class Venue < ActiveRecord::Base
   belongs_to :band, optional: true
-  has_many :set_lists
+  has_many :gigs
   
   validates :name, presence: true
   validates :location, presence: true
@@ -128,22 +129,43 @@ class Venue < ActiveRecord::Base
   validates :phone_number, presence: true
 end
 
-class SetList < ActiveRecord::Base
+class Gig < ActiveRecord::Base
   belongs_to :band
   belongs_to :venue, optional: true
-  has_many :set_list_songs, dependent: :destroy
-  has_many :songs, through: :set_list_songs
+  has_many :gig_songs, dependent: :destroy
+  has_many :songs, through: :gig_songs
   
   validates :name, presence: true
   validates :band, presence: true
   validates :performance_date, presence: true
 end
 
-class SetListSong < ActiveRecord::Base
-  belongs_to :set_list
+class GigSong < ActiveRecord::Base
+  belongs_to :gig
   belongs_to :song
   
   validates :position, presence: true, numericality: { greater_than: 0 }
+end
+
+class BlackoutDate < ActiveRecord::Base
+  belongs_to :user
+  
+  validates :blackout_date, presence: true
+  validates :user, presence: true
+  validates :user_id, uniqueness: { scope: :blackout_date }
+  validate :blackout_date_not_in_past
+  
+  scope :for_date_range, ->(start_date, end_date) { where(blackout_date: start_date..end_date) }
+  
+  private
+  
+  def blackout_date_not_in_past
+    return unless blackout_date.present?
+    
+    if blackout_date < Date.current
+      errors.add(:blackout_date, "cannot be in the past")
+    end
+  end
 end
 
 # Authentication helpers
@@ -190,12 +212,82 @@ helpers do
     case collection.name
     when 'Song'
       collection.joins(:bands).where(bands: { id: current_band.id })
-    when 'SetList'
+    when 'Gig'
       collection.where(band: current_band)
     when 'Venue'
       collection.where(band: current_band)
     else
       collection
+    end
+  end
+  
+  # Calendar helper methods
+  def calendar_days_for_month(year, month)
+    start_date = Date.new(year, month, 1)
+    
+    # Get last day of month
+    next_month = month == 12 ? Date.new(year + 1, 1, 1) : Date.new(year, month + 1, 1)
+    end_date = next_month - 1
+    
+    # Get the first day of the calendar (Sunday of the week containing the 1st)
+    days_back_to_sunday = start_date.wday
+    calendar_start = start_date - days_back_to_sunday
+    
+    # Get the last day of the calendar (Saturday of the week containing the last day)
+    days_forward_to_saturday = 6 - end_date.wday
+    calendar_end = end_date + days_forward_to_saturday
+    
+    # Generate all days in the calendar
+    (calendar_start..calendar_end).to_a
+  end
+  
+  def gigs_for_date(date)
+    gigs = {}
+    
+    # Current band gigs
+    @current_band_gigs.select { |gig| gig.performance_date == date }.each do |gig|
+      gigs[:current] ||= []
+      gigs[:current] << gig
+    end
+    
+    # Other band gigs
+    @other_band_gigs.select { |gig| gig.performance_date == date }.each do |gig|
+      gigs[:other] ||= []
+      gigs[:other] << gig
+    end
+    
+    # Bandmate conflicts
+    @bandmate_conflicts.select { |gig| gig.performance_date == date }.each do |gig|
+      gigs[:conflicts] ||= []
+      gigs[:conflicts] << gig
+    end
+    
+    # Blackout dates
+    @blackout_dates.select { |blackout| blackout.blackout_date == date }.each do |blackout|
+      gigs[:blackouts] ||= []
+      gigs[:blackouts] << blackout
+    end
+    
+    gigs
+  end
+  
+  def month_name(month)
+    Date::MONTHNAMES[month]
+  end
+  
+  def prev_month_link(year, month)
+    if month == 1
+      "/calendar?year=#{year - 1}&month=12"
+    else
+      "/calendar?year=#{year}&month=#{month - 1}"
+    end
+  end
+  
+  def next_month_link(year, month)
+    if month == 12
+      "/calendar?year=#{year + 1}&month=1"
+    else
+      "/calendar?year=#{year}&month=#{month + 1}"
     end
   end
 end
@@ -233,7 +325,7 @@ post '/login' do
       session[:band_id] = user.bands.first.id
     end
     
-    redirect '/set_lists'
+    redirect '/gigs'
   else
     @error = "Invalid username or password"
     erb :login, layout: :layout
@@ -261,7 +353,7 @@ post '/signup' do
   
   if user.save
     session[:user_id] = user.id
-    redirect '/set_lists'
+    redirect '/gigs'
   else
     @errors = user.errors.full_messages
     erb :signup, layout: :layout
@@ -384,13 +476,13 @@ get '/' do
   end
   
   # Redirect to set lists as the main screen
-  redirect '/set_lists'
+  redirect '/gigs'
 end
 
 # Songs routes
 get '/songs' do
   require_login
-  return redirect '/set_lists' unless current_band
+  return redirect '/gigs' unless current_band
   
   @search = params[:search]
   
@@ -406,13 +498,13 @@ end
 
 get '/songs/new' do
   require_login
-  return redirect '/set_lists' unless current_band
+  return redirect '/gigs' unless current_band
   erb :new_song
 end
 
 post '/songs' do
   require_login
-  return redirect '/set_lists' unless current_band
+  return redirect '/gigs' unless current_band
   
   song = Song.new(params[:song])
   # If band_ids provided, associate accordingly but ensure current_band is included by default
@@ -464,7 +556,7 @@ delete '/songs/:id' do
   song = current_band.songs.find(params[:id])
   
   # Clean up associations before deleting the song
-  song.set_list_songs.destroy_all
+  song.gig_songs.destroy_all
   
   # Remove the song from all bands (many-to-many relationship)
   song.band_ids = []
@@ -581,8 +673,8 @@ post '/bands/:band_id/copy_songs' do
   end
 end
 
-# Set lists routes
-get '/set_lists' do
+# Gigs routes
+get '/gigs' do
   require_login
   
   # If user has no bands, redirect to create or join a band
@@ -595,24 +687,27 @@ get '/set_lists' do
     redirect '/bands'
   end
   
-  @set_lists = filter_by_current_band(SetList).includes(:venue).order(:name)
-  erb :set_lists
+  all_gigs = filter_by_current_band(Gig).includes(:venue)
+  today = Date.current
+  @upcoming_gigs = all_gigs.where('performance_date >= ?', today).order(:performance_date) || []
+  @past_gigs = all_gigs.where('performance_date < ?', today).order(performance_date: :desc) || []
+  erb :gigs
 end
 
-get '/set_lists/new' do
+get '/gigs/new' do
   require_login
-  return redirect '/set_lists' unless current_band
+  return redirect '/gigs' unless current_band
   
   @venues = filter_by_current_band(Venue).order(:name)
   @songs = filter_by_current_band(Song).order(:title)
-  erb :new_set_list
+  erb :new_gig
 end
 
-post '/set_lists' do
+post '/gigs' do
   require_login
-  return redirect '/set_lists' unless current_band
+  return redirect '/gigs' unless current_band
   
-  set_list_params = {
+  gig_params = {
     name: params[:name], 
     band_id: current_band.id,
     venue_id: params[:venue_id].presence,
@@ -621,38 +716,38 @@ post '/set_lists' do
     end_time: params[:end_time].presence
   }
   
-  set_list = SetList.new(set_list_params)
-  if set_list.save
-    redirect '/set_lists'
+  gig = Gig.new(gig_params)
+  if gig.save
+    redirect '/gigs'
   else
-    @errors = set_list.errors.full_messages
+    @errors = gig.errors.full_messages
     @venues = filter_by_current_band(Venue).order(:name)
     @songs = filter_by_current_band(Song).order(:title)
-    erb :new_set_list
+    erb :new_gig
   end
 end
 
-get '/set_lists/:id' do
+get '/gigs/:id' do
   require_login
-  @set_list = filter_by_current_band(SetList).includes(:venue).find(params[:id])
+  @gig = filter_by_current_band(Gig).includes(:venue).find(params[:id])
   
-  @available_songs = filter_by_current_band(Song).where.not(id: @set_list.song_ids).order(:title)
-  erb :show_set_list
+  @available_songs = filter_by_current_band(Song).where.not(id: @gig.song_ids).order(:title)
+  erb :show_gig
 end
 
-get '/set_lists/:id/edit' do
+get '/gigs/:id/edit' do
   require_login
-  @set_list = filter_by_current_band(SetList).find(params[:id])
+  @gig = filter_by_current_band(Gig).find(params[:id])
   
   @venues = filter_by_current_band(Venue).order(:name)
-  erb :edit_set_list
+  erb :edit_gig
 end
 
-put '/set_lists/:id' do
+put '/gigs/:id' do
   require_login
-  @set_list = filter_by_current_band(SetList).find(params[:id])
+  @gig = filter_by_current_band(Gig).find(params[:id])
   
-  set_list_params = {
+  gig_params = {
     name: params[:name], 
     notes: params[:notes],
     band_id: current_band.id,
@@ -662,80 +757,80 @@ put '/set_lists/:id' do
     end_time: params[:end_time].presence
   }
   
-  if @set_list.update(set_list_params)
-    redirect "/set_lists/#{@set_list.id}"
+  if @gig.update(gig_params)
+    redirect "/gigs/#{@gig.id}"
   else
-    @errors = @set_list.errors.full_messages
+    @errors = @gig.errors.full_messages
     @venues = filter_by_current_band(Venue).order(:name)
-    erb :edit_set_list
+    erb :edit_gig
   end
 end
 
-delete '/set_lists/:id' do
+delete '/gigs/:id' do
   require_login
-  set_list = filter_by_current_band(SetList).find(params[:id])
+  gig = filter_by_current_band(Gig).find(params[:id])
   
-  set_list.destroy
-  redirect '/set_lists'
+  gig.destroy
+  redirect '/gigs'
 end
 
 # Add song to set list
-post '/set_lists/:id/songs' do
+post '/gigs/:id/songs' do
   require_login
-  set_list = filter_by_current_band(SetList).find(params[:id])
+  gig = filter_by_current_band(Gig).find(params[:id])
   
   song = filter_by_current_band(Song).find(params[:song_id])
-  position = set_list.set_list_songs.count + 1
+  position = gig.gig_songs.count + 1
   
-  set_list_song = SetListSong.new(
-    set_list: set_list,
+  gig_song = GigSong.new(
+    gig: gig,
     song: song,
     position: position
   )
   
-  if set_list_song.save
-    redirect "/set_lists/#{set_list.id}"
+  if gig_song.save
+    redirect "/gigs/#{gig.id}"
   else
-    @errors = set_list_song.errors.full_messages
-    @set_list = set_list
-    erb :show_set_list
+    @errors = gig_song.errors.full_messages
+    @gig = gig
+    erb :show_gig
   end
 end
 
 # Remove song from set list
-delete '/set_lists/:set_list_id/songs/:song_id' do
+delete '/gigs/:gig_id/songs/:song_id' do
   require_login
-  set_list = filter_by_current_band(SetList).find(params[:set_list_id])
+  gig = filter_by_current_band(Gig).find(params[:gig_id])
   
-  set_list_song = set_list.set_list_songs.find_by(song_id: params[:song_id])
-  set_list_song.destroy if set_list_song
+  gig_song = gig.gig_songs.find_by(song_id: params[:song_id])
+  gig_song.destroy if gig_song
   
   # Reorder remaining songs
-  set_list.set_list_songs.order(:position).each_with_index do |sls, index|
+  gig.gig_songs.order(:position).each_with_index do |sls, index|
     sls.update(position: index + 1)
   end
   
-  redirect "/set_lists/#{set_list.id}"
+  redirect "/gigs/#{gig.id}"
 end
 
 # Print set list
-get '/set_lists/:id/print' do
+get '/gigs/:id/print' do
   require_login
-  @set_list = filter_by_current_band(SetList).find(params[:id])
+  @gig = filter_by_current_band(Gig).find(params[:id])
   
-  erb :print_set_list, layout: false
+  erb :print_gig, layout: false
 end
 
 # Reorder songs in set list
-post '/set_lists/:id/reorder' do
+post '/gigs/:id/reorder' do
   require_login
-  set_list = filter_by_current_band(SetList).find(params[:id])
+  gig = filter_by_current_band(Gig).find(params[:id])
   song_order = params[:song_order]
   
   if song_order && song_order.is_a?(Array)
     song_order.each_with_index do |song_id, index|
-      set_list_song = set_list.set_list_songs.find_by(song_id: song_id)
-      set_list_song.update(position: index + 1) if set_list_song
+      gig_song = gig.gig_songs.find_by(song_id: song_id)
+      gig_song.update(position: index + 1) if gig_song
     end
   end
   
@@ -744,35 +839,265 @@ post '/set_lists/:id/reorder' do
 end
 
 # Copy set list
-post '/set_lists/:id/copy' do
+post '/gigs/:id/copy' do
   require_login
   begin
-    original_set_list = filter_by_current_band(SetList).find(params[:id])
+    original_gig = filter_by_current_band(Gig).find(params[:id])
     
     # Create new set list with copied name and notes
-    new_name = "Copy - #{original_set_list.name}"
-    new_set_list = SetList.create!(
+    new_name = "Copy - #{original_gig.name}"
+    new_gig = Gig.create!(
       name: new_name,
-      notes: original_set_list.notes,
-      band: original_set_list.band,
-      performance_date: original_set_list.performance_date || Date.current
+      notes: original_gig.notes,
+      band: original_gig.band,
+      performance_date: original_gig.performance_date || Date.current
     )
     
     # Copy all songs with their positions
-    original_set_list.set_list_songs.includes(:song).order(:position).each do |set_list_song|
-      SetListSong.create!(
-        set_list_id: new_set_list.id,
-        song_id: set_list_song.song_id,
-        position: set_list_song.position
+    original_gig.gig_songs.includes(:song).order(:position).each do |gig_song|
+      GigSong.create!(
+        gig_id: new_gig.id,
+        song_id: gig_song.song_id,
+        position: gig_song.position
       )
     end
     
-    redirect "/set_lists/#{new_set_list.id}"
+    redirect "/gigs/#{new_gig.id}"
   rescue => e
     # If something goes wrong, redirect back with an error
-    redirect "/set_lists/#{params[:id]}?error=copy_failed"
+    redirect "/gigs/#{params[:id]}?error=copy_failed"
   end
 end
+
+# Calendar routes
+get '/calendar' do
+  require_login
+  
+  # Get the requested month/year or default to current
+  @year = params[:year] ? params[:year].to_i : Date.current.year
+  @month = params[:month] ? params[:month].to_i : Date.current.month
+  
+  # Ensure month is valid
+  @month = [[1, @month].max, 12].min
+  
+  # Get the first and last day of the month
+  start_date = Date.new(@year, @month, 1)
+  next_month = @month == 12 ? Date.new(@year + 1, 1, 1) : Date.new(@year, @month + 1, 1)
+  end_date = next_month - 1
+  
+  # Get all user's bands
+  user_band_ids = current_user.bands.pluck(:id)
+  
+  # Get current band gigs for this month
+  @current_band_gigs = if current_band
+    current_band.gigs.where(performance_date: start_date..end_date)
+                      .includes(:venue)
+                      .order(:performance_date)
+  else
+    []
+  end
+  
+  # Get user's gigs from other bands
+  @other_band_gigs = Gig.joins(:band)
+                        .where(bands: { id: user_band_ids })
+                        .where(performance_date: start_date..end_date)
+                        .where.not(band_id: current_band&.id)
+                        .includes(:band, :venue)
+                        .order(:performance_date)
+  
+  # Get bandmate conflicts (other users in current band who have gigs with different bands)
+  @bandmate_conflicts = if current_band
+    # Get all users in current band except current user
+    bandmate_ids = current_band.users.where.not(id: current_user.id).pluck(:id)
+    
+    # Get bands of those bandmates (excluding current band)
+    bandmate_band_ids = UserBand.where(user_id: bandmate_ids)
+                               .where.not(band_id: current_band.id)
+                               .pluck(:band_id)
+    
+    # Get gigs from those bands - simplified query
+    if bandmate_band_ids.any?
+      Gig.joins(:band)
+         .where(bands: { id: bandmate_band_ids })
+         .where(performance_date: start_date..end_date)
+         .includes(:band)
+         .order(:performance_date)
+    else
+      []
+    end
+  else
+    []
+  end
+  
+  # Get blackout dates for all users in current band (if there is one)
+  if current_band
+    bandmate_ids = current_band.users.pluck(:id)
+    @blackout_dates = BlackoutDate.where(user_id: bandmate_ids)
+                                  .where(blackout_date: start_date..end_date)
+                                  .includes(:user)
+  else
+    @blackout_dates = current_user.blackout_dates
+                                  .where(blackout_date: start_date..end_date)
+  end
+  
+  erb :calendar
+end
+
+# Blackout dates routes
+delete '/blackout_dates/bulk' do
+  require_login
+  
+  dates_param = params[:dates]
+  
+  return { error: 'Dates are required' }.to_json unless dates_param
+  
+  begin
+    date_strings = dates_param.split(',')
+    deleted_count = 0
+    
+    date_strings.each do |date_str|
+      blackout_date = Date.parse(date_str.strip)
+      
+      # Find and delete the blackout date for current user
+      blackout = current_user.blackout_dates.find_by(blackout_date: blackout_date)
+      
+      if blackout
+        blackout.destroy
+        deleted_count += 1
+      end
+    end
+    
+    content_type :json
+    { success: true, deleted_count: deleted_count, message: "Removed #{deleted_count} blackout date#{deleted_count == 1 ? '' : 's'}" }.to_json
+    
+  rescue Date::Error => e
+    content_type :json
+    { error: "Invalid date format: #{e.message}" }.to_json
+  rescue => e
+    content_type :json
+    { error: 'Failed to remove blackout dates' }.to_json
+  end
+end
+
+post '/blackout_dates' do
+  require_login
+  
+  date_param = params[:date]
+  reason = params[:reason]
+  
+  return { error: 'Date is required' }.to_json unless date_param
+  
+  begin
+    blackout_date = Date.parse(date_param)
+    
+    # Check if blackout already exists for this user/date
+    existing = current_user.blackout_dates.find_by(blackout_date: blackout_date)
+    
+    if existing
+      content_type :json
+      return { error: 'Blackout date already exists' }.to_json
+    end
+    
+    # Create the blackout date
+    blackout = current_user.blackout_dates.build(
+      blackout_date: blackout_date,
+      reason: reason
+    )
+    
+    if blackout.save
+      content_type :json
+      { success: true, blackout_date: blackout_date.to_s, reason: reason }.to_json
+    else
+      content_type :json
+      { error: blackout.errors.full_messages.join(', ') }.to_json
+    end
+    
+  rescue Date::Error
+    content_type :json
+    { error: 'Invalid date format' }.to_json
+  rescue => e
+    content_type :json
+    { error: 'Failed to create blackout date' }.to_json
+  end
+end
+
+delete '/blackout_dates/:date' do
+  require_login
+  
+  begin
+    blackout_date = Date.parse(params[:date])
+    
+    # Find and delete the blackout date for current user
+    blackout = current_user.blackout_dates.find_by(blackout_date: blackout_date)
+    
+    if blackout
+      blackout.destroy
+      content_type :json
+      { success: true, message: 'Blackout date removed' }.to_json
+    else
+      content_type :json
+      { error: 'Blackout date not found' }.to_json
+    end
+    
+  rescue Date::Error
+    content_type :json
+    { error: 'Invalid date format' }.to_json
+  rescue => e
+    content_type :json
+    { error: 'Failed to remove blackout date' }.to_json
+  end
+end
+
+# Bulk blackout dates routes
+post '/blackout_dates/bulk' do
+  require_login
+  
+  dates_param = params[:dates]
+  reason = params[:reason]
+  
+  return { error: 'Dates are required' }.to_json unless dates_param
+  
+  begin
+    date_strings = dates_param.split(',')
+    created_count = 0
+    errors = []
+    
+    date_strings.each do |date_str|
+      blackout_date = Date.parse(date_str.strip)
+      
+      # Check if blackout already exists for this user/date
+      existing = current_user.blackout_dates.find_by(blackout_date: blackout_date)
+      
+      unless existing
+        blackout = current_user.blackout_dates.create(
+          blackout_date: blackout_date,
+          reason: reason
+        )
+        
+        if blackout.persisted?
+          created_count += 1
+        else
+          errors << "Failed to create blackout for #{date_str}: #{blackout.errors.full_messages.join(', ')}"
+        end
+      end
+    end
+    
+    content_type :json
+    if errors.empty?
+      { success: true, created_count: created_count, message: "Created #{created_count} blackout date#{created_count == 1 ? '' : 's'}" }.to_json
+    else
+      { success: false, created_count: created_count, errors: errors }.to_json
+    end
+    
+  rescue Date::Error => e
+    content_type :json
+    { error: "Invalid date format: #{e.message}" }.to_json
+  rescue => e
+    content_type :json
+    { error: 'Failed to create blackout dates' }.to_json
+  end
+end
+
 
 # Bands routes
 get '/bands' do
@@ -801,7 +1126,7 @@ post '/bands' do
       session[:band_id] = band.id
       # Save this as the user's preferred band
       current_user.update(last_selected_band_id: band.id)
-      redirect '/set_lists'
+      redirect '/gigs'
     else
       redirect '/bands'
     end
@@ -985,7 +1310,7 @@ end
 # Venues routes
 get '/venues' do
   require_login
-  return redirect '/set_lists' unless current_band
+  return redirect '/gigs' unless current_band
   
   @venues = filter_by_current_band(Venue).order(:name)
   erb :venues
@@ -993,13 +1318,13 @@ end
 
 get '/venues/new' do
   require_login
-  return redirect '/set_lists' unless current_band
+  return redirect '/gigs' unless current_band
   erb :new_venue
 end
 
 post '/venues' do
   require_login
-  return redirect '/set_lists' unless current_band
+  return redirect '/gigs' unless current_band
   
   venue = Venue.new(params[:venue])
   venue.band = current_band
@@ -1014,7 +1339,7 @@ end
 
 get '/venues/:id' do
   require_login
-  return redirect '/set_lists' unless current_band
+  return redirect '/gigs' unless current_band
   
   @venue = filter_by_current_band(Venue).find(params[:id])
   
@@ -1024,7 +1349,7 @@ end
 
 get '/venues/:id/edit' do
   require_login
-  return redirect '/set_lists' unless current_band
+  return redirect '/gigs' unless current_band
   
   @venue = filter_by_current_band(Venue).find(params[:id])
   
@@ -1033,7 +1358,7 @@ end
 
 put '/venues/:id' do
   require_login
-  return redirect '/set_lists' unless current_band
+  return redirect '/gigs' unless current_band
   
   @venue = filter_by_current_band(Venue).find(params[:id])
   
@@ -1047,7 +1372,7 @@ end
 
 delete '/venues/:id' do
   require_login
-  return redirect '/set_lists' unless current_band
+  return redirect '/gigs' unless current_band
   
   venue = filter_by_current_band(Venue).find(params[:id])
   
@@ -1106,7 +1431,7 @@ end
 # Copy a single venue to another band
 get '/venues/:venue_id/copy' do
   require_login
-  return redirect '/set_lists' unless current_band
+  return redirect '/gigs' unless current_band
   
   @venue = filter_by_current_band(Venue).find(params[:venue_id])
   
@@ -1123,7 +1448,7 @@ end
 
 post '/venues/:venue_id/copy' do
   require_login
-  return redirect '/set_lists' unless current_band
+  return redirect '/gigs' unless current_band
   
   @venue = filter_by_current_band(Venue).find(params[:venue_id])
   

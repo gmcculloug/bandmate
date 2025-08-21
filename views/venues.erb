@@ -11,22 +11,15 @@
                     <div style="flex: 1; min-width: 0;">
                         <div style="font-weight: 600; font-size: 1.1rem; word-break: break-word;"><%= venue.name %></div>
                         <div style="margin-top: 4px; display: flex; gap: 15px; font-size: 0.85rem; color: #4a5568; flex-wrap: wrap;">
-                            <span><strong>Location:</strong> <%= venue.location %></span>
                             <span><strong>Contact:</strong> <%= venue.contact_name %></span>
                             <span><strong>Phone:</strong> <%= venue.phone_number %></span>
+                            <span><strong>Location:</strong> <%= venue.location %></span>
                         </div>
                         <% if venue.website.present? %>
                             <div style="margin-top: 4px; font-size: 0.85rem; color: #718096;">
                                 <a href="<%= venue.website %>" target="_blank" style="color: #667eea; text-decoration: none;">🌐 <%= venue.website %></a>
                             </div>
                         <% end %>
-                    </div>
-                    <div class="actions" onclick="event.stopPropagation();" style="display: flex; gap: 5px; flex-shrink: 0;">
-                        <a href="/venues/<%= venue.id %>/edit" class="btn" style="font-size: 0.8rem; padding: 5px 10px;">Edit</a>
-                        <form method="POST" action="/venues/<%= venue.id %>" style="display: inline;">
-                            <input type="hidden" name="_method" value="DELETE">
-                            <button type="submit" class="btn btn-danger" style="font-size: 0.8rem; padding: 5px 10px;" onclick="return confirm('Delete this venue? This will also remove it from any associated set lists.')">Delete</button>
-                        </form>
                     </div>
                 </div>
             </div>

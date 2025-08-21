@@ -69,30 +69,38 @@
 </div>
 
 <div class="card" style="margin-top: 20px;">
-    <h3>Set Lists at this Venue (<%= @venue.set_lists.count %>)</h3>
-    <% if @venue.set_lists.any? %>
+    <h3>Gigs at this Venue (<%= @venue.gigs.count %>)</h3>
+    <% if @venue.gigs.any? %>
         <div style="display: flex; flex-direction: column; gap: 8px;">
-            <% @venue.set_lists.order(:performance_date).each do |set_list| %>
-                <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #e2e8f0; cursor: pointer;" onclick="window.location.href='/set_lists/<%= set_list.id %>'">
+            <% @venue.gigs.order(:performance_date).each do |gig| %>
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #e2e8f0; cursor: pointer;" onclick="window.location.href='/gigs/<%= gig.id %>'">
                     <div style="flex: 1; min-width: 0;">
-                        <div style="font-weight: 600; color: #2d3748; word-break: break-word;"><%= set_list.name %></div>
+                        <div style="font-weight: 600; color: #2d3748; word-break: break-word;"><%= gig.name %></div>
                         <div style="font-size: 0.85rem; color: #718096; display: flex; gap: 8px; flex-wrap: wrap;">
-                            <span><strong>Band:</strong> <%= set_list.band.name %></span>
-                            <% if set_list.performance_date %>
-                                <span><strong>Date:</strong> <%= set_list.performance_date.strftime('%B %d, %Y') %></span>
+                            <span><strong>Band:</strong> <%= gig.band.name %></span>
+                            <% if gig.performance_date %>
+                                <span><strong>Date:</strong> <%= gig.performance_date.strftime('%B %d, %Y') %></span>
                             <% end %>
-                            <% if set_list.start_time %>
-                                <span><strong>Time:</strong> <%= set_list.start_time.strftime('%I:%M %p') %></span>
+                            <% if gig.start_time %>
+                                <span><strong>Time:</strong> <%= gig.start_time.strftime('%I:%M %p') %></span>
                             <% end %>
                         </div>
                     </div>
                     <div class="actions" onclick="event.stopPropagation();" style="flex-shrink: 0;">
-                        <a href="/set_lists/<%= set_list.id %>" class="btn" style="padding: 4px 8px; font-size: 0.75rem;">View</a>
+                        <a href="/gigs/<%= gig.id %>" class="btn" style="padding: 4px 8px; font-size: 0.75rem;">View</a>
                     </div>
                 </div>
             <% end %>
         </div>
     <% else %>
-        <p style="text-align: center; color: #718096; font-style: italic;">No set lists scheduled at this venue yet.</p>
+        <p style="text-align: center; color: #718096; font-style: italic;">No gigs scheduled at this venue yet.</p>
     <% end %>
+</div>
+
+<div class="card" style="margin-top: 20px;">
+    <h3>Venue Management</h3>
+    <form method="POST" action="/venues/<%= @venue.id %>" style="margin-top: 15px;">
+        <input type="hidden" name="_method" value="DELETE">
+        <button type="submit" class="btn btn-danger" onclick="return confirm('Delete this venue? This will also remove it from any associated gigs.')">🗑️ Delete Venue</button>
+    </form>
 </div> 

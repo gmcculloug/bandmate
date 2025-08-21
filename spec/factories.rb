@@ -34,8 +34,8 @@ FactoryBot.define do
     association :band
   end
 
-  factory :set_list do
-    sequence(:name) { |n| "Set List #{n}" }
+  factory :gig do
+    sequence(:name) { |n| "Gig #{n}" }
     performance_date { Date.current + rand(1..30).days }
     start_time { "20:00" }
     end_time { "22:00" }
@@ -45,9 +45,15 @@ FactoryBot.define do
     association :venue
   end
 
-  factory :set_list_song do
-    association :set_list
+  factory :gig_song do
+    association :gig
     association :song
     sequence(:position) { |n| n }
+  end
+
+  factory :blackout_date do
+    association :user
+    blackout_date { Date.current + rand(0..30).days }
+    reason { ['Vacation', 'Personal', 'Work', nil].sample }
   end
 end 

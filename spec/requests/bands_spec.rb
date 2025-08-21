@@ -85,7 +85,7 @@ RSpec.describe 'Bands API', type: :request do
       }.to change(Band, :count).by(1)
       
       expect(last_response).to be_redirect
-      expect(last_response.location).to end_with('/set_lists')
+      expect(last_response.location).to end_with('/gigs')
     end
 
     it 'creates subsequent bands and redirects to bands index' do

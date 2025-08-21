@@ -330,7 +330,7 @@
             flex-wrap: wrap;
         }
         
-        .set-list-item {
+        .gig-item {
             background: white;
             border-radius: 10px;
             padding: 15px;
@@ -343,12 +343,12 @@
             -webkit-tap-highlight-color: transparent;
         }
         
-        .set-list-info h3 {
+        .gig-info h3 {
             color: #2d3748;
             margin-bottom: 5px;
         }
         
-        .set-list-info p {
+        .gig-info p {
             color: #718096;
         }
         
@@ -464,7 +464,7 @@
                 gap: 5px;
             }
             
-            .set-list-item {
+            .gig-item {
                 padding: 12px;
                 flex-direction: column;
                 align-items: flex-start;
@@ -767,7 +767,8 @@
             <button class="mobile-menu-toggle" onclick="toggleMobileMenu()">☰</button>
             <nav class="nav" id="mobile-nav">
                 <% if logged_in? %>
-                    <a href="/set_lists">📋 Set Lists</a>
+                    <a href="/gigs">📋 Gigs</a>
+                    <a href="/calendar">📅 Calendar</a>
                     <a href="/songs">🎵 Songs</a>
                     <a href="/global_songs">🌐 Global Songs</a>
                     <a href="/venues">🏢 Venues</a>

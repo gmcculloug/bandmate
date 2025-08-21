@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><%= @set_list.name %> - Set List</title>
+    <title><%= @gig.name %> - Gig</title>
     <style>
         @media print {
             @page {
@@ -231,29 +231,29 @@
     <button class="print-button" onclick="window.print()">🖨️ Print</button>
     
     <div class="header">
-        <h1><%= @set_list.name %></h1>
+        <h1><%= @gig.name %></h1>
     </div>
 
-    <% if @set_list.notes.present? %>
+    <% if @gig.notes.present? %>
         <div class="notes">
             <h4>Notes:</h4>
-            <p><%= @set_list.notes %></p>
+            <p><%= @gig.notes %></p>
         </div>
     <% end %>
 
     <div class="song-list">
-        <% if @set_list.songs.any? %>
-            <% @set_list.set_list_songs.includes(:song).order(:position).each_with_index do |set_list_song, index| %>
+        <% if @gig.songs.any? %>
+            <% @gig.gig_songs.includes(:song).order(:position).each_with_index do |gig_song, index| %>
                 <div class="song-item">
                     <div class="song-number"><%= index + 1 %></div>
                     <div class="song-info">
                         <div class="song-title">
-                            <%= set_list_song.song.title %>
-                            <% if set_list_song.song.artist.present? %>
-                                <span style="color: #666; font-weight: normal; font-size: 0.9rem;"> • <%= set_list_song.song.artist %></span>
+                            <%= gig_song.song.title %>
+                            <% if gig_song.song.artist.present? %>
+                                <span style="color: #666; font-weight: normal; font-size: 0.9rem;"> • <%= gig_song.song.artist %></span>
                             <% end %>
                         </div>
-                        <div class="song-key">(<%= set_list_song.song.key %>)</div>
+                        <div class="song-key">(<%= gig_song.song.key %>)</div>
                     </div>
                 </div>
             <% end %>
@@ -262,16 +262,16 @@
         <% end %>
     </div>
 
-    <% if @set_list.songs.any? %>
+    <% if @gig.songs.any? %>
         <div class="summary">
             <div class="summary-grid">
                 <div class="summary-item">
-                    <span class="summary-label">Total Songs:</span> <%= @set_list.songs.count %>
+                    <span class="summary-label">Total Songs:</span> <%= @gig.songs.count %>
                 </div>
                 <div class="summary-item">
                     <span class="summary-label">Estimated Duration:</span> 
                     <% 
-                      total_minutes = @set_list.songs.sum do |s| 
+                      total_minutes = @gig.songs.sum do |s| 
                         if s.duration.present? && s.duration.match?(/^\d+:\d+$/)
                           parts = s.duration.split(':').map(&:to_i)
                           parts[0] + parts[1]/60.0

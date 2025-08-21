@@ -1,0 +1,559 @@
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+    <div>
+        <h2>📅 Gig Calendar</h2>
+        <p style="color: #718096; margin: 5px 0 0 0;">View all gigs across your bands and bandmate availability.</p>
+    </div>
+    
+    <div style="display: flex; align-items: center; gap: 10px;">
+        <a href="<%= prev_month_link(@year, @month) %>" class="btn">‹ Prev</a>
+        <span style="font-weight: 600; font-size: 1.1rem;"><%= month_name(@month) %> <%= @year %></span>
+        <a href="<%= next_month_link(@year, @month) %>" class="btn">Next ›</a>
+    </div>
+</div>
+
+<!-- Legend -->
+<div style="display: flex; gap: 20px; margin-bottom: 20px; padding: 15px; background: #f7fafc; border-radius: 8px; flex-wrap: wrap;">
+    <div style="display: flex; align-items: center; gap: 5px;">
+        <div style="width: 16px; height: 16px; background: #667eea; border-radius: 4px;"></div>
+        <span style="font-size: 0.9rem;">Current Band Gigs</span>
+    </div>
+    <% if current_user.bands.count > 1 %>
+        <div style="display: flex; align-items: center; gap: 5px;">
+            <div style="width: 16px; height: 16px; background: #f6ad55; border-radius: 4px;"></div>
+            <span style="font-size: 0.9rem;">Your Other Band Gigs</span>
+        </div>
+    <% end %>
+    <div style="display: flex; align-items: center; gap: 5px;">
+        <div style="width: 16px; height: 16px; background: #fc8181; border-radius: 4px;"></div>
+        <span style="font-size: 0.9rem;">Bandmate Conflicts</span>
+    </div>
+    <div style="display: flex; align-items: center; gap: 5px;">
+        <div style="width: 16px; height: 16px; background: #6b46c1; border-radius: 4px;"></div>
+        <span style="font-size: 0.9rem;">Blackout Dates</span>
+    </div>
+    <div style="flex: 1; text-align: right; font-size: 0.85rem; color: #718096;">
+        Click to toggle blackout • Drag to select multiple dates
+    </div>
+</div>
+
+<!-- Calendar Grid -->
+<div class="calendar-grid">
+    <!-- Day headers -->
+    <div class="calendar-header">Sunday</div>
+    <div class="calendar-header">Monday</div>
+    <div class="calendar-header">Tuesday</div>
+    <div class="calendar-header">Wednesday</div>
+    <div class="calendar-header">Thursday</div>
+    <div class="calendar-header">Friday</div>
+    <div class="calendar-header">Saturday</div>
+    
+    <!-- Calendar days -->
+    <% calendar_days_for_month(@year, @month).each do |date| %>
+        <% gigs = gigs_for_date(date) %>
+        <% is_current_month = date.month == @month %>
+        <% is_today = date == Date.current %>
+        <% is_past = date < Date.current %>
+        
+        <div class="calendar-day <%= 'other-month' unless is_current_month %> <%= 'today' if is_today %> <%= 'past-date' if is_past %>" 
+             data-date="<%= date.to_s %>" 
+             <%= "onclick=\"toggleBlackoutDate('#{date.to_s}')\"" unless is_past %>
+             style="cursor: <%= is_past ? 'not-allowed' : 'pointer' %>;">
+            <div class="day-number"><%= date.day %></div>
+            
+            <div class="day-events">
+                <!-- Current band gigs -->
+                <% if gigs[:current] %>
+                    <% gigs[:current].each do |gig| %>
+                        <div class="gig-event current-band" title="<%= gig.name %> at <%= gig.venue&.name || 'TBD' %>">
+                            <a href="/gigs/<%= gig.id %>" style="color: white; text-decoration: none;">
+                                <%= gig.name.truncate(20) %>
+                            </a>
+                        </div>
+                    <% end %>
+                <% end %>
+                
+                <!-- Other band gigs -->
+                <% if gigs[:other] && current_user.bands.count > 1 %>
+                    <% gigs[:other].each do |gig| %>
+                        <div class="gig-event other-band" title="<%= gig.name %> with <%= gig.band.name %> at <%= gig.venue&.name || 'TBD' %>">
+                            <a href="/gigs/<%= gig.id %>" style="color: white; text-decoration: none;">
+                                <%= gig.band.name %>: <%= gig.name.truncate(15) %>
+                            </a>
+                        </div>
+                    <% end %>
+                <% end %>
+                
+                <!-- Bandmate conflicts -->
+                <% if gigs[:conflicts] %>
+                    <% gigs[:conflicts].each do |gig| %>
+                        <div class="gig-event conflict" title="Bandmate busy with <%= gig.band.name %>: <%= gig.name %>">
+                            Bandmate busy - <%= gig.band.name %>
+                        </div>
+                    <% end %>
+                <% end %>
+                
+                <!-- Blackout dates -->
+                <% if gigs[:blackouts] %>
+                    <% gigs[:blackouts].each do |blackout| %>
+                        <% user_text = blackout.user == current_user ? "You" : blackout.user.username %>
+                        <% is_current_user = blackout.user == current_user %>
+                        <div class="gig-event blackout <%= 'user-blackout' if is_current_user %>" 
+                             title="<%= user_text %> - unavailable<%= blackout.reason.present? ? ': ' + blackout.reason : '' %>"
+                             <%= 'data-user-blackout="true"' if is_current_user %>
+                             onclick="event.stopPropagation();">
+                            <%= user_text %> - unavailable
+                        </div>
+                    <% end %>
+                <% end %>
+            </div>
+        </div>
+    <% end %>
+</div>
+
+<style>
+.calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 1px;
+    background: #e2e8f0;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.calendar-header {
+    background: #4a5568;
+    color: white;
+    padding: 12px 8px;
+    text-align: center;
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.calendar-day {
+    background: white;
+    min-height: 120px;
+    padding: 8px;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+}
+
+.calendar-day.other-month {
+    background: #f7fafc;
+    color: #a0aec0;
+}
+
+.calendar-day.today {
+    background: #ebf8ff;
+    border: 2px solid #3182ce;
+}
+
+.calendar-day.today.other-month {
+    background: #f0f4f8;
+}
+
+.calendar-day.past-date {
+    background: #f5f5f5;
+    color: #9ca3af;
+    opacity: 0.6;
+}
+
+.calendar-day.past-date:hover {
+    background-color: #f5f5f5 !important;
+}
+
+.day-number {
+    font-weight: 600;
+    font-size: 0.9rem;
+    margin-bottom: 4px;
+}
+
+.day-events {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.gig-event {
+    background: #667eea;
+    color: white;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    line-height: 1.2;
+    word-break: break-word;
+    cursor: pointer;
+}
+
+.gig-event.current-band {
+    background: #667eea;
+}
+
+.gig-event.other-band {
+    background: #f6ad55;
+}
+
+.gig-event.conflict {
+    background: #fc8181;
+}
+
+.gig-event.blackout {
+    background: #6b46c1;
+}
+
+.calendar-day:hover {
+    background-color: #f0f9ff;
+}
+
+.calendar-day.other-month:hover {
+    background-color: #e5e7eb;
+}
+
+/* Drag selection styles */
+.calendar-day.selecting {
+    background-color: #dbeafe !important;
+    border: 2px solid #3b82f6 !important;
+}
+
+.calendar-day.selected-range {
+    background-color: #bfdbfe !important;
+    border: 1px solid #3b82f6 !important;
+}
+
+.calendar-grid.drag-mode {
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+}
+
+.calendar-grid.drag-mode .calendar-day {
+    cursor: crosshair;
+}
+
+.gig-event:hover {
+    opacity: 0.8;
+}
+
+.gig-event a {
+    display: block;
+    color: inherit;
+    text-decoration: none;
+}
+
+@media (max-width: 768px) {
+    .calendar-grid {
+        font-size: 0.8rem;
+    }
+    
+    .calendar-day {
+        min-height: 80px;
+        padding: 4px;
+    }
+    
+    .gig-event {
+        font-size: 0.7rem;
+        padding: 1px 4px;
+    }
+    
+    .calendar-header {
+        padding: 8px 4px;
+        font-size: 0.8rem;
+    }
+}
+</style>
+
+<script>
+function toggleBlackoutDate(dateStr) {
+    // Check if this date already has a blackout for current user
+    const calendarDay = document.querySelector(`[data-date="${dateStr}"]`);
+    
+    // Look for blackout elements in multiple ways to be more robust
+    const userBlackout = calendarDay.querySelector('.blackout[data-user-blackout="true"]') ||
+                        calendarDay.querySelector('.blackout[title*="You - unavailable"]') ||
+                        calendarDay.querySelector('.user-blackout');
+    
+    if (userBlackout) {
+        // Remove blackout
+        removeBlackoutDate(dateStr);
+    } else {
+        // Add blackout without reason prompt
+        addBlackoutDate(dateStr, '');
+    }
+}
+
+function addBlackoutDate(dateStr, reason) {
+    fetch('/blackout_dates', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: `date=${encodeURIComponent(dateStr)}&reason=${encodeURIComponent(reason || '')}`
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Add blackout element to DOM instead of full page reload
+            addBlackoutToCalendar(dateStr);
+        } else {
+            // If blackout already exists, try to find and update the UI state
+            if (data.error && data.error.includes('already exists')) {
+                // The blackout exists on server but not in our UI, add it to sync
+                addBlackoutToCalendar(dateStr);
+            } else {
+                // Only show alerts for unexpected errors
+                alert('Error: ' + (data.error || 'Failed to add blackout date'));
+            }
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Failed to add blackout date');
+    });
+}
+
+function removeBlackoutDate(dateStr) {
+    fetch(`/blackout_dates/${encodeURIComponent(dateStr)}`, {
+        method: 'DELETE'
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Remove blackout element from DOM instead of full page reload
+            removeBlackoutFromCalendar(dateStr);
+        } else {
+            // If blackout not found, the UI might be out of sync - remove from UI anyway
+            if (data.error && data.error.includes('not found')) {
+                // The blackout doesn't exist on server but might be in our UI, remove it to sync
+                removeBlackoutFromCalendar(dateStr);
+            } else {
+                // Only show alerts for unexpected errors
+                alert('Error: ' + (data.error || 'Failed to remove blackout date'));
+            }
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Failed to remove blackout date');
+    });
+}
+
+function addBlackoutToCalendar(dateStr) {
+    const calendarDay = document.querySelector(`[data-date="${dateStr}"]`);
+    if (calendarDay) {
+        // Check if we already have a user blackout to avoid duplicates
+        const existingBlackout = calendarDay.querySelector('.blackout[data-user-blackout="true"]') ||
+                                 calendarDay.querySelector('.blackout[title*="You - unavailable"]');
+        if (existingBlackout) {
+            return;
+        }
+        
+        const dayEvents = calendarDay.querySelector('.day-events');
+        
+        // Create blackout element
+        const blackoutElement = document.createElement('div');
+        blackoutElement.className = 'gig-event blackout user-blackout';
+        blackoutElement.title = 'You - unavailable';
+        blackoutElement.textContent = 'You - unavailable';
+        blackoutElement.onclick = function(e) { e.stopPropagation(); };
+        blackoutElement.setAttribute('data-user-blackout', 'true');
+        
+        // Add to day events
+        dayEvents.appendChild(blackoutElement);
+    }
+}
+
+function removeBlackoutFromCalendar(dateStr) {
+    const calendarDay = document.querySelector(`[data-date="${dateStr}"]`);
+    if (calendarDay) {
+        const userBlackout = calendarDay.querySelector('.blackout[data-user-blackout="true"]') ||
+                            calendarDay.querySelector('.blackout[title*="You - unavailable"]');
+        if (userBlackout) {
+            userBlackout.remove();
+        }
+    }
+}
+
+// Drag selection variables
+let isDragging = false;
+let startDate = null;
+let currentSelection = [];
+
+// Prevent event bubbling for gig events so they don't trigger blackout toggle
+document.addEventListener('DOMContentLoaded', function() {
+    const gigEvents = document.querySelectorAll('.gig-event:not(.blackout)');
+    gigEvents.forEach(event => {
+        event.addEventListener('click', function(e) {
+            e.stopPropagation();
+        });
+    });
+    
+    // Add drag selection event listeners
+    const calendarGrid = document.querySelector('.calendar-grid');
+    const calendarDays = document.querySelectorAll('.calendar-day');
+    
+    calendarDays.forEach(day => {
+        day.addEventListener('mousedown', startDragSelection);
+        day.addEventListener('mouseenter', updateDragSelection);
+        day.addEventListener('mouseup', endDragSelection);
+    });
+    
+    // Prevent text selection during drag
+    document.addEventListener('selectstart', function(e) {
+        if (isDragging) {
+            e.preventDefault();
+        }
+    });
+    
+    // Handle mouse leave and mouse up on document to end selection
+    document.addEventListener('mouseup', endDragSelection);
+});
+
+function startDragSelection(e) {
+    e.preventDefault();
+    
+    // Don't start drag if clicking on a gig event
+    if (e.target.closest('.gig-event')) {
+        return;
+    }
+    
+    // Don't start drag if clicking on a past date
+    if (this.classList.contains('past-date')) {
+        return;
+    }
+    
+    isDragging = true;
+    startDate = this.dataset.date;
+    currentSelection = [startDate];
+    
+    // Add drag-mode class to grid
+    document.querySelector('.calendar-grid').classList.add('drag-mode');
+    
+    // Clear previous selection
+    document.querySelectorAll('.calendar-day').forEach(day => {
+        day.classList.remove('selecting', 'selected-range');
+    });
+    
+    // Mark start day as selecting
+    this.classList.add('selecting');
+}
+
+function updateDragSelection(e) {
+    if (!isDragging) return;
+    
+    const endDate = this.dataset.date;
+    
+    // Clear previous selection styling
+    document.querySelectorAll('.calendar-day').forEach(day => {
+        day.classList.remove('selecting', 'selected-range');
+    });
+    
+    // Calculate date range
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    const rangeStart = start <= end ? start : end;
+    const rangeEnd = start <= end ? end : start;
+    
+    // Update current selection
+    currentSelection = [];
+    
+    // Find all dates in range and add styling (exclude past dates)
+    document.querySelectorAll('.calendar-day').forEach(day => {
+        const dayDate = new Date(day.dataset.date);
+        if (dayDate >= rangeStart && dayDate <= rangeEnd && !day.classList.contains('past-date')) {
+            day.classList.add('selected-range');
+            currentSelection.push(day.dataset.date);
+        }
+    });
+}
+
+function endDragSelection(e) {
+    if (!isDragging) return;
+    
+    isDragging = false;
+    
+    // Remove drag-mode class
+    document.querySelector('.calendar-grid').classList.remove('drag-mode');
+    
+    // If we have a selection, show options
+    if (currentSelection.length > 0) {
+        showRangeOptions(currentSelection);
+    }
+    
+    // Clear visual selection
+    setTimeout(() => {
+        document.querySelectorAll('.calendar-day').forEach(day => {
+            day.classList.remove('selecting', 'selected-range');
+        });
+    }, 200);
+}
+
+function showRangeOptions(dates) {
+    // Check if any of the selected dates already have blackouts for current user
+    let hasAnyBlackouts = false;
+    
+    dates.forEach(dateStr => {
+        const calendarDay = document.querySelector(`[data-date="${dateStr}"]`);
+        const userBlackout = calendarDay?.querySelector('.blackout[title*="You - unavailable"]');
+        if (userBlackout) {
+            hasAnyBlackouts = true;
+        }
+    });
+    
+    // If any dates have blackouts, remove all blackouts from the selection
+    // If no dates have blackouts, add blackouts to all dates
+    if (hasAnyBlackouts) {
+        removeBlackoutDateRange(dates);
+    } else {
+        addBlackoutDateRange(dates);
+    }
+}
+
+function addBlackoutDateRange(dates) {
+    fetch('/blackout_dates/bulk', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: `dates=${encodeURIComponent(dates.join(','))}&reason=${encodeURIComponent('')}`
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Add blackout elements to DOM for all dates
+            dates.forEach(dateStr => addBlackoutToCalendar(dateStr));
+        } else {
+            alert('Error: ' + (data.error || 'Failed to add blackout dates'));
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Failed to add blackout dates');
+    });
+}
+
+function removeBlackoutDateRange(dates) {
+    fetch('/blackout_dates/bulk', {
+        method: 'DELETE',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: `dates=${encodeURIComponent(dates.join(','))}`
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Remove blackout elements from DOM for all dates
+            dates.forEach(dateStr => removeBlackoutFromCalendar(dateStr));
+        } else {
+            alert('Error: ' + (data.error || 'Failed to remove blackout dates'));
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Failed to remove blackout dates');
+    });
+}
+</script>

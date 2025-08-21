@@ -30,12 +30,12 @@ RSpec.describe Band, type: :model do
       expect(band.songs).to include(song1, song2)
     end
 
-    it 'has many set lists' do
+    it 'has many gigs' do
       band = create(:band)
-      set_list1 = create(:set_list, band: band)
-      set_list2 = create(:set_list, band: band)
+      gig1 = create(:gig, band: band)
+      gig2 = create(:gig, band: band)
       
-      expect(band.set_lists).to include(set_list1, set_list2)
+      expect(band.gigs).to include(gig1, gig2)
     end
 
     it 'has many venues' do
@@ -73,10 +73,10 @@ RSpec.describe Band, type: :model do
       expect { band.destroy }.to change(Band, :count).by(-1)
     end
 
-    it 'can be destroyed when it has set lists' do
+    it 'can be destroyed when it has gigs' do
       band = create(:band)
-      set_list = create(:set_list, band: band)
-      set_list.destroy  # Clean up the set list first due to foreign key constraint
+      gig = create(:gig, band: band)
+      gig.destroy  # Clean up the set list first due to foreign key constraint
       expect { band.destroy }.to change(Band, :count).by(-1)
     end
 

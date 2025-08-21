@@ -1,75 +1,75 @@
 <% if params[:error] == 'copy_failed' %>
     <div class="errors" style="margin-bottom: 20px;">
-        <p>Failed to copy set list. Please try again.</p>
+        <p>Failed to copy gig. Please try again.</p>
     </div>
 <% end %>
 
-<% unless @set_list %>
+<% unless @gig %>
     <div class="errors" style="margin-bottom: 20px;">
         <p>Set list not found.</p>
     </div>
-    <a href="/set_lists" class="btn">Back to Set Lists</a>
+    <a href="/gigs" class="btn">Back to Gigs</a>
     <% return %>
 <% end %>
 
 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; flex-wrap: wrap; gap: 10px;">
-    <h2>📋 <%= @set_list.name %></h2>
+    <h2>📋 <%= @gig.name %></h2>
     <div class="actions">
-        <a href="/set_lists/<%= @set_list.id %>/edit" class="btn">Edit</a>
-        <a href="/set_lists/<%= @set_list.id %>/print" class="btn" target="_blank">Print</a>
-        <form method="POST" action="/set_lists/<%= @set_list.id %>/copy" style="display: inline;">
-            <button type="submit" class="btn" onclick="return confirm('Copy this set list?')">📋 Copy</button>
+        <a href="/gigs/<%= @gig.id %>/edit" class="btn">Edit</a>
+        <a href="/gigs/<%= @gig.id %>/print" class="btn" target="_blank">Print Set List</a>
+        <form method="POST" action="/gigs/<%= @gig.id %>/copy" style="display: inline;">
+            <button type="submit" class="btn" onclick="return confirm('Copy this gig?')">📋 Copy</button>
         </form>
-        <a href="/set_lists" class="btn">Back to Set Lists</a>
+        <a href="/gigs" class="btn">Back to Gigs</a>
     </div>
 </div>
 
 <div class="card">
-    <% if @set_list && ((@set_list.venue && @set_list.venue.present?) || @set_list.performance_date.present? || @set_list.start_time.present?) %>
+    <% if @gig && ((@gig.venue && @gig.venue.present?) || @gig.performance_date.present? || @gig.start_time.present?) %>
         <div style="margin-bottom: 20px; padding: 15px; background: #f7fafc; border-radius: 8px;">
             <h4>Performance Details</h4>
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-top: 10px;">
-                <% if @set_list.venue && @set_list.venue.present? %>
+                <% if @gig.venue && @gig.venue.present? %>
                     <div class="detail-item">
                         <span class="detail-label">Venue:</span> 
-                        <a href="/venues/<%= @set_list.venue.id %>" style="color: #667eea; text-decoration: none;"><%= @set_list.venue.name %></a>
+                        <a href="/venues/<%= @gig.venue.id %>" style="color: #667eea; text-decoration: none;"><%= @gig.venue.name %></a>
                     </div>
                 <% end %>
-                <% if @set_list.performance_date.present? %>
+                <% if @gig.performance_date.present? %>
                     <div class="detail-item">
-                        <span class="detail-label">Date:</span> <%= @set_list.performance_date.strftime('%B %d, %Y') %>
+                        <span class="detail-label">Date:</span> <%= @gig.performance_date.strftime('%B %d, %Y') %>
                     </div>
                 <% end %>
-                <% if @set_list.start_time.present? %>
+                <% if @gig.start_time.present? %>
                     <div class="detail-item">
-                        <span class="detail-label">Start Time:</span> <%= @set_list.start_time.strftime('%I:%M %p') %>
+                        <span class="detail-label">Start Time:</span> <%= @gig.start_time.strftime('%I:%M %p') %>
                     </div>
                 <% end %>
-                <% if @set_list.end_time.present? %>
+                <% if @gig.end_time.present? %>
                     <div class="detail-item">
-                        <span class="detail-label">End Time:</span> <%= @set_list.end_time.strftime('%I:%M %p') %>
+                        <span class="detail-label">End Time:</span> <%= @gig.end_time.strftime('%I:%M %p') %>
                     </div>
                 <% end %>
             </div>
         </div>
     <% end %>
 
-    <% if @set_list.notes.present? %>
+    <% if @gig.notes.present? %>
         <div style="margin-bottom: 20px; padding: 15px; background: #f7fafc; border-radius: 8px;">
             <h4>Notes</h4>
-            <p><%= @set_list.notes %></p>
+            <p><%= @gig.notes %></p>
         </div>
     <% end %>
 
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
-        <h3>Songs (<%= @set_list.songs.count %>)</h3>
+        <h3>Songs (<%= @gig.songs.count %>)</h3>
         <a href="/songs" class="btn btn-success">➕ Add Songs</a>
     </div>
 
-    <% if @set_list.songs.any? %>
+    <% if @gig.songs.any? %>
         <div style="margin-bottom: 15px;">
-            <% @set_list.set_list_songs.includes(:song).order(:position).each_with_index do |set_list_song, index| %>
-                <div class="song-card" style="margin-bottom: 8px; padding: 10px; border: 1px solid #e2e8f0; border-radius: 6px; cursor: pointer;" onclick="window.location.href='/songs/<%= set_list_song.song.id %>'">
+            <% @gig.gig_songs.includes(:song).order(:position).each_with_index do |gig_song, index| %>
+                <div class="song-card" style="margin-bottom: 8px; padding: 10px; border: 1px solid #e2e8f0; border-radius: 6px; cursor: pointer;" onclick="window.location.href='/songs/<%= gig_song.song.id %>'">
                     <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
                         <div style="flex: 1; min-width: 0;">
                             <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
@@ -78,27 +78,27 @@
                                 </span>
                                 <div style="flex: 1; min-width: 0;">
                                     <div style="font-weight: 600; font-size: 1rem; word-break: break-word;">
-                                        <%= set_list_song.song.title %>
-                                        <% if set_list_song.song.artist.present? %>
-                                            <span style="color: #718096; font-weight: normal; font-size: 0.9rem;"> • <%= set_list_song.song.artist %></span>
+                                        <%= gig_song.song.title %>
+                                        <% if gig_song.song.artist.present? %>
+                                            <span style="color: #718096; font-weight: normal; font-size: 0.9rem;"> • <%= gig_song.song.artist %></span>
                                         <% end %>
                                     </div>
                                     <div style="margin-top: 4px; display: flex; gap: 15px; font-size: 0.85rem; color: #4a5568; flex-wrap: wrap;">
-                                        <span><strong>Key:</strong> <%= set_list_song.song.key %></span>
-                                        <span><strong>Tempo:</strong> <%= set_list_song.song.tempo ? "#{set_list_song.song.tempo} BPM" : 'N/A' %></span>
-                                        <span><strong>Duration:</strong> <%= set_list_song.song.duration || 'N/A' %></span>
-                                        <span><strong>Genre:</strong> <%= set_list_song.song.genre || 'N/A' %></span>
+                                        <span><strong>Key:</strong> <%= gig_song.song.key %></span>
+                                        <span><strong>Tempo:</strong> <%= gig_song.song.tempo ? "#{gig_song.song.tempo} BPM" : 'N/A' %></span>
+                                        <span><strong>Duration:</strong> <%= gig_song.song.duration || 'N/A' %></span>
+                                        <span><strong>Genre:</strong> <%= gig_song.song.genre || 'N/A' %></span>
                                     </div>
                                 </div>
                             </div>
                         </div>
                         <div class="actions" onclick="event.stopPropagation();" style="display: flex; gap: 5px; flex-shrink: 0;">
-                            <% if set_list_song.song.url.present? %>
-                                <a href="<%= set_list_song.song.url %>" target="_blank" class="btn" style="font-size: 0.8rem; padding: 5px 10px;">🎵</a>
+                            <% if gig_song.song.url.present? %>
+                                <a href="<%= gig_song.song.url %>" target="_blank" class="btn" style="font-size: 0.8rem; padding: 5px 10px;">🎵</a>
                             <% end %>
-                            <form method="POST" action="/set_lists/<%= @set_list.id %>/songs/<%= set_list_song.song.id %>" style="display: inline;">
+                            <form method="POST" action="/gigs/<%= @gig.id %>/songs/<%= gig_song.song.id %>" style="display: inline;">
                                 <input type="hidden" name="_method" value="DELETE">
-                                <button type="submit" class="btn btn-danger" style="font-size: 0.8rem; padding: 5px 10px;" onclick="return confirm('Remove this song from the set list?')">Remove</button>
+                                <button type="submit" class="btn btn-danger" style="font-size: 0.8rem; padding: 5px 10px;" onclick="return confirm('Remove this song from the gig?')">Remove</button>
                             </form>
                         </div>
                     </div>
@@ -107,15 +107,15 @@
         </div>
 
         <div style="background: #f7fafc; padding: 20px; border-radius: 8px;">
-            <h4>Set List Summary</h4>
+            <h4>Gig Summary</h4>
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-top: 15px;">
                 <div class="detail-item">
-                    <span class="detail-label">Total Songs:</span> <%= @set_list.songs.count %>
+                    <span class="detail-label">Total Songs:</span> <%= @gig.songs.count %>
                 </div>
                 <div class="detail-item">
                     <span class="detail-label">Estimated Duration:</span> 
                     <% 
-                      total_minutes = @set_list.songs.sum do |s| 
+                      total_minutes = @gig.songs.sum do |s| 
                         if s.duration.present? && s.duration.match?(/^\d+:\d+$/)
                           parts = s.duration.split(':').map(&:to_i)
                           parts[0] + parts[1]/60.0
@@ -131,7 +131,7 @@
         </div>
     <% else %>
         <div style="text-align: center; padding: 40px;">
-            <h3>No songs in this set list yet</h3>
+            <h3>No songs in this gig yet</h3>
             <p>Add some songs to get started!</p>
             <a href="/songs" class="btn btn-success">Browse Songs</a>
         </div>
@@ -140,11 +140,11 @@
 
 <% if @available_songs.any? %>
     <div class="card" style="margin-top: 30px;">
-        <h3>Add Songs to Set List</h3>
-        <p>Select songs from "<%= @set_list.band.name %>" to add to "<%= @set_list.name %>":</p>
+        <h3>Add Songs to Gig</h3>
+        <p>Select songs from "<%= @gig.band.name %>" to add to "<%= @gig.name %>":</p>
         
         <% @available_songs.each do |song| %>
-            <form method="POST" action="/set_lists/<%= @set_list.id %>/songs" style="margin-bottom: 10px;">
+            <form method="POST" action="/gigs/<%= @gig.id %>/songs" style="margin-bottom: 10px;">
                 <input type="hidden" name="song_id" value="<%= song.id %>">
                 <button type="submit" class="btn" style="width: 100%; text-align: left; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
                     <span style="flex: 1; min-width: 0;">
@@ -166,7 +166,7 @@
 <% elsif @available_songs.empty? %>
     <div class="card" style="margin-top: 30px;">
         <h3>No More Songs Available</h3>
-        <p>All songs from "<%= @set_list.band.name %>" are already in this set list.</p>
-        <a href="/songs/new" class="btn btn-success">Add New Song to <%= @set_list.band.name %></a>
+        <p>All songs from "<%= @gig.band.name %>" are already in this gig.</p>
+        <a href="/songs/new" class="btn btn-success">Add New Song to <%= @gig.band.name %></a>
     </div>
 <% end %> 

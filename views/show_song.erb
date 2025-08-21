@@ -53,26 +53,26 @@
             <% end %>
             
             <div style="margin-bottom: 20px;">
-                <h4>Add to Set List</h4>
-                <form method="POST" action="/set_lists" style="display: flex; gap: 10px; align-items: end;">
+                <h4>Add to Gig</h4>
+                <form method="POST" action="/gigs" style="display: flex; gap: 10px; align-items: end;">
                     <div class="form-group" style="flex: 1;">
-                        <label for="set_list_name">Set List Name</label>
-                        <input type="text" id="set_list_name" name="name" placeholder="e.g., Friday Night Set" required>
+                        <label for="gig_name">Gig Name</label>
+                        <input type="text" id="gig_name" name="name" placeholder="e.g., Friday Night Set" required>
                     </div>
                     <button type="submit" class="btn">Create & Add</button>
                 </form>
             </div>
 
-            <% existing_set_lists = SetList.joins(:band).where(bands: { id: @song.band_ids }) %>
-            <% if existing_set_lists.any? %>
+            <% existing_gigs = Gig.joins(:band).where(bands: { id: @song.band_ids }) %>
+            <% if existing_gigs.any? %>
                 <div>
-                    <h4>Add to Existing Set List</h4>
-                    <% existing_set_lists.each do |set_list| %>
-                        <% unless set_list.songs.include?(@song) %>
-                            <form method="POST" action="/set_lists/<%= set_list.id %>/songs" style="margin-bottom: 10px;">
+                    <h4>Add to Existing Gig</h4>
+                    <% existing_gigs.each do |gig| %>
+                        <% unless gig.songs.include?(@song) %>
+                            <form method="POST" action="/gigs/<%= gig.id %>/songs" style="margin-bottom: 10px;">
                                 <input type="hidden" name="song_id" value="<%= @song.id %>">
                                 <button type="submit" class="btn" style="width: 100%; text-align: left;">
-                                    ➕ Add to "<%= set_list.name %>" (<%= set_list.band.name %>)
+                                    ➕ Add to "<%= gig.name %>" (<%= gig.band.name %>)
                                 </button>
                             </form>
                         <% end %>
@@ -99,4 +99,12 @@
             </div>
         </div>
     <% end %>
+</div>
+
+<div class="card" style="margin-top: 20px;">
+    <h3>Song Management</h3>
+    <form method="POST" action="/songs/<%= @song.id %>" style="margin-top: 15px;">
+        <input type="hidden" name="_method" value="DELETE">
+        <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure you want to delete this song? This will remove it from all gigs and bands.')">🗑️ Delete Song</button>
+    </form>
 </div> 
