@@ -318,6 +318,10 @@ helpers do
   end
 end
 
+# ============================================================================
+# ROUTES
+# ============================================================================
+
 # Test authentication route (only available in test mode)
 if settings.test?
   post '/test_login' do
@@ -332,7 +336,51 @@ if settings.test?
   end
 end
 
-# Authentication routes
+# Root route
+get '/' do
+  require_login
+  
+  # If user has no bands, redirect to create or join a band
+  if user_bands.empty?
+    redirect '/bands/new?first_band=true'
+  end
+  
+  # Redirect to set lists as the main screen
+  redirect '/gigs'
+end
+
+# Band selection
+post '/select_band' do
+  require_login
+  band = current_user.bands.find_by(id: params[:band_id])
+  if band
+    session[:band_id] = band.id
+    # Save this as the user's preferred band
+    current_user.update(last_selected_band_id: band.id)
+  end
+  
+  # Check if we're on a specific record page and redirect to appropriate list
+  referrer = request.env['HTTP_REFERER'] || ''
+  
+  if referrer.match?(/\/songs\/\d+/)
+    redirect '/songs'
+  elsif referrer.match?(/\/gigs\/\d+/)
+    redirect '/gigs'
+  elsif referrer.match?(/\/venues\/\d+/)
+    redirect '/venues'
+  elsif referrer.match?(/\/bands\/\d+/)
+    redirect '/bands'
+  elsif referrer.match?(/\/global_songs\/\d+/)
+    redirect '/global_songs'
+  else
+    redirect back
+  end
+end
+
+# ============================================================================
+# AUTHENTICATION ROUTES
+# ============================================================================
+
 get '/login' do
   erb :login, layout: :layout
 end
@@ -396,46 +444,10 @@ get '/logout' do
   redirect '/login'
 end
 
-# Account deletion
-get '/account/delete' do
-  require_login
-  erb :delete_account
-end
+# ============================================================================
+# USER PROFILE AND ACCOUNT ROUTES
+# ============================================================================
 
-post '/account/delete' do
-  require_login
-  
-  # Verify password for security
-  unless current_user.authenticate(params[:password])
-    @errors = ["Incorrect password. Please try again."]
-    return erb :delete_account
-  end
-  
-  user = current_user
-  
-  begin
-    # Clear session first
-    session.clear
-    
-    # Remove user from all bands first
-    user.user_bands.destroy_all
-    
-    # Clear last selected band reference
-    user.update(last_selected_band_id: nil)
-    
-    # Delete the user
-    user.destroy
-    
-    redirect '/login?account_deleted=true'
-  rescue => e
-    # If something goes wrong, restore the session
-    session[:user_id] = user.id
-    @errors = ["Failed to delete account. Please try again or contact support."]
-    erb :delete_account
-  end
-end
-
-# User profile routes
 get '/profile' do
   require_login
   erb :profile
@@ -481,31 +493,300 @@ post '/profile/change_password' do
   erb :profile
 end
 
-post '/select_band' do
+get '/account/delete' do
   require_login
-  band = current_user.bands.find_by(id: params[:band_id])
-  if band
-    session[:band_id] = band.id
-    # Save this as the user's preferred band
-    current_user.update(last_selected_band_id: band.id)
-  end
-  redirect back
+  erb :delete_account
 end
 
-# Routes
-get '/' do
+post '/account/delete' do
   require_login
   
-  # If user has no bands, redirect to create or join a band
-  if user_bands.empty?
-    redirect '/bands/new?first_band=true'
+  # Verify password for security
+  unless current_user.authenticate(params[:password])
+    @errors = ["Incorrect password. Please try again."]
+    return erb :delete_account
   end
   
-  # Redirect to set lists as the main screen
-  redirect '/gigs'
+  user = current_user
+  
+  begin
+    # Clear session first
+    session.clear
+    
+    # Remove user from all bands first
+    user.user_bands.destroy_all
+    
+    # Clear last selected band reference
+    user.update(last_selected_band_id: nil)
+    
+    # Delete the user
+    user.destroy
+    
+    redirect '/login?account_deleted=true'
+  rescue => e
+    # If something goes wrong, restore the session
+    session[:user_id] = user.id
+    @errors = ["Failed to delete account. Please try again or contact support."]
+    erb :delete_account
+  end
 end
 
-# Songs routes
+# ============================================================================
+# BAND ROUTES
+# ============================================================================
+
+get '/bands' do
+  require_login
+  @bands = user_bands.order(:name)
+  erb :bands
+end
+
+get '/bands/new' do
+  require_login
+  erb :new_band
+end
+
+post '/bands' do
+  require_login
+  
+  band = Band.new(params[:band])
+  band.owner = current_user
+  
+  if band.save
+    # Associate the current user with the new band
+    current_user.bands << band
+    
+    # Set this as the current band if it's the user's first band
+    if current_user.bands.count == 1
+      session[:band_id] = band.id
+      # Save this as the user's preferred band
+      current_user.update(last_selected_band_id: band.id)
+      redirect '/gigs'
+    else
+      redirect '/bands'
+    end
+  else
+    @errors = band.errors.full_messages
+    erb :new_band
+  end
+end
+
+get '/bands/:id' do
+  require_login
+  @band = user_bands.find(params[:id])
+  erb :show_band
+end
+
+get '/bands/:id/edit' do
+  require_login
+  @band = user_bands.find(params[:id])
+  
+  # Any band member can edit the band
+  unless @band.users.include?(current_user)
+    @errors = ["You must be a member of this band to edit it"]
+    return erb :show_band
+  end
+  
+  erb :edit_band
+end
+
+put '/bands/:id' do
+  require_login
+  @band = user_bands.find(params[:id])
+  
+  # Any band member can edit the band
+  unless @band.users.include?(current_user)
+    @errors = ["You must be a member of this band to edit it"]
+    return erb :show_band
+  end
+  
+  if @band.update(params[:band])
+    redirect "/bands/#{@band.id}"
+  else
+    @errors = @band.errors.full_messages
+    erb :edit_band
+  end
+end
+
+delete '/bands/:id' do
+  require_login
+  band = user_bands.find(params[:id])
+  
+  # Only the owner can delete the band
+  unless band.owned_by?(current_user)
+    @errors = ["Only the band owner can delete this band"]
+    return erb :show_band
+  end
+  
+  # If this was the current band, clear the session
+  if current_band&.id == band.id
+    session[:band_id] = nil
+  end
+  
+  # Remove all user associations with the band
+  band.user_bands.destroy_all
+  
+  # Delete the band
+  band.destroy
+  
+  redirect '/bands'
+end
+
+# Band user management
+post '/bands/:id/add_user' do
+  require_login
+  @band = user_bands.find(params[:id])
+  
+  # Any band member can add users
+  unless @band.users.include?(current_user)
+    @user_error = "You must be a member of this band to add new members"
+    return erb :edit_band
+  end
+  
+  username = params[:username]&.strip
+  
+  if username.blank?
+    @user_error = "Username cannot be empty"
+    return erb :edit_band
+  end
+  
+  # Find user by username (case insensitive)
+  user = User.where('LOWER(username) = ?', username.downcase).first
+  
+  if user.nil?
+    @user_error = "User '#{username}' not found"
+    return erb :edit_band
+  end
+  
+  if @band.users.include?(user)
+    @user_error = "User '#{username}' is already a member of this band"
+    return erb :edit_band
+  end
+  
+  # Add user to band
+  @band.users << user
+  @user_success = "Successfully added '#{username}' to the band"
+  
+  erb :edit_band
+end
+
+post '/bands/:id/remove_user' do
+  require_login
+  @band = user_bands.find(params[:id])
+  user_to_remove = User.find(params[:user_id])
+  
+  # Any band member can remove other members, but users can always remove themselves
+  if user_to_remove != current_user && !@band.users.include?(current_user)
+    @user_error = "You must be a member of this band to remove other members"
+    return erb :edit_band
+  end
+  
+  # Prevent removing the band owner
+  if user_to_remove == @band.owner
+    @user_error = "Cannot remove the band owner. The owner must transfer ownership first."
+    return erb :edit_band
+  end
+  
+  # Prevent removing the last user from the band
+  if @band.users.count <= 1
+    @user_error = "Cannot remove the last member from the band"
+    return erb :edit_band
+  end
+  
+  if @band.users.include?(user_to_remove)
+    @band.users.delete(user_to_remove)
+    
+    if user_to_remove == current_user
+      # User is removing themselves - redirect to bands list with message
+      redirect '/bands?left_band=true'
+    else
+      # Member removing another user - stay on edit page with success message
+      @user_success = "Successfully removed '#{user_to_remove.username}' from the band"
+      erb :edit_band
+    end
+  else
+    @user_error = "User is not a member of this band"
+    erb :edit_band
+  end
+end
+
+post '/bands/:id/transfer_ownership' do
+  require_login
+  @band = user_bands.find(params[:id])
+  new_owner = User.find(params[:new_owner_id])
+  
+  # Only the current owner can transfer ownership
+  unless @band.owned_by?(current_user)
+    @user_error = "Only the band owner can transfer ownership"
+    return erb :edit_band
+  end
+  
+  # New owner must be a member of the band
+  unless @band.users.include?(new_owner)
+    @user_error = "The new owner must be a member of this band"
+    return erb :edit_band
+  end
+  
+  # Cannot transfer ownership to yourself
+  if new_owner == current_user
+    @user_error = "You are already the owner of this band"
+    return erb :edit_band
+  end
+  
+  # Transfer ownership
+  @band.update(owner: new_owner)
+  @user_success = "Successfully transferred ownership to '#{new_owner.username}'"
+  
+  erb :edit_band
+end
+
+# Copy songs to band
+get '/bands/:band_id/copy_songs' do
+  require_login
+  @band = user_bands.find(params[:band_id])
+  @search = params[:search]
+  @global_songs = GlobalSong.order('LOWER(title)')
+  
+  # Apply search filter
+  if @search.present?
+    @global_songs = @global_songs.search(@search)
+  end
+  
+  # Exclude songs already copied to this band based on global_song_id
+  existing_global_song_ids = @band.songs.where.not(global_song_id: nil).pluck(:global_song_id)
+  @global_songs = @global_songs.where.not(id: existing_global_song_ids)
+  
+  erb :copy_songs_to_band
+end
+
+post '/bands/:band_id/copy_songs' do
+  require_login
+  @band = user_bands.find(params[:band_id])
+  global_song_ids = params[:global_song_ids] || []
+  
+  copied_count = 0
+  global_song_ids.each do |global_song_id|
+    global_song = GlobalSong.find(global_song_id)
+    song = Song.create_from_global_song(global_song, [@band.id])
+    
+    if song.save
+      copied_count += 1
+    end
+  end
+  
+  # If copying from a specific global song page, redirect back to that song
+  if params[:from_global_song]
+    redirect "/global_songs/#{params[:from_global_song]}?copied=#{copied_count}"
+  else
+    # Otherwise redirect to the band page (bulk copy)
+    redirect "/bands/#{@band.id}?copied=#{copied_count}"
+  end
+end
+
+# ============================================================================
+# SONG ROUTES
+# ============================================================================
+
 get '/songs' do
   require_login
   return redirect '/gigs' unless current_band
@@ -551,7 +832,48 @@ post '/songs' do
   end
 end
 
-# Copy songs from global list interface
+get '/songs/:id' do
+  require_login
+  @song = current_band.songs.find(params[:id])
+  
+  erb :show_song
+end
+
+get '/songs/:id/edit' do
+  require_login
+  @song = current_band.songs.find(params[:id])
+  
+  erb :edit_song
+end
+
+put '/songs/:id' do
+  require_login
+  @song = current_band.songs.find(params[:id])
+  
+  if @song.update(params[:song])
+    redirect "/songs/#{@song.id}"
+  else
+    @errors = @song.errors.full_messages
+    erb :edit_song
+  end
+end
+
+delete '/songs/:id' do
+  require_login
+  song = current_band.songs.find(params[:id])
+  
+  # Clean up associations before deleting the song
+  song.gig_songs.destroy_all
+  
+  # Remove the song from all bands (many-to-many relationship)
+  song.band_ids = []
+  
+  song.destroy
+  
+  redirect '/songs'
+end
+
+# Copy songs from global list
 get '/songs/copy_from_global' do
   require_login
   return redirect '/gigs' unless current_band
@@ -597,48 +919,10 @@ post '/songs/copy_from_global' do
   redirect "/songs?copied=#{copied_count}"
 end
 
-get '/songs/:id' do
-  require_login
-  @song = current_band.songs.find(params[:id])
-  
-  erb :show_song
-end
+# ============================================================================
+# GLOBAL SONG ROUTES
+# ============================================================================
 
-get '/songs/:id/edit' do
-  require_login
-  @song = current_band.songs.find(params[:id])
-  
-  erb :edit_song
-end
-
-put '/songs/:id' do
-  require_login
-  @song = current_band.songs.find(params[:id])
-  
-  if @song.update(params[:song])
-    redirect "/songs/#{@song.id}"
-  else
-    @errors = @song.errors.full_messages
-    erb :edit_song
-  end
-end
-
-delete '/songs/:id' do
-  require_login
-  song = current_band.songs.find(params[:id])
-  
-  # Clean up associations before deleting the song
-  song.gig_songs.destroy_all
-  
-  # Remove the song from all bands (many-to-many relationship)
-  song.band_ids = []
-  
-  song.destroy
-  
-  redirect '/songs'
-end
-
-# Global songs routes
 get '/global_songs' do
   require_login
   
@@ -702,50 +986,10 @@ delete '/global_songs/:id' do
   redirect '/global_songs'
 end
 
-# Copy global song to band
-get '/bands/:band_id/copy_songs' do
-  require_login
-  @band = user_bands.find(params[:band_id])
-  @search = params[:search]
-  @global_songs = GlobalSong.order('LOWER(title)')
-  
-  # Apply search filter
-  if @search.present?
-    @global_songs = @global_songs.search(@search)
-  end
-  
-  # Exclude songs already copied to this band based on global_song_id
-  existing_global_song_ids = @band.songs.where.not(global_song_id: nil).pluck(:global_song_id)
-  @global_songs = @global_songs.where.not(id: existing_global_song_ids)
-  
-  erb :copy_songs_to_band
-end
+# ============================================================================
+# GIG ROUTES
+# ============================================================================
 
-post '/bands/:band_id/copy_songs' do
-  require_login
-  @band = user_bands.find(params[:band_id])
-  global_song_ids = params[:global_song_ids] || []
-  
-  copied_count = 0
-  global_song_ids.each do |global_song_id|
-    global_song = GlobalSong.find(global_song_id)
-    song = Song.create_from_global_song(global_song, [@band.id])
-    
-    if song.save
-      copied_count += 1
-    end
-  end
-  
-  # If copying from a specific global song page, redirect back to that song
-  if params[:from_global_song]
-    redirect "/global_songs/#{params[:from_global_song]}?copied=#{copied_count}"
-  else
-    # Otherwise redirect to the band page (bulk copy)
-    redirect "/bands/#{@band.id}?copied=#{copied_count}"
-  end
-end
-
-# Gigs routes
 get '/gigs' do
   require_login
   
@@ -846,7 +1090,7 @@ delete '/gigs/:id' do
   redirect '/gigs'
 end
 
-# Add song to set list
+# Set list management
 post '/gigs/:id/songs' do
   require_login
   gig = filter_by_current_band(Gig).find(params[:id])
@@ -869,7 +1113,6 @@ post '/gigs/:id/songs' do
   end
 end
 
-# Remove song from set list
 delete '/gigs/:gig_id/songs/:song_id' do
   require_login
   gig = filter_by_current_band(Gig).find(params[:gig_id])
@@ -885,15 +1128,6 @@ delete '/gigs/:gig_id/songs/:song_id' do
   redirect "/gigs/#{gig.id}"
 end
 
-# Print set list
-get '/gigs/:id/print' do
-  require_login
-  @gig = filter_by_current_band(Gig).find(params[:id])
-  
-  erb :print_gig, layout: false
-end
-
-# Reorder songs in set list
 post '/gigs/:id/reorder' do
   require_login
   gig = filter_by_current_band(Gig).find(params[:id])
@@ -910,7 +1144,14 @@ post '/gigs/:id/reorder' do
   { success: true }.to_json
 end
 
-# Copy set list
+# Gig utilities
+get '/gigs/:id/print' do
+  require_login
+  @gig = filter_by_current_band(Gig).find(params[:id])
+  
+  erb :print_gig, layout: false
+end
+
 post '/gigs/:id/copy' do
   require_login
   begin
@@ -941,445 +1182,10 @@ post '/gigs/:id/copy' do
   end
 end
 
-# Calendar routes
-get '/calendar' do
-  require_login
-  
-  # Get the requested month/year or default to current
-  @year = params[:year] ? params[:year].to_i : Date.current.year
-  @month = params[:month] ? params[:month].to_i : Date.current.month
-  
-  # Ensure month is valid
-  @month = [[1, @month].max, 12].min
-  
-  # Get the first and last day of the month
-  start_date = Date.new(@year, @month, 1)
-  next_month = @month == 12 ? Date.new(@year + 1, 1, 1) : Date.new(@year, @month + 1, 1)
-  end_date = next_month - 1
-  
-  # Get all user's bands
-  user_band_ids = current_user.bands.pluck(:id)
-  
-  # Get current band gigs for this month
-  @current_band_gigs = if current_band
-    current_band.gigs.where(performance_date: start_date..end_date)
-                      .includes(:venue)
-                      .order(:performance_date)
-  else
-    []
-  end
-  
-  # Get user's gigs from other bands
-  @other_band_gigs = Gig.joins(:band)
-                        .where(bands: { id: user_band_ids })
-                        .where(performance_date: start_date..end_date)
-                        .where.not(band_id: current_band&.id)
-                        .includes(:band, :venue)
-                        .order(:performance_date)
-  
-  # Get bandmate conflicts (other users in current band who have gigs with different bands)
-  @bandmate_conflicts = if current_band
-    # Get all users in current band except current user
-    bandmate_ids = current_band.users.where.not(id: current_user.id).pluck(:id)
-    
-    # Get bands of those bandmates (excluding current band)
-    bandmate_band_ids = UserBand.where(user_id: bandmate_ids)
-                               .where.not(band_id: current_band.id)
-                               .pluck(:band_id)
-    
-    # Get gigs from those bands - simplified query
-    if bandmate_band_ids.any?
-      Gig.joins(:band)
-         .where(bands: { id: bandmate_band_ids })
-         .where(performance_date: start_date..end_date)
-         .includes(:band)
-         .order(:performance_date)
-    else
-      []
-    end
-  else
-    []
-  end
-  
-  # Get blackout dates for all users in current band (if there is one)
-  if current_band
-    bandmate_ids = current_band.users.pluck(:id)
-    @blackout_dates = BlackoutDate.where(user_id: bandmate_ids)
-                                  .where(blackout_date: start_date..end_date)
-                                  .includes(:user)
-  else
-    @blackout_dates = current_user.blackout_dates
-                                  .where(blackout_date: start_date..end_date)
-  end
-  
-  erb :calendar
-end
+# ============================================================================
+# VENUE ROUTES
+# ============================================================================
 
-# Blackout dates routes
-delete '/blackout_dates/bulk' do
-  require_login
-  
-  dates_param = params[:dates]
-  
-  return { error: 'Dates are required' }.to_json unless dates_param
-  
-  begin
-    date_strings = dates_param.split(',')
-    deleted_count = 0
-    
-    date_strings.each do |date_str|
-      blackout_date = Date.parse(date_str.strip)
-      
-      # Find and delete the blackout date for current user
-      blackout = current_user.blackout_dates.find_by(blackout_date: blackout_date)
-      
-      if blackout
-        blackout.destroy
-        deleted_count += 1
-      end
-    end
-    
-    content_type :json
-    { success: true, deleted_count: deleted_count, message: "Removed #{deleted_count} blackout date#{deleted_count == 1 ? '' : 's'}" }.to_json
-    
-  rescue Date::Error => e
-    content_type :json
-    { error: "Invalid date format: #{e.message}" }.to_json
-  rescue => e
-    content_type :json
-    { error: 'Failed to remove blackout dates' }.to_json
-  end
-end
-
-post '/blackout_dates' do
-  require_login
-  
-  date_param = params[:date]
-  reason = params[:reason]
-  
-  return { error: 'Date is required' }.to_json unless date_param
-  
-  begin
-    blackout_date = Date.parse(date_param)
-    
-    # Check if blackout already exists for this user/date
-    existing = current_user.blackout_dates.find_by(blackout_date: blackout_date)
-    
-    if existing
-      content_type :json
-      return { error: 'Blackout date already exists' }.to_json
-    end
-    
-    # Create the blackout date
-    blackout = current_user.blackout_dates.build(
-      blackout_date: blackout_date,
-      reason: reason
-    )
-    
-    if blackout.save
-      content_type :json
-      { success: true, blackout_date: blackout_date.to_s, reason: reason }.to_json
-    else
-      content_type :json
-      { error: blackout.errors.full_messages.join(', ') }.to_json
-    end
-    
-  rescue Date::Error
-    content_type :json
-    { error: 'Invalid date format' }.to_json
-  rescue => e
-    content_type :json
-    { error: 'Failed to create blackout date' }.to_json
-  end
-end
-
-delete '/blackout_dates/:date' do
-  require_login
-  
-  begin
-    blackout_date = Date.parse(params[:date])
-    
-    # Find and delete the blackout date for current user
-    blackout = current_user.blackout_dates.find_by(blackout_date: blackout_date)
-    
-    if blackout
-      blackout.destroy
-      content_type :json
-      { success: true, message: 'Blackout date removed' }.to_json
-    else
-      content_type :json
-      { error: 'Blackout date not found' }.to_json
-    end
-    
-  rescue Date::Error
-    content_type :json
-    { error: 'Invalid date format' }.to_json
-  rescue => e
-    content_type :json
-    { error: 'Failed to remove blackout date' }.to_json
-  end
-end
-
-# Bulk blackout dates routes
-post '/blackout_dates/bulk' do
-  require_login
-  
-  dates_param = params[:dates]
-  reason = params[:reason]
-  
-  return { error: 'Dates are required' }.to_json unless dates_param
-  
-  begin
-    date_strings = dates_param.split(',')
-    created_count = 0
-    errors = []
-    
-    date_strings.each do |date_str|
-      blackout_date = Date.parse(date_str.strip)
-      
-      # Check if blackout already exists for this user/date
-      existing = current_user.blackout_dates.find_by(blackout_date: blackout_date)
-      
-      unless existing
-        blackout = current_user.blackout_dates.create(
-          blackout_date: blackout_date,
-          reason: reason
-        )
-        
-        if blackout.persisted?
-          created_count += 1
-        else
-          errors << "Failed to create blackout for #{date_str}: #{blackout.errors.full_messages.join(', ')}"
-        end
-      end
-    end
-    
-    content_type :json
-    if errors.empty?
-      { success: true, created_count: created_count, message: "Created #{created_count} blackout date#{created_count == 1 ? '' : 's'}" }.to_json
-    else
-      { success: false, created_count: created_count, errors: errors }.to_json
-    end
-    
-  rescue Date::Error => e
-    content_type :json
-    { error: "Invalid date format: #{e.message}" }.to_json
-  rescue => e
-    content_type :json
-    { error: 'Failed to create blackout dates' }.to_json
-  end
-end
-
-
-# Bands routes
-get '/bands' do
-  require_login
-  @bands = user_bands.order(:name)
-  erb :bands
-end
-
-get '/bands/new' do
-  require_login
-  erb :new_band
-end
-
-post '/bands' do
-  require_login
-  
-  band = Band.new(params[:band])
-  band.owner = current_user
-  
-  if band.save
-    # Associate the current user with the new band
-    current_user.bands << band
-    
-    # Set this as the current band if it's the user's first band
-    if current_user.bands.count == 1
-      session[:band_id] = band.id
-      # Save this as the user's preferred band
-      current_user.update(last_selected_band_id: band.id)
-      redirect '/gigs'
-    else
-      redirect '/bands'
-    end
-  else
-    @errors = band.errors.full_messages
-    erb :new_band
-  end
-end
-
-get '/bands/:id' do
-  require_login
-  @band = user_bands.find(params[:id])
-  erb :show_band
-end
-
-get '/bands/:id/edit' do
-  require_login
-  @band = user_bands.find(params[:id])
-  
-  # Any band member can edit the band
-  unless @band.users.include?(current_user)
-    @errors = ["You must be a member of this band to edit it"]
-    return erb :show_band
-  end
-  
-  erb :edit_band
-end
-
-put '/bands/:id' do
-  require_login
-  @band = user_bands.find(params[:id])
-  
-  # Any band member can edit the band
-  unless @band.users.include?(current_user)
-    @errors = ["You must be a member of this band to edit it"]
-    return erb :show_band
-  end
-  
-  if @band.update(params[:band])
-    redirect "/bands/#{@band.id}"
-  else
-    @errors = @band.errors.full_messages
-    erb :edit_band
-  end
-end
-
-delete '/bands/:id' do
-  require_login
-  band = user_bands.find(params[:id])
-  
-  # Only the owner can delete the band
-  unless band.owned_by?(current_user)
-    @errors = ["Only the band owner can delete this band"]
-    return erb :show_band
-  end
-  
-  # If this was the current band, clear the session
-  if current_band&.id == band.id
-    session[:band_id] = nil
-  end
-  
-  # Remove all user associations with the band
-  band.user_bands.destroy_all
-  
-  # Delete the band
-  band.destroy
-  
-  redirect '/bands'
-end
-
-# Add user to band
-post '/bands/:id/add_user' do
-  require_login
-  @band = user_bands.find(params[:id])
-  
-  # Any band member can add users
-  unless @band.users.include?(current_user)
-    @user_error = "You must be a member of this band to add new members"
-    return erb :edit_band
-  end
-  
-  username = params[:username]&.strip
-  
-  if username.blank?
-    @user_error = "Username cannot be empty"
-    return erb :edit_band
-  end
-  
-  # Find user by username (case insensitive)
-  user = User.where('LOWER(username) = ?', username.downcase).first
-  
-  if user.nil?
-    @user_error = "User '#{username}' not found"
-    return erb :edit_band
-  end
-  
-  if @band.users.include?(user)
-    @user_error = "User '#{username}' is already a member of this band"
-    return erb :edit_band
-  end
-  
-  # Add user to band
-  @band.users << user
-  @user_success = "Successfully added '#{username}' to the band"
-  
-  erb :edit_band
-end
-
-# Remove user from band
-post '/bands/:id/remove_user' do
-  require_login
-  @band = user_bands.find(params[:id])
-  user_to_remove = User.find(params[:user_id])
-  
-  # Any band member can remove other members, but users can always remove themselves
-  if user_to_remove != current_user && !@band.users.include?(current_user)
-    @user_error = "You must be a member of this band to remove other members"
-    return erb :edit_band
-  end
-  
-  # Prevent removing the band owner
-  if user_to_remove == @band.owner
-    @user_error = "Cannot remove the band owner. The owner must transfer ownership first."
-    return erb :edit_band
-  end
-  
-  # Prevent removing the last user from the band
-  if @band.users.count <= 1
-    @user_error = "Cannot remove the last member from the band"
-    return erb :edit_band
-  end
-  
-  if @band.users.include?(user_to_remove)
-    @band.users.delete(user_to_remove)
-    
-    if user_to_remove == current_user
-      # User is removing themselves - redirect to bands list with message
-      redirect '/bands?left_band=true'
-    else
-      # Member removing another user - stay on edit page with success message
-      @user_success = "Successfully removed '#{user_to_remove.username}' from the band"
-      erb :edit_band
-    end
-  else
-    @user_error = "User is not a member of this band"
-    erb :edit_band
-  end
-end
-
-# Transfer band ownership
-post '/bands/:id/transfer_ownership' do
-  require_login
-  @band = user_bands.find(params[:id])
-  new_owner = User.find(params[:new_owner_id])
-  
-  # Only the current owner can transfer ownership
-  unless @band.owned_by?(current_user)
-    @user_error = "Only the band owner can transfer ownership"
-    return erb :edit_band
-  end
-  
-  # New owner must be a member of the band
-  unless @band.users.include?(new_owner)
-    @user_error = "The new owner must be a member of this band"
-    return erb :edit_band
-  end
-  
-  # Cannot transfer ownership to yourself
-  if new_owner == current_user
-    @user_error = "You are already the owner of this band"
-    return erb :edit_band
-  end
-  
-  # Transfer ownership
-  @band.update(owner: new_owner)
-  @user_success = "Successfully transferred ownership to '#{new_owner.username}'"
-  
-  erb :edit_band
-end
-
-# Venues routes
 get '/venues' do
   require_login
   return redirect '/gigs' unless current_band
@@ -1453,7 +1259,7 @@ delete '/venues/:id' do
   redirect '/venues'
 end
 
-# Copy venues from other bands user is a member of
+# Copy venues to band
 get '/bands/:band_id/copy_venues' do
   require_login
   @band = user_bands.find(params[:band_id])
@@ -1501,7 +1307,7 @@ post '/bands/:band_id/copy_venues' do
   redirect "/bands/#{@band.id}?venues_copied=#{copied_count}"
 end
 
-# Copy a single venue to another band
+# Copy single venue to band
 get '/venues/:venue_id/copy' do
   require_login
   return redirect '/gigs' unless current_band
@@ -1577,7 +1383,241 @@ post '/venues/:venue_id/copy' do
   end
 end
 
-# API routes for AJAX
+# ============================================================================
+# CALENDAR AND BLACKOUT DATE ROUTES
+# ============================================================================
+
+get '/calendar' do
+  require_login
+  
+  # Get the requested month/year or default to current
+  @year = params[:year] ? params[:year].to_i : Date.current.year
+  @month = params[:month] ? params[:month].to_i : Date.current.month
+  
+  # Ensure month is valid
+  @month = [[1, @month].max, 12].min
+  
+  # Get the first and last day of the month
+  start_date = Date.new(@year, @month, 1)
+  next_month = @month == 12 ? Date.new(@year + 1, 1, 1) : Date.new(@year, @month + 1, 1)
+  end_date = next_month - 1
+  
+  # Get all user's bands
+  user_band_ids = current_user.bands.pluck(:id)
+  
+  # Get current band gigs for this month
+  @current_band_gigs = if current_band
+    current_band.gigs.where(performance_date: start_date..end_date)
+                      .includes(:venue)
+                      .order(:performance_date)
+  else
+    []
+  end
+  
+  # Get user's gigs from other bands
+  @other_band_gigs = Gig.joins(:band)
+                        .where(bands: { id: user_band_ids })
+                        .where(performance_date: start_date..end_date)
+                        .where.not(band_id: current_band&.id)
+                        .includes(:band, :venue)
+                        .order(:performance_date)
+  
+  # Get bandmate conflicts (other users in current band who have gigs with different bands)
+  @bandmate_conflicts = if current_band
+    # Get all users in current band except current user
+    bandmate_ids = current_band.users.where.not(id: current_user.id).pluck(:id)
+    
+    # Get bands of those bandmates (excluding current band)
+    bandmate_band_ids = UserBand.where(user_id: bandmate_ids)
+                               .where.not(band_id: current_band.id)
+                               .pluck(:band_id)
+    
+    # Get gigs from those bands - simplified query
+    if bandmate_band_ids.any?
+      Gig.joins(:band)
+         .where(bands: { id: bandmate_band_ids })
+         .where(performance_date: start_date..end_date)
+         .includes(:band)
+         .order(:performance_date)
+    else
+      []
+    end
+  else
+    []
+  end
+  
+  # Get blackout dates for all users in current band (if there is one)
+  if current_band
+    bandmate_ids = current_band.users.pluck(:id)
+    @blackout_dates = BlackoutDate.where(user_id: bandmate_ids)
+                                  .where(blackout_date: start_date..end_date)
+                                  .includes(:user)
+  else
+    @blackout_dates = current_user.blackout_dates
+                                  .where(blackout_date: start_date..end_date)
+  end
+  
+  erb :calendar
+end
+
+# Blackout date management
+post '/blackout_dates' do
+  require_login
+  
+  date_param = params[:date]
+  reason = params[:reason]
+  
+  return { error: 'Date is required' }.to_json unless date_param
+  
+  begin
+    blackout_date = Date.parse(date_param)
+    
+    # Check if blackout already exists for this user/date
+    existing = current_user.blackout_dates.find_by(blackout_date: blackout_date)
+    
+    if existing
+      content_type :json
+      return { error: 'Blackout date already exists' }.to_json
+    end
+    
+    # Create the blackout date
+    blackout = current_user.blackout_dates.build(
+      blackout_date: blackout_date,
+      reason: reason
+    )
+    
+    if blackout.save
+      content_type :json
+      { success: true, blackout_date: blackout_date.to_s, reason: reason }.to_json
+    else
+      content_type :json
+      { error: blackout.errors.full_messages.join(', ') }.to_json
+    end
+    
+  rescue Date::Error
+    content_type :json
+    { error: 'Invalid date format' }.to_json
+  rescue => e
+    content_type :json
+    { error: 'Failed to create blackout date' }.to_json
+  end
+end
+
+delete '/blackout_dates/:date' do
+  require_login
+  
+  begin
+    blackout_date = Date.parse(params[:date])
+    
+    # Find and delete the blackout date for current user
+    blackout = current_user.blackout_dates.find_by(blackout_date: blackout_date)
+    
+    if blackout
+      blackout.destroy
+      content_type :json
+      { success: true, message: 'Blackout date removed' }.to_json
+    else
+      content_type :json
+      { error: 'Blackout date not found' }.to_json
+    end
+    
+  rescue Date::Error
+    content_type :json
+    { error: 'Invalid date format' }.to_json
+  rescue => e
+    content_type :json
+    { error: 'Failed to remove blackout date' }.to_json
+  end
+end
+
+post '/blackout_dates/bulk' do
+  require_login
+  
+  dates_param = params[:dates]
+  reason = params[:reason]
+  
+  return { error: 'Dates are required' }.to_json unless dates_param
+  
+  begin
+    date_strings = dates_param.split(',')
+    created_count = 0
+    errors = []
+    
+    date_strings.each do |date_str|
+      blackout_date = Date.parse(date_str.strip)
+      
+      # Check if blackout already exists for this user/date
+      existing = current_user.blackout_dates.find_by(blackout_date: blackout_date)
+      
+      unless existing
+        blackout = current_user.blackout_dates.create(
+          blackout_date: blackout_date,
+          reason: reason
+        )
+        
+        if blackout.persisted?
+          created_count += 1
+        else
+          errors << "Failed to create blackout for #{date_str}: #{blackout.errors.full_messages.join(', ')}"
+        end
+      end
+    end
+    
+    content_type :json
+    if errors.empty?
+      { success: true, created_count: created_count, message: "Created #{created_count} blackout date#{created_count == 1 ? '' : 's'}" }.to_json
+    else
+      { success: false, created_count: created_count, errors: errors }.to_json
+    end
+    
+  rescue Date::Error => e
+    content_type :json
+    { error: "Invalid date format: #{e.message}" }.to_json
+  rescue => e
+    content_type :json
+    { error: 'Failed to create blackout dates' }.to_json
+  end
+end
+
+delete '/blackout_dates/bulk' do
+  require_login
+  
+  dates_param = params[:dates]
+  
+  return { error: 'Dates are required' }.to_json unless dates_param
+  
+  begin
+    date_strings = dates_param.split(',')
+    deleted_count = 0
+    
+    date_strings.each do |date_str|
+      blackout_date = Date.parse(date_str.strip)
+      
+      # Find and delete the blackout date for current user
+      blackout = current_user.blackout_dates.find_by(blackout_date: blackout_date)
+      
+      if blackout
+        blackout.destroy
+        deleted_count += 1
+      end
+    end
+    
+    content_type :json
+    { success: true, deleted_count: deleted_count, message: "Removed #{deleted_count} blackout date#{deleted_count == 1 ? '' : 's'}" }.to_json
+    
+  rescue Date::Error => e
+    content_type :json
+    { error: "Invalid date format: #{e.message}" }.to_json
+  rescue => e
+    content_type :json
+    { error: 'Failed to remove blackout dates' }.to_json
+  end
+end
+
+# ============================================================================
+# API ROUTES
+# ============================================================================
+
 get '/api/songs' do
   require_login
   content_type :json
@@ -1590,7 +1630,6 @@ get '/api/songs' do
   songs.map { |song| { id: song.id, title: song.title, artist: song.artist } }.to_json
 end
 
-# Song lookup from songbpm.com
 get '/api/lookup_song' do
   require_login
   content_type :json
@@ -1658,6 +1697,29 @@ get '/api/lookup_song' do
       success: false,
       error: "Lookup failed: #{e.message}"
     }.to_json
+  end
+end
+
+# ============================================================================
+# UTILITY ROUTES
+# ============================================================================
+
+get '/setup' do
+  begin
+    # Check if migrations table exists
+    unless ActiveRecord::Base.connection.table_exists?('schema_migrations')
+      # Run migrations if they haven't been run
+      ActiveRecord::Base.connection.migration_context.migrate
+    end
+    
+    # Seed the database
+    if Band.count == 0
+      Band.create!(name: "My Band", notes: "Default band created during setup")
+    end
+    
+    "Database setup complete! Default band 'My Band' has been created."
+  rescue => e
+    "Database setup failed: #{e.message}. Please run 'rake db:setup' instead."
   end
 end
 

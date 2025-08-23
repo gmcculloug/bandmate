@@ -131,6 +131,52 @@ bandmate/
 - Never modify the database directly
 - Test migrations on a copy of production data
 
+## 🧪 Testing
+
+The project includes a comprehensive test suite using RSpec and FactoryBot.
+
+### Running Tests
+
+```bash
+# Run all tests
+rake spec
+# or
+bundle exec rspec
+
+# Run specific test categories
+bundle exec rspec spec/models/     # Model tests
+bundle exec rspec spec/requests/   # Request/Integration tests
+
+# Run specific test file
+bundle exec rspec spec/models/band_spec.rb
+
+# Run with verbose output
+bundle exec rspec --format documentation
+```
+
+### Test Coverage
+
+**Model Tests**: Validations, associations, scopes, and business logic
+**Request Tests**: CRUD operations, form handling, search/filtering, API endpoints
+**Integration Tests**: Set list management, band associations, database setup
+
+### Test Structure
+
+```
+spec/
+├── spec_helper.rb          # RSpec configuration
+├── factories.rb            # FactoryBot factories
+├── models/                 # Model tests
+└── requests/               # Request/Integration tests
+```
+
+### Adding New Tests
+
+1. Create factories in `spec/factories.rb` for new models
+2. Add model tests in `spec/models/`
+3. Add request tests in `spec/requests/`
+4. Use descriptive test names and test both success and error cases
+
 ## 🐛 Troubleshooting
 
 ### Migration Issues
@@ -140,9 +186,9 @@ If you encounter migration problems:
 3. Reset if necessary: `rake db:reset` (⚠️ This will delete all data)
 
 ### Database Connection Issues
-- Ensure the database file is writable
 - Check database configuration in `config/database.yml`
-- Verify SQLite3 is installed
+- Verify PostgreSQL is running and accessible
+- Ensure database credentials are correct
 
 ## 📝 License
 

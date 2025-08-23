@@ -1,38 +1,34 @@
-<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+<div class="page-header">
     <div>
-        <h2>📅 Gig Calendar</h2>
-        <p style="color: #718096; margin: 5px 0 0 0;">View all gigs across your bands and bandmate availability.</p>
+        <h2 class="page-title">📅 <%= month_name(@month) %> <%= @year %></h2>
+        <p style="color: #718096; margin: 0; font-size: 0.85rem;">Click to toggle blackout • Drag to select multiple dates</p>
     </div>
     
-    <div style="display: flex; align-items: center; gap: 10px;">
-        <a href="<%= prev_month_link(@year, @month) %>" class="btn">‹ Prev</a>
-        <span style="font-weight: 600; font-size: 1.1rem;"><%= month_name(@month) %> <%= @year %></span>
-        <a href="<%= next_month_link(@year, @month) %>" class="btn">Next ›</a>
+    <div class="page-actions">
+        <a href="<%= prev_month_link(@year, @month) %>" class="btn btn-small">‹ Prev</a>
+        <a href="<%= next_month_link(@year, @month) %>" class="btn btn-small">Next ›</a>
     </div>
 </div>
 
-<!-- Legend -->
-<div style="display: flex; gap: 20px; margin-bottom: 20px; padding: 15px; background: #f7fafc; border-radius: 8px; flex-wrap: wrap;">
-    <div style="display: flex; align-items: center; gap: 5px;">
-        <div style="width: 16px; height: 16px; background: #667eea; border-radius: 4px;"></div>
-        <span style="font-size: 0.9rem;">Current Band Gigs</span>
+<!-- Compact Legend -->
+<div style="display: flex; gap: 12px; margin-bottom: 15px; padding: 8px; background: #f7fafc; border-radius: 6px; flex-wrap: wrap; font-size: 0.8rem;">
+    <div style="display: flex; align-items: center; gap: 3px;">
+        <div style="width: 12px; height: 12px; background: #667eea; border-radius: 2px;"></div>
+        <span>Current Band</span>
     </div>
     <% if current_user.bands.count > 1 %>
-        <div style="display: flex; align-items: center; gap: 5px;">
-            <div style="width: 16px; height: 16px; background: #f6ad55; border-radius: 4px;"></div>
-            <span style="font-size: 0.9rem;">Your Other Band Gigs</span>
+        <div style="display: flex; align-items: center; gap: 3px;">
+            <div style="width: 12px; height: 12px; background: #f6ad55; border-radius: 2px;"></div>
+            <span>Other Bands</span>
         </div>
     <% end %>
-    <div style="display: flex; align-items: center; gap: 5px;">
-        <div style="width: 16px; height: 16px; background: #fc8181; border-radius: 4px;"></div>
-        <span style="font-size: 0.9rem;">Bandmate Conflicts</span>
+    <div style="display: flex; align-items: center; gap: 3px;">
+        <div style="width: 12px; height: 12px; background: #fc8181; border-radius: 2px;"></div>
+        <span>Conflicts</span>
     </div>
-    <div style="display: flex; align-items: center; gap: 5px;">
-        <div style="width: 16px; height: 16px; background: #6b46c1; border-radius: 4px;"></div>
-        <span style="font-size: 0.9rem;">Blackout Dates</span>
-    </div>
-    <div style="flex: 1; text-align: right; font-size: 0.85rem; color: #718096;">
-        Click to toggle blackout • Drag to select multiple dates
+    <div style="display: flex; align-items: center; gap: 3px;">
+        <div style="width: 12px; height: 12px; background: #6b46c1; border-radius: 2px;"></div>
+        <span>Blackouts</span>
     </div>
 </div>
 
@@ -124,16 +120,16 @@
 .calendar-header {
     background: #4a5568;
     color: white;
-    padding: 12px 8px;
+    padding: 6px 4px;
     text-align: center;
     font-weight: 600;
-    font-size: 0.9rem;
+    font-size: 0.8rem;
 }
 
 .calendar-day {
     background: white;
-    min-height: 120px;
-    padding: 8px;
+    min-height: 80px;
+    padding: 4px;
     position: relative;
     display: flex;
     flex-direction: column;
@@ -165,26 +161,30 @@
 
 .day-number {
     font-weight: 600;
-    font-size: 0.9rem;
-    margin-bottom: 4px;
+    font-size: 0.8rem;
+    margin-bottom: 2px;
 }
 
 .day-events {
     flex: 1;
     display: flex;
     flex-direction: column;
-    gap: 2px;
+    gap: 1px;
 }
 
 .gig-event {
     background: #667eea;
     color: white;
-    padding: 2px 6px;
-    border-radius: 4px;
-    font-size: 0.75rem;
-    line-height: 1.2;
+    padding: 1px 3px;
+    border-radius: 2px;
+    font-size: 0.65rem;
+    line-height: 1.1;
     word-break: break-word;
     cursor: pointer;
+    max-height: 14px;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
 }
 
 .gig-event.current-band {
@@ -245,22 +245,28 @@
 
 @media (max-width: 768px) {
     .calendar-grid {
-        font-size: 0.8rem;
+        font-size: 0.7rem;
     }
     
     .calendar-day {
-        min-height: 80px;
-        padding: 4px;
+        min-height: 60px;
+        padding: 2px;
     }
     
     .gig-event {
-        font-size: 0.7rem;
-        padding: 1px 4px;
+        font-size: 0.6rem;
+        padding: 1px 2px;
+        max-height: 12px;
     }
     
     .calendar-header {
-        padding: 8px 4px;
-        font-size: 0.8rem;
+        padding: 4px 2px;
+        font-size: 0.7rem;
+    }
+    
+    .day-number {
+        font-size: 0.7rem;
+        margin-bottom: 1px;
     }
 }
 </style>

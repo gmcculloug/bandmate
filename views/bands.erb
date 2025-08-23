@@ -1,10 +1,12 @@
-<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; flex-wrap: wrap; gap: 10px;">
-    <h2>🎸 Bands</h2>
-    <a href="/bands/new" class="btn btn-success">➕ Add Band</a>
+<div class="page-header">
+    <h2 class="page-title">🎸 Bands</h2>
+    <div class="page-actions">
+        <a href="/bands/new" class="btn btn-success">➕ Add Band</a>
+    </div>
 </div>
 
 <% if params[:left_band] %>
-    <div class="success" style="margin-bottom: 20px;">
+    <div class="message message--success">
         You have successfully left the band.
     </div>
 <% end %>
