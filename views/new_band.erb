@@ -37,9 +37,7 @@
 
             <div class="actions">
                 <button type="submit" class="btn btn-success">Create Band</button>
-                <% if params[:first_band] == 'true' %>
-                    <a href="/setup" class="btn">Setup Database</a>
-                <% else %>
+                <% unless params[:first_band] == 'true' %>
                     <a href="/bands" class="btn">Cancel</a>
                 <% end %>
             </div>

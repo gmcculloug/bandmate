@@ -38,6 +38,11 @@
         <input type="url" id="venue_website" name="venue[website]" value="<%= @venue.website %>" placeholder="https://www.venuewebsite.com">
     </div>
 
+    <div class="form-group">
+        <label for="venue_notes">Notes</label>
+        <textarea id="venue_notes" name="venue[notes]" rows="4" placeholder="Any additional notes about the venue (capacity, setup requirements, parking info, etc.)"><%= @venue.notes %></textarea>
+    </div>
+
     <div class="actions">
         <button type="submit" class="btn btn-success">Update Venue</button>
         <a href="/venues/<%= @venue.id %>" class="btn">Cancel</a>

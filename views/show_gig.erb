@@ -63,7 +63,6 @@
 
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
         <h3>Songs (<%= @gig.songs.count %>)</h3>
-        <a href="/songs" class="btn btn-success">➕ Add Songs</a>
     </div>
 
     <% if @gig.songs.any? %>
@@ -92,15 +91,11 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="actions" onclick="event.stopPropagation();" style="display: flex; gap: 5px; flex-shrink: 0;">
-                            <% if gig_song.song.url.present? %>
+                        <% if gig_song.song.url.present? %>
+                            <div class="actions" onclick="event.stopPropagation();" style="display: flex; gap: 5px; flex-shrink: 0;">
                                 <a href="<%= gig_song.song.url %>" target="_blank" class="btn" style="font-size: 0.8rem; padding: 5px 10px;">🎵</a>
-                            <% end %>
-                            <form method="POST" action="/gigs/<%= @gig.id %>/songs/<%= gig_song.song.id %>" style="display: inline;">
-                                <input type="hidden" name="_method" value="DELETE">
-                                <button type="submit" class="btn btn-danger" style="font-size: 0.8rem; padding: 5px 10px;" onclick="return confirm('Remove this song from the gig?')">Remove</button>
-                            </form>
-                        </div>
+                            </div>
+                        <% end %>
                     </div>
                 </div>
             <% end %>
@@ -138,35 +133,4 @@
     <% end %>
 </div>
 
-<% if @available_songs.any? %>
-    <div class="card" style="margin-top: 30px;">
-        <h3>Add Songs to Gig</h3>
-        <p>Select songs from "<%= @gig.band.name %>" to add to "<%= @gig.name %>":</p>
-        
-        <% @available_songs.each do |song| %>
-            <form method="POST" action="/gigs/<%= @gig.id %>/songs" style="margin-bottom: 10px;">
-                <input type="hidden" name="song_id" value="<%= song.id %>">
-                <button type="submit" class="btn" style="width: 100%; text-align: left; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
-                    <span style="flex: 1; min-width: 0;">
-                        <strong style="word-break: break-word;">
-                            <%= song.title %>
-                            <% if song.artist.present? %>
-                                <span style="color: #718096; font-weight: normal;"> • <%= song.artist %></span>
-                            <% end %>
-                        </strong>
-                        <span style="color: #718096; font-size: 0.9rem; display: block; margin-top: 2px;">
-                            (<%= song.key %> • <%= song.tempo ? "#{song.tempo} BPM" : 'N/A' %>)
-                        </span>
-                    </span>
-                    <span style="flex-shrink: 0;">➕ Add</span>
-                </button>
-            </form>
-        <% end %>
-    </div>
-<% elsif @available_songs.empty? %>
-    <div class="card" style="margin-top: 30px;">
-        <h3>No More Songs Available</h3>
-        <p>All songs from "<%= @gig.band.name %>" are already in this gig.</p>
-        <a href="/songs/new" class="btn btn-success">Add New Song to <%= @gig.band.name %></a>
-    </div>
-<% end %> 
+ 

@@ -148,28 +148,25 @@ namespace :db do
     end
   end
 
-  desc "Reset database (drop, create, migrate)"
-  task :reset => :environment do
+  desc "Reset database tables (drop tables, migrate)"
+  task :reset_tables => :environment do
     puts "Dropping all tables..."
-    ActiveRecord::Base.connection.tables.each do |table|
-      ActiveRecord::Base.connection.drop_table(table)
-    end
+    
+    # Drop all foreign keys first
+    ActiveRecord::Base.connection.execute(<<~SQL)
+      DO $$ DECLARE
+        r RECORD;
+      BEGIN
+        FOR r IN (SELECT tablename FROM pg_tables WHERE schemaname = current_schema()) LOOP
+          EXECUTE 'DROP TABLE IF EXISTS ' || quote_ident(r.tablename) || ' CASCADE';
+        END LOOP;
+      END $$;
+    SQL
     
     puts "Running migrations..."
     Rake::Task['db:migrate'].invoke
     
     puts "Database reset completed!"
-  end
-
-  desc "Seed the database with initial data"
-  task :seed => :environment do
-    # Create a default band if none exists
-    if Band.count == 0
-      Band.create!(name: "My Band", notes: "Default band created during setup")
-      puts "Created default band 'My Band'"
-    else
-      puts "Default band already exists"
-    end
   end
 
   desc "Setup database (migrate + seed)"

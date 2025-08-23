@@ -41,7 +41,7 @@ RSpec.configure do |config|
     # Clear blackout dates before users
     BlackoutDate.delete_all
     # Clear many-to-many relationships first
-    ActiveRecord::Base.connection.execute("DELETE FROM bands_songs")
+    ActiveRecord::Base.connection.execute("DELETE FROM songs_bands")
     Song.delete_all
     Venue.delete_all
     # Clear user's last_selected_band_id reference before deleting bands

@@ -6,8 +6,10 @@ require 'bcrypt'
 require 'rack/method_override'
 
 enable :sessions
+enable :static
 use Rack::MethodOverride
 set :session_secret, ENV['SESSION_SECRET'] || 'your_secret_key_here_that_is_very_long_and_secure_at_least_64_chars'
+set :public_folder, File.dirname(__FILE__) + '/public'
 
 # Account creation code for user registration (required)
 # Set BANDMATE_ACCT_CREATION_SECRET environment variable to enable account creation
@@ -547,6 +549,52 @@ post '/songs' do
     @errors = song.errors.full_messages
     erb :new_song
   end
+end
+
+# Copy songs from global list interface
+get '/songs/copy_from_global' do
+  require_login
+  return redirect '/gigs' unless current_band
+  
+  @search = params[:search]
+  
+  # Get all global songs not already in current band
+  existing_global_song_ids = current_band.songs.where.not(global_song_id: nil).pluck(:global_song_id)
+  @global_songs = GlobalSong.where.not(id: existing_global_song_ids).order('LOWER(title)')
+  
+  # Apply search filter
+  if @search.present?
+    @global_songs = @global_songs.search(@search)
+  end
+  
+  # Get current band songs for the right column
+  @band_songs = current_band.songs.order('LOWER(title)')
+  
+  erb :copy_from_global_songs
+end
+
+post '/songs/copy_from_global' do
+  require_login
+  return redirect '/gigs' unless current_band
+  
+  global_song_ids = params[:global_song_ids] || []
+  
+  copied_count = 0
+  global_song_ids.each do |global_song_id|
+    global_song = GlobalSong.find(global_song_id)
+    
+    # Check if song is already in this band
+    existing_song = current_band.songs.find_by(global_song_id: global_song_id)
+    next if existing_song
+    
+    song = Song.create_from_global_song(global_song, [current_band.id])
+    
+    if song.save
+      copied_count += 1
+    end
+  end
+  
+  redirect "/songs?copied=#{copied_count}"
 end
 
 get '/songs/:id' do
@@ -1440,6 +1488,7 @@ post '/bands/:band_id/copy_venues' do
         contact_name: source_venue.contact_name,
         phone_number: source_venue.phone_number,
         website: source_venue.website,
+        notes: source_venue.notes,
         band: @band
       )
       
@@ -1506,6 +1555,7 @@ post '/venues/:venue_id/copy' do
     contact_name: @venue.contact_name,
     phone_number: @venue.phone_number,
     website: @venue.website,
+    notes: @venue.notes,
     band: target_band
   )
   

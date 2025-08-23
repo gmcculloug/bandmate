@@ -33,6 +33,15 @@
             </div>
         <% end %>
     </div>
+    
+    <% if @venue.notes.present? %>
+        <div style="margin-top: 20px;">
+            <h4 style="margin-bottom: 10px; color: #4a5568;">📝 Notes</h4>
+            <div style="background: #f7fafc; padding: 15px; border-radius: 8px; border-left: 4px solid #667eea;">
+                <p style="margin: 0; white-space: pre-wrap; line-height: 1.6;"><%= @venue.notes %></p>
+            </div>
+        </div>
+    <% end %>
 </div>
 
 <div class="card" style="margin-top: 20px;">

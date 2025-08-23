@@ -20,6 +20,11 @@
                                 <a href="<%= venue.website %>" target="_blank" style="color: #667eea; text-decoration: none;">🌐 <%= venue.website %></a>
                             </div>
                         <% end %>
+                        <% if venue.notes.present? %>
+                            <div style="margin-top: 4px; font-size: 0.85rem; color: #718096;">
+                                <strong>📝 Notes:</strong> <%= venue.notes.length > 100 ? venue.notes[0..100] + '...' : venue.notes %>
+                            </div>
+                        <% end %>
                     </div>
                 </div>
             </div>

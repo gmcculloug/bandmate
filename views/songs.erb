@@ -1,5 +1,10 @@
 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
-    <h2>🎵 Songs</h2>
+    <h2>🎵 Songs (<%= @songs.count %>)</h2>
+    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+        <a href="/songs/copy_from_global" class="btn btn-primary">📋 Copy from Global Song list</a>
+        <a href="/global_songs" class="btn btn-secondary">🌍 Global Songs</a>
+        <a href="/global_songs/new" class="btn btn-success">➕ Add Songs</a>
+    </div>
 </div>
 
 <div style="margin-bottom: 20px;">
@@ -54,6 +59,14 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 </script>
+
+<% if params[:copied] %>
+    <div style="margin-bottom: 20px; padding: 10px; background: #f0fff4; border-radius: 8px; border-left: 4px solid #38a169;">
+        <p style="margin: 0; color: #2f855a;">
+            ✅ Successfully copied <%= params[:copied] %> song<%= params[:copied].to_i == 1 ? '' : 's' %> to your band!
+        </p>
+    </div>
+<% end %>
 
 <% if @search.present? %>
     <div style="margin-bottom: 20px; padding: 10px; background: #f7fafc; border-radius: 8px; border-left: 4px solid #667eea;">

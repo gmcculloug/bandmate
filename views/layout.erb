@@ -49,6 +49,8 @@
             color: #4a5568;
             font-size: 2rem;
             margin: 0;
+            text-align: center;
+            flex: 1;
         }
         
         .band-section {
@@ -740,7 +742,7 @@
     <div class="container">
         <div class="header">
             <div class="header-top">
-                <h1>🎸 Bandmate</h1>
+                <h1>Band 🎶 Mate</h1>
                 <% if logged_in? %>
                     <div class="user-controls">
                         <div class="band-section">
@@ -770,7 +772,6 @@
                     <a href="/gigs">📋 Gigs</a>
                     <a href="/calendar">📅 Calendar</a>
                     <a href="/songs">🎵 Songs</a>
-                    <a href="/global_songs">🌐 Global Songs</a>
                     <a href="/venues">🏢 Venues</a>
                 <% else %>
                     <a href="/login">Login</a>
