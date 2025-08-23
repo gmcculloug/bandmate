@@ -59,16 +59,16 @@ end
 
 # Create 10 global songs
 global_songs_data = [
-  { title: "Sweet Home Alabama", artist: "Lynyrd Skynyrd", key: "G", original_key: "G", tempo: 100, genre: "Rock", year: 1974, album: "Second Helping" },
-  { title: "Hotel California", artist: "Eagles", key: "Bm", original_key: "Bm", tempo: 75, genre: "Rock", year: 1976, album: "Hotel California" },
-  { title: "Wonderwall", artist: "Oasis", key: "Em", original_key: "Em", tempo: 87, genre: "Alternative Rock", year: 1995, album: "What's the Story Morning Glory?" },
-  { title: "Don't Stop Believin'", artist: "Journey", key: "E", original_key: "E", tempo: 119, genre: "Rock", year: 1981, album: "Escape" },
-  { title: "Bohemian Rhapsody", artist: "Queen", key: "Bb", original_key: "Bb", tempo: 72, genre: "Progressive Rock", year: 1975, album: "A Night at the Opera" },
-  { title: "Stairway to Heaven", artist: "Led Zeppelin", key: "Am", original_key: "Am", tempo: 82, genre: "Rock", year: 1971, album: "Led Zeppelin IV" },
-  { title: "Free Bird", artist: "Lynyrd Skynyrd", key: "G", original_key: "G", tempo: 65, genre: "Southern Rock", year: 1973, album: "Pronounced Leh-nerd Skin-nerd" },
-  { title: "Brown Eyed Girl", artist: "Van Morrison", key: "G", original_key: "G", tempo: 150, genre: "Folk Rock", year: 1967, album: "Blowin' Your Mind!" },
-  { title: "Sweet Caroline", artist: "Neil Diamond", key: "C", original_key: "C", tempo: 125, genre: "Pop", year: 1969, album: "Brother Love's Travelling Salvation Show" },
-  { title: "Livin' on a Prayer", artist: "Bon Jovi", key: "Em", original_key: "Em", tempo: 123, genre: "Rock", year: 1986, album: "Slippery When Wet" }
+  { title: "Sweet Home Alabama", artist: "Lynyrd Skynyrd", key: "G", original_key: "G", tempo: 100, genre: "Rock", year: 1974, album: "Second Helping", duration: "4:43" },
+  { title: "Hotel California", artist: "Eagles", key: "Bm", original_key: "Bm", tempo: 75, genre: "Rock", year: 1976, album: "Hotel California", duration: "6:30" },
+  { title: "Wonderwall", artist: "Oasis", key: "Em", original_key: "Em", tempo: 87, genre: "Alternative Rock", year: 1995, album: "What's the Story Morning Glory?", duration: "4:18" },
+  { title: "Don't Stop Believin'", artist: "Journey", key: "E", original_key: "E", tempo: 119, genre: "Rock", year: 1981, album: "Escape", duration: "4:09" },
+  { title: "Bohemian Rhapsody", artist: "Queen", key: "Bb", original_key: "Bb", tempo: 72, genre: "Progressive Rock", year: 1975, album: "A Night at the Opera", duration: "5:55" },
+  { title: "Stairway to Heaven", artist: "Led Zeppelin", key: "Am", original_key: "Am", tempo: 82, genre: "Rock", year: 1971, album: "Led Zeppelin IV", duration: "8:02" },
+  { title: "Free Bird", artist: "Lynyrd Skynyrd", key: "G", original_key: "G", tempo: 65, genre: "Southern Rock", year: 1973, album: "Pronounced Leh-nerd Skin-nerd", duration: "9:07" },
+  { title: "Brown Eyed Girl", artist: "Van Morrison", key: "G", original_key: "G", tempo: 150, genre: "Folk Rock", year: 1967, album: "Blowin' Your Mind!", duration: "3:05" },
+  { title: "Sweet Caroline", artist: "Neil Diamond", key: "C", original_key: "C", tempo: 125, genre: "Pop", year: 1969, album: "Brother Love's Travelling Salvation Show", duration: "3:21" },
+  { title: "Livin' on a Prayer", artist: "Bon Jovi", key: "Em", original_key: "Em", tempo: 123, genre: "Rock", year: 1986, album: "Slippery When Wet", duration: "4:09" }
 ]
 
 global_songs = []
@@ -83,6 +83,7 @@ global_songs_data.each do |song_data|
     gs.genre = song_data[:genre]
     gs.year = song_data[:year]
     gs.album = song_data[:album]
+    gs.duration = song_data[:duration]
   end
   global_songs << global_song
   puts "Created/found global song: #{global_song.title} by #{global_song.artist}"

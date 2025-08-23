@@ -231,15 +231,24 @@
     <button class="print-button" onclick="window.print()">🖨️ Print</button>
     
     <div class="header">
-        <h1><%= @gig.name %></h1>
+        <h1>
+            <%= @gig.name %>
+            <% if @gig.performance_date || @gig.start_time || @gig.end_time %>
+                <% date_info = @gig.performance_date&.strftime('%b %d') %>
+                <% time_info = [] %>
+                <% time_info << @gig.start_time&.strftime('%l:%M %p')&.strip if @gig.start_time %>
+                <% time_info << @gig.end_time&.strftime('%l:%M %p')&.strip if @gig.end_time %>
+                <% time_display = time_info.any? ? time_info.join(' - ') : nil %>
+                
+                <% info_parts = [date_info, time_display].compact %>
+                <% if info_parts.any? %>
+                    <span style="font-size: 1rem; font-weight: normal; color: #666; margin-left: 15px;">
+                        <%= info_parts.join(' • ') %>
+                    </span>
+                <% end %>
+            <% end %>
+        </h1>
     </div>
-
-    <% if @gig.notes.present? %>
-        <div class="notes">
-            <h4>Notes:</h4>
-            <p><%= @gig.notes %></p>
-        </div>
-    <% end %>
 
     <div class="song-list">
         <% if @gig.songs.any? %>
@@ -249,9 +258,6 @@
                     <div class="song-info">
                         <div class="song-title">
                             <%= gig_song.song.title %>
-                            <% if gig_song.song.artist.present? %>
-                                <span style="color: #666; font-weight: normal; font-size: 0.9rem;"> • <%= gig_song.song.artist %></span>
-                            <% end %>
                         </div>
                         <div class="song-key">(<%= gig_song.song.key %>)</div>
                     </div>
