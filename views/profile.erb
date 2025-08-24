@@ -1,6 +1,5 @@
-<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+<div style="margin-bottom: 30px;">
     <h2>⚙️ User Profile</h2>
-    <a href="/gigs" class="btn">Back to Set Lists</a>
 </div>
 
 <% if @success %>
@@ -111,42 +110,38 @@
     </div>
 </div>
 
-<!-- Account Management -->
+<!-- Account Statistics -->
 <div class="card" style="margin-top: 30px;">
-    <h3>Account Management</h3>
-    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px;">
-        <div>
-            <h4>Account Statistics</h4>
-            <div class="detail-item">
-                <span class="detail-label">Member since:</span> 
-                <%= current_user.created_at.strftime("%B %d, %Y") %>
-            </div>
-            <div class="detail-item">
-                <span class="detail-label">Bands:</span> 
-                <%= current_user.bands.count %>
-            </div>
-            <div class="detail-item">
-                <span class="detail-label">Last login:</span> 
-                <%= current_user.updated_at.strftime("%B %d, %Y at %I:%M %p") %>
-            </div>
-        </div>
-        
-        <div>
-            <h4>Danger Zone</h4>
-            <div style="padding: 15px; background: #fef2f2; border-radius: 8px; border-left: 4px solid #dc2626;">
-                <p style="margin: 0; color: #991b1b; font-weight: 500;">
-                    ⚠️ <strong>Warning:</strong> These actions cannot be undone.
-                </p>
-            </div>
-            <div style="margin-top: 15px;">
-                <a href="/account/delete" class="btn btn-danger" style="background: #dc2626;">
-                    🗑️ Delete My Account
-                </a>
-                <small style="display: block; margin-top: 5px; color: #666;">
-                    This will permanently delete your account and all associated data.
-                </small>
-            </div>
-        </div>
+    <h3>Account Statistics</h3>
+    <div class="detail-item">
+        <span class="detail-label">Member since:</span> 
+        <%= current_user.created_at.strftime("%B %d, %Y") %>
+    </div>
+    <div class="detail-item">
+        <span class="detail-label">Bands:</span> 
+        <%= current_user.bands.count %>
+    </div>
+    <div class="detail-item">
+        <span class="detail-label">Last login:</span> 
+        <%= current_user.updated_at.strftime("%B %d, %Y at %I:%M %p") %>
+    </div>
+</div>
+
+<!-- Danger Zone -->
+<div class="card" style="margin-top: 50px; border: 2px solid #dc2626;">
+    <h3 style="color: #dc2626;">🚨 Danger Zone</h3>
+    <div style="padding: 15px; background: #fef2f2; border-radius: 8px; border-left: 4px solid #dc2626; margin-bottom: 20px;">
+        <p style="margin: 0; color: #991b1b; font-weight: 500;">
+            ⚠️ <strong>Warning:</strong> These actions cannot be undone.
+        </p>
+    </div>
+    <div>
+        <a href="/account/delete" class="btn btn-danger" style="background: #dc2626;">
+            🗑️ Delete My Account
+        </a>
+        <small style="display: block; margin-top: 5px; color: #666;">
+            This will permanently delete your account and all associated data.
+        </small>
     </div>
 </div>
 

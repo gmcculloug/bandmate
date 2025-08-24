@@ -5,6 +5,7 @@
     </div>
     
     <div class="page-actions">
+        <a href="/calendar?year=<%= Date.current.year %>&month=<%= Date.current.month %>" class="btn btn-small">Today</a>
         <a href="<%= prev_month_link(@year, @month) %>" class="btn btn-small">‹ Prev</a>
         <a href="<%= next_month_link(@year, @month) %>" class="btn btn-small">Next ›</a>
     </div>
@@ -562,4 +563,22 @@ function removeBlackoutDateRange(dates) {
         alert('Failed to remove blackout dates');
     });
 }
+
+// Keyboard navigation for calendar
+document.addEventListener('keydown', function(e) {
+    // Only handle arrow keys when not typing in an input or textarea
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+        return;
+    }
+    
+    if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        // Navigate to previous month
+        window.location.href = '<%= prev_month_link(@year, @month) %>';
+    } else if (e.key === 'ArrowRight') {
+        e.preventDefault();
+        // Navigate to next month
+        window.location.href = '<%= next_month_link(@year, @month) %>';
+    }
+});
 </script>

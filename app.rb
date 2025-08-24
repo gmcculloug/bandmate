@@ -1905,20 +1905,48 @@ end
 # Start the server
 if __FILE__ == $0
   puts "🎸 Bandmate is starting up..."
-  puts "Visit http://localhost:4567 to access the application"
-  puts "Visit http://localhost:4567/setup to initialize the database (first time only)"
-  puts ""
   
-  # Get local IP address for external access
-  require 'socket'
-  local_ip = Socket.ip_address_list.find { |addr| addr.ipv4? && !addr.ipv4_loopback? }&.ip_address
-  if local_ip
-    puts "🌐 External access: http://#{local_ip}:4567"
+  # Check for SSL certificates
+  ssl_cert_path = File.join(File.dirname(__FILE__), 'ssl', 'server.crt')
+  ssl_key_path = File.join(File.dirname(__FILE__), 'ssl', 'server.key')
+  
+  if File.exist?(ssl_cert_path) && File.exist?(ssl_key_path)
+    puts "🔒 Starting with HTTPS (SSL enabled)"
+    puts "Visit https://localhost:4567 to access the application"
+    puts "Visit https://localhost:4567/setup to initialize the database (first time only)"
+    puts ""
+    puts "⚠️  You'll see a security warning since this uses a self-signed certificate."
+    puts "   Click 'Advanced' and 'Proceed to localhost' to continue."
+    puts ""
+    
+    # Get local IP address for external access
+    require 'socket'
+    local_ip = Socket.ip_address_list.find { |addr| addr.ipv4? && !addr.ipv4_loopback? }&.ip_address
+    if local_ip
+      puts "🌐 External access: https://#{local_ip}:4567"
+    end
+    puts "Press Ctrl+C to stop the server"
+    puts ""
+    
+    # Use Puma with SSL configuration file
+    exec("puma -C config/puma_ssl.rb")
+  else
+    puts "⚠️  SSL certificates not found. Starting with HTTP..."
+    puts "Visit http://localhost:4567 to access the application"
+    puts "Visit http://localhost:4567/setup to initialize the database (first time only)"
+    puts ""
+    
+    # Get local IP address for external access
+    require 'socket'
+    local_ip = Socket.ip_address_list.find { |addr| addr.ipv4? && !addr.ipv4_loopback? }&.ip_address
+    if local_ip
+      puts "🌐 External access: http://#{local_ip}:4567"
+    end
+    puts "Press Ctrl+C to stop the server"
+    puts ""
+    
+    set :port, 4567
+    set :bind, '0.0.0.0'  # Bind to all interfaces
+    Sinatra::Application.run!
   end
-  puts "Press Ctrl+C to stop the server"
-  puts ""
-  
-  set :port, 4567
-  set :bind, '0.0.0.0'  # Bind to all interfaces
-  Sinatra::Application.run!
 end 

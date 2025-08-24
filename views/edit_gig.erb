@@ -14,20 +14,18 @@
     <input type="hidden" name="_method" value="PUT">
     
     <div class="form-group">
-        <label for="gig_name">Gig Name *</label>
-        <input type="text" id="gig_name" name="name" value="<%= @gig.name %>" required autofocus>
-    </div>
-
-
-
-    <div class="form-group">
         <label for="gig_venue_id">Venue</label>
-        <select id="gig_venue_id" name="venue_id">
+        <select id="gig_venue_id" name="venue_id" autofocus>
             <option value="">Select Venue (Optional)</option>
             <% @venues.each do |venue| %>
-                <option value="<%= venue.id %>" <%= 'selected' if @gig.venue_id == venue.id %>><%= venue.name %> - <%= venue.location %></option>
+                <option value="<%= venue.id %>" data-venue-name="<%= venue.name %>" <%= 'selected' if @gig.venue_id == venue.id %>><%= venue.name %> - <%= venue.location %></option>
             <% end %>
         </select>
+    </div>
+
+    <div class="form-group">
+        <label for="gig_name">Gig Name *</label>
+        <input type="text" id="gig_name" name="name" value="<%= @gig.name %>" required>
     </div>
 
     <div style="display: grid; grid-template-columns: 1fr; gap: 20px;">
@@ -116,6 +114,38 @@
 </div>
 
 <script>
+// Venue change detection for gig name auto-update
+document.addEventListener('DOMContentLoaded', function() {
+    const venueSelect = document.getElementById('gig_venue_id');
+    const gigNameInput = document.getElementById('gig_name');
+    let previousVenueName = '';
+    
+    // Initialize previousVenueName based on currently selected venue
+    const initialSelectedOption = venueSelect.options[venueSelect.selectedIndex];
+    if (initialSelectedOption && initialSelectedOption.dataset.venueName) {
+        previousVenueName = initialSelectedOption.dataset.venueName;
+    }
+    
+    venueSelect.addEventListener('change', function() {
+        const selectedOption = this.options[this.selectedIndex];
+        const newVenueName = selectedOption.dataset.venueName || '';
+        
+        // Auto-populate if gig name is blank
+        if (gigNameInput.value.trim() === '') {
+            if (selectedOption.value && newVenueName) {
+                gigNameInput.value = newVenueName;
+            }
+        }
+        // Replace if current gig name matches the previous venue name
+        else if (gigNameInput.value.trim() === previousVenueName && newVenueName) {
+            gigNameInput.value = newVenueName;
+        }
+        
+        // Update the previous venue name for next comparison
+        previousVenueName = newVenueName;
+    });
+});
+
 let draggedElement = null;
 
 // Initialize drag and drop

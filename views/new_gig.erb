@@ -12,20 +12,18 @@
 
 <form method="POST" action="/gigs" class="card">
     <div class="form-group">
-        <label for="gig_name">Gig Name *</label>
-        <input type="text" id="gig_name" name="name" placeholder="e.g., Friday Night Set, Acoustic Session" required autofocus>
-    </div>
-
-
-
-    <div class="form-group">
         <label for="gig_venue_id">Venue</label>
-        <select id="gig_venue_id" name="venue_id">
+        <select id="gig_venue_id" name="venue_id" autofocus>
             <option value="">Select Venue (Optional)</option>
             <% @venues.each do |venue| %>
-                <option value="<%= venue.id %>"><%= venue.name %> - <%= venue.location %></option>
+                <option value="<%= venue.id %>" data-venue-name="<%= venue.name %>"><%= venue.name %> - <%= venue.location %></option>
             <% end %>
         </select>
+    </div>
+
+    <div class="form-group">
+        <label for="gig_name">Gig Name *</label>
+        <input type="text" id="gig_name" name="name" placeholder="e.g., Friday Night Set, Acoustic Session" required>
     </div>
 
     <div style="display: grid; grid-template-columns: 1fr; gap: 20px;">
@@ -64,6 +62,39 @@
         <a href="/gigs" class="btn">Cancel</a>
     </div>
 </form>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const venueSelect = document.getElementById('gig_venue_id');
+    const gigNameInput = document.getElementById('gig_name');
+    let previousVenueName = '';
+    
+    venueSelect.addEventListener('change', function() {
+        const selectedOption = this.options[this.selectedIndex];
+        const newVenueName = selectedOption.dataset.venueName || '';
+        
+        // Auto-populate if gig name is blank
+        if (gigNameInput.value.trim() === '') {
+            if (selectedOption.value && newVenueName) {
+                gigNameInput.value = newVenueName;
+            }
+        }
+        // Replace if current gig name matches the previous venue name
+        else if (gigNameInput.value.trim() === previousVenueName && newVenueName) {
+            gigNameInput.value = newVenueName;
+        }
+        
+        // Update the previous venue name for next comparison
+        previousVenueName = newVenueName;
+    });
+    
+    // Initialize previousVenueName if a venue is already selected
+    const initialSelectedOption = venueSelect.options[venueSelect.selectedIndex];
+    if (initialSelectedOption && initialSelectedOption.dataset.venueName) {
+        previousVenueName = initialSelectedOption.dataset.venueName;
+    }
+});
+</script>
 
 <% if defined?(@songs) && @songs.any? %>
     <div class="card" style="margin-top: 30px;">
