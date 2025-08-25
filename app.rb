@@ -1079,7 +1079,8 @@ get '/gigs/:id/manage_songs' do
       id: song.id.to_s,
       title: song.title,
       artist: song.artist || "",
-      key: song.key || ""
+      key: song.key || "",
+      duration: song.duration || ""
     }
   }.to_json
   
@@ -1089,7 +1090,8 @@ get '/gigs/:id/manage_songs' do
         id: gig_song.song.id.to_s,
         title: gig_song.song.title,
         artist: gig_song.song.artist || "",
-        key: gig_song.song.key || ""
+        key: gig_song.song.key || "",
+        duration: gig_song.song.duration || ""
       }
     }
   }.to_json

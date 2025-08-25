@@ -2,13 +2,20 @@
 
 <div class="card" style="margin-bottom: 20px;">
     <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
-        <div>
-            <label for="num_sets" style="font-weight: bold; margin-right: 10px;">Number of Sets:</label>
-            <select id="num_sets" style="padding: 8px; border: 1px solid #d1d5db; border-radius: 4px;">
-                <option value="1">1</option>
-                <option value="2" selected>2</option>
-                <option value="3">3</option>
-            </select>
+        <div style="display: flex; align-items: center; gap: 20px; flex-wrap: wrap;">
+            <div>
+                <label for="num_sets" style="font-weight: bold; margin-right: 10px;">Number of Sets:</label>
+                <select id="num_sets" style="padding: 8px; border: 1px solid #d1d5db; border-radius: 4px;">
+                    <option value="1">1</option>
+                    <option value="2" selected>2</option>
+                    <option value="3">3</option>
+                </select>
+            </div>
+            
+            <div style="padding: 8px 15px; background: #f7fafc; border-radius: 6px; border: 1px solid #e2e8f0;">
+                <span style="font-weight: bold; color: #4a5568;">Total Time:</span>
+                <span id="total-time" style="color: #2d3748; margin-left: 8px;">0:00</span>
+            </div>
         </div>
         
         <div class="actions">
@@ -77,6 +84,8 @@ document.addEventListener('DOMContentLoaded', function() {
     generateSets();
     setupEventListeners();
     updateAvailableSongs();
+    updateAllSetTimes();
+    updateTotalTime();
     
     // Fallback check - if sets aren't generated after 1 second, show error
     setTimeout(function() {
@@ -107,7 +116,13 @@ function generateSets() {
         setDiv.dataset.setNumber = i;
         
         setDiv.innerHTML = `
-            <h3>Set ${i} (<span class="set-count">0</span>)</h3>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
+                <h3 style="margin: 0;">Set ${i} (<span class="set-count">0</span>)</h3>
+                <div style="padding: 4px 10px; background: #f7fafc; border-radius: 4px; border: 1px solid #e2e8f0; font-size: 0.85rem;">
+                    <span style="font-weight: bold; color: #4a5568;">Time:</span>
+                    <span class="set-time" style="color: #2d3748; margin-left: 6px;">0:00</span>
+                </div>
+            </div>
             <div class="set-songs" data-set="${i}" style="min-height: 400px; max-height: 500px; overflow-y: auto; border: 2px dashed #e2e8f0; border-radius: 6px; padding: 10px;">
                 <div class="drop-zone-text" style="text-align: center; color: #a0aec0; padding: 20px; font-style: italic;">Drop songs here</div>
             </div>
@@ -169,8 +184,9 @@ function removeSongFromSet(button) {
     // Remove from DOM
     songDiv.remove();
     
-    // Update count
+    // Update count and total time
     updateSetCount(setNumber);
+    updateTotalTime();
     
     // Add back to available songs
     updateAvailableSongs();
@@ -256,6 +272,81 @@ function updateSetCount(setNumber) {
             countSpan.textContent = count;
         }
     }
+    
+    // Also update the set time
+    updateSetTime(setNumber);
+}
+
+// Helper function to format time from minutes
+function formatTime(totalMinutes) {
+    const hours = Math.floor(totalMinutes / 60);
+    const minutes = Math.floor(totalMinutes % 60);
+    const seconds = Math.round((totalMinutes % 1) * 60);
+    
+    if (hours > 0) {
+        return `${hours}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    } else {
+        return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+    }
+}
+
+// Calculate time for a specific set
+function calculateSetTime(setNumber) {
+    let setMinutes = 0;
+    
+    if (setsSongs[setNumber]) {
+        setsSongs[setNumber].forEach(song => {
+            if (song.duration && song.duration.match(/^\d+:\d+$/)) {
+                const parts = song.duration.split(':').map(part => parseInt(part));
+                setMinutes += parts[0] + parts[1] / 60.0;
+            }
+        });
+    }
+    
+    return setMinutes;
+}
+
+// Update individual set time display
+function updateSetTime(setNumber) {
+    const setMinutes = calculateSetTime(setNumber);
+    const timeDisplay = formatTime(setMinutes);
+    
+    const setColumn = document.querySelector(`[data-set-number="${setNumber}"]`);
+    if (setColumn) {
+        const setTimeElement = setColumn.querySelector('.set-time');
+        if (setTimeElement) {
+            setTimeElement.textContent = timeDisplay;
+        }
+    }
+}
+
+// Calculate and update total time
+function updateTotalTime() {
+    let totalMinutes = 0;
+    
+    // Sum up all songs in all sets
+    Object.values(setsSongs).forEach(songs => {
+        songs.forEach(song => {
+            if (song.duration && song.duration.match(/^\d+:\d+$/)) {
+                const parts = song.duration.split(':').map(part => parseInt(part));
+                totalMinutes += parts[0] + parts[1] / 60.0;
+            }
+        });
+    });
+    
+    const timeDisplay = formatTime(totalMinutes);
+    
+    const totalTimeElement = document.getElementById('total-time');
+    if (totalTimeElement) {
+        totalTimeElement.textContent = timeDisplay;
+    }
+}
+
+// Update all set times
+function updateAllSetTimes() {
+    for (let i = 1; i <= currentSets; i++) {
+        updateSetTime(i);
+    }
 }
 
 // Setup event listeners
@@ -276,6 +367,8 @@ function setupEventListeners() {
         currentSets = newSetCount;
         generateSets();
         updateAvailableSongs();
+        updateAllSetTimes();
+        updateTotalTime();
     });
     
     // Song filter
@@ -291,35 +384,67 @@ function setupSongDragEvents(songElement) {
     songElement.addEventListener('dragstart', function(e) {
         draggedElement = this;
         this.style.opacity = '0.5';
+        this.classList.add('dragging');
         e.dataTransfer.effectAllowed = 'move';
         e.dataTransfer.setData('text/html', this.outerHTML);
     });
     
     songElement.addEventListener('dragend', function() {
         this.style.opacity = '1';
+        this.classList.remove('dragging');
+        
+        // Clean up any remaining drop indicators
+        document.querySelectorAll('.drop-indicator').forEach(indicator => indicator.remove());
+        
+        // Reset all set container styles
+        document.querySelectorAll('.set-songs').forEach(container => {
+            container.style.borderColor = '#e2e8f0';
+            container.style.backgroundColor = 'transparent';
+        });
+        
         draggedElement = null;
     });
 }
 
-// Setup set drop zones
+// Setup set drop zones with precise positioning
 function setupSetDropZones() {
     document.querySelectorAll('.set-songs').forEach(setContainer => {
         setContainer.addEventListener('dragover', function(e) {
             e.preventDefault();
             e.dataTransfer.dropEffect = 'move';
+            
+            // Remove any existing drop indicators
+            this.querySelectorAll('.drop-indicator').forEach(indicator => indicator.remove());
+            
+            const afterElement = getDragAfterElement(this, e.clientY);
+            const dropIndicator = createDropIndicator();
+            
+            if (afterElement == null) {
+                this.appendChild(dropIndicator);
+            } else {
+                this.insertBefore(dropIndicator, afterElement);
+            }
+            
             this.style.borderColor = '#667eea';
             this.style.backgroundColor = '#f7fafc';
         });
         
         setContainer.addEventListener('dragleave', function() {
-            this.style.borderColor = '#e2e8f0';
-            this.style.backgroundColor = 'transparent';
+            // Only remove indicators if we're leaving the container entirely
+            if (!this.contains(event.relatedTarget)) {
+                this.querySelectorAll('.drop-indicator').forEach(indicator => indicator.remove());
+                this.style.borderColor = '#e2e8f0';
+                this.style.backgroundColor = 'transparent';
+            }
         });
         
         setContainer.addEventListener('drop', function(e) {
             e.preventDefault();
             this.style.borderColor = '#e2e8f0';
             this.style.backgroundColor = 'transparent';
+            
+            // Remove drop indicators
+            this.querySelectorAll('.drop-indicator').forEach(indicator => indicator.remove());
             
             if (draggedElement) {
                 const songId = draggedElement.dataset.songId;
@@ -329,37 +454,64 @@ function setupSetDropZones() {
                 const songData = allBandSongs.find(song => song.id === songId);
                 
                 if (songData) {
+                    // Calculate insertion position
+                    const afterElement = getDragAfterElement(this, e.clientY);
+                    let insertPosition = 0;
+                    
+                    if (afterElement) {
+                        const songs = Array.from(this.querySelectorAll('.set-song'));
+                        insertPosition = songs.indexOf(afterElement);
+                    } else {
+                        insertPosition = this.querySelectorAll('.set-song').length;
+                    }
+                    
                     // Remove from current location
                     if (draggedElement.classList.contains('available-song')) {
                         // Moving from available songs
                     } else {
                         // Moving from another set
                         const fromSet = draggedElement.closest('.set-songs').dataset.set;
+                        const fromPosition = Array.from(draggedElement.closest('.set-songs').querySelectorAll('.set-song')).indexOf(draggedElement);
+                        
                         if (setsSongs[fromSet]) {
-                            setsSongs[fromSet] = setsSongs[fromSet].filter(song => song.id !== songId);
+                            setsSongs[fromSet].splice(fromPosition, 1);
                             updateSetCount(fromSet);
+                        }
+                        
+                        // Adjust insertion position if moving within same set
+                        if (fromSet === setNumber && fromPosition < insertPosition) {
+                            insertPosition--;
                         }
                     }
                     
-                    // Add to new set
+                    // Add to new set at specific position
                     if (!setsSongs[setNumber]) {
                         setsSongs[setNumber] = [];
                     }
                     
-                    // Check if song is already in this set
-                    if (!setsSongs[setNumber].find(song => song.id === songId)) {
-                        setsSongs[setNumber].push(songData);
-                        
-                        // Clear drop zone text if this is the first song
-                        const dropZoneText = this.querySelector('.drop-zone-text');
-                        if (dropZoneText) {
-                            dropZoneText.remove();
+                    // Check if song is already in this set at different position
+                    const existingIndex = setsSongs[setNumber].findIndex(song => song.id === songId);
+                    if (existingIndex !== -1) {
+                        // Remove from old position
+                        setsSongs[setNumber].splice(existingIndex, 1);
+                        // Adjust insertion position if necessary
+                        if (existingIndex < insertPosition) {
+                            insertPosition--;
                         }
-                        
-                        addSongToSet(this, songData);
-                        updateSetCount(setNumber);
-                        updateAvailableSongs();
                     }
+                    
+                    // Insert at precise position
+                    setsSongs[setNumber].splice(insertPosition, 0, songData);
+                    
+                    // Clear drop zone text if this is the first song
+                    const dropZoneText = this.querySelector('.drop-zone-text');
+                    if (dropZoneText) {
+                        dropZoneText.remove();
+                    }
+                    
+                    // Rebuild the entire set to reflect new order
+                    rebuildSet(setNumber);
+                    updateAvailableSongs();
                     
                     // Remove dragged element if it was moved from another set
                     if (!draggedElement.classList.contains('available-song')) {
@@ -369,6 +521,49 @@ function setupSetDropZones() {
             }
         });
     });
+}
+
+// Helper function to determine where to insert based on mouse position
+function getDragAfterElement(container, y) {
+    const draggableElements = [...container.querySelectorAll('.set-song:not(.dragging)')];
+    
+    return draggableElements.reduce((closest, child) => {
+        const box = child.getBoundingClientRect();
+        const offset = y - box.top - box.height / 2;
+        
+        if (offset < 0 && offset > closest.offset) {
+            return { offset: offset, element: child };
+        } else {
+            return closest;
+        }
+    }, { offset: Number.NEGATIVE_INFINITY }).element;
+}
+
+// Create a visual drop indicator
+function createDropIndicator() {
+    const indicator = document.createElement('div');
+    indicator.className = 'drop-indicator';
+    indicator.style.cssText = 'height: 3px; background: #667eea; margin: 4px 0; border-radius: 2px; opacity: 0.8;';
+    return indicator;
+}
+
+// Rebuild entire set to reflect new order
+function rebuildSet(setNumber) {
+    const setContainer = document.querySelector(`[data-set="${setNumber}"]`);
+    if (!setContainer) return;
+    
+    // Clear existing songs
+    setContainer.querySelectorAll('.set-song').forEach(song => song.remove());
+    
+    // Add songs in correct order
+    if (setsSongs[setNumber]) {
+        setsSongs[setNumber].forEach(song => {
+            addSongToSet(setContainer, song);
+        });
+    }
+    
+    updateSetCount(setNumber); // This now also updates set time
+    updateTotalTime();
 }
 
 // Save song changes
@@ -421,6 +616,12 @@ function saveSongChanges() {
     cursor: grabbing;
 }
 
+.song-item.dragging {
+    opacity: 0.5;
+    transform: rotate(2deg);
+    z-index: 1000;
+}
+
 .set-songs {
     transition: all 0.2s ease;
 }
@@ -428,6 +629,15 @@ function saveSongChanges() {
 .set-songs.drag-over {
     border-color: #667eea !important;
     background-color: #f7fafc !important;
+}
+
+.drop-indicator {
+    height: 3px;
+    background: #667eea;
+    margin: 4px 0;
+    border-radius: 2px;
+    opacity: 0.8;
+    transition: all 0.2s ease;
 }
 
 @media (max-width: 768px) {
