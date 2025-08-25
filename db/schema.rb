@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_08_22_191345) do
+ActiveRecord::Schema[8.0].define(version: 2025_08_25_002201) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -41,8 +41,10 @@ ActiveRecord::Schema[8.0].define(version: 2025_08_22_191345) do
     t.integer "position", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "set_number", default: 1, null: false
     t.index ["gig_id"], name: "index_gig_songs_on_gig_id"
     t.index ["position"], name: "index_gig_songs_on_position"
+    t.index ["set_number"], name: "index_gig_songs_on_set_number"
     t.index ["song_id"], name: "index_gig_songs_on_song_id"
   end
 

@@ -1,0 +1,442 @@
+<h2>🎵 Manage Songs: <%= @gig.name %></h2>
+
+<div class="card" style="margin-bottom: 20px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
+        <div>
+            <label for="num_sets" style="font-weight: bold; margin-right: 10px;">Number of Sets:</label>
+            <select id="num_sets" style="padding: 8px; border: 1px solid #d1d5db; border-radius: 4px;">
+                <option value="1">1</option>
+                <option value="2" selected>2</option>
+                <option value="3">3</option>
+            </select>
+        </div>
+        
+        <div class="actions">
+            <button type="button" class="btn btn-success" onclick="saveSongChanges()">Save Changes</button>
+            <a href="/gigs/<%= @gig.id %>" class="btn">Cancel</a>
+        </div>
+    </div>
+</div>
+
+<div id="main-container" style="display: grid; grid-template-columns: 300px 1fr; gap: 20px; min-height: 600px;">
+    <!-- Available Songs Column -->
+    <div class="card">
+        <h3>Available Songs (<span id="available-count"><%= @available_songs.count %></span>)</h3>
+        
+        <div style="margin-bottom: 15px;">
+            <input type="text" id="song-filter" placeholder="Search songs..." style="width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 4px;">
+        </div>
+        
+        <div id="available-songs" style="max-height: 500px; overflow-y: auto;">
+            <% @available_songs.each do |song| %>
+                <div class="song-item available-song" data-song-id="<%= song.id %>" draggable="true" style="margin-bottom: 8px; padding: 10px; background: #f7fafc; border: 1px solid #e2e8f0; border-radius: 6px; cursor: grab; transition: all 0.2s ease;">
+                    <div style="font-weight: bold; color: #2d3748; font-size: 0.9rem;"><%= song.title %></div>
+                    <% if song.artist.present? %>
+                        <div style="color: #718096; font-size: 0.8rem;"><%= song.artist %></div>
+                    <% end %>
+                    <% if song.key.present? %>
+                        <div style="margin-top: 4px;">
+                            <span style="background: #667eea; color: white; padding: 2px 6px; border-radius: 10px; font-size: 0.7rem;"><%= song.key %></span>
+                        </div>
+                    <% end %>
+                </div>
+            <% end %>
+        </div>
+    </div>
+    
+    <!-- Sets Columns -->
+    <div id="sets-container" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px;">
+        <!-- Sets will be dynamically generated here -->
+        <div class="loading-message" style="grid-column: 1 / -1; text-align: center; padding: 40px; color: #718096;">
+            Loading sets...
+        </div>
+    </div>
+</div>
+
+<script>
+// Global variables
+let draggedElement = null;
+let currentSets = 2;
+let allBandSongs = [];
+let setsSongs = {};
+
+// Initialize the page
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize all band songs data
+    allBandSongs = <%= @all_band_songs_json.to_s %>;
+    
+    // Initialize existing songs in sets
+    setsSongs = <%= @sets_songs_json.to_s %>;
+    
+    // Set the number of sets based on existing data
+    const setNumbers = Object.keys(setsSongs).map(k => parseInt(k));
+    const maxSetNumber = setNumbers.length > 0 ? Math.max(...setNumbers) : 1;
+    currentSets = Math.max(Math.min(maxSetNumber, 3), 2); // Default to 2 sets minimum
+    document.getElementById('num_sets').value = currentSets;
+    
+    generateSets();
+    setupEventListeners();
+    updateAvailableSongs();
+    
+    // Fallback check - if sets aren't generated after 1 second, show error
+    setTimeout(function() {
+        const container = document.getElementById('sets-container');
+        if (container && container.children.length === 0) {
+            container.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: #e53e3e;">Error loading sets. Please refresh the page.</div>';
+        }
+    }, 1000);
+});
+
+// Generate set columns
+function generateSets() {
+    const container = document.getElementById('sets-container');
+    if (!container) {
+        console.error('Sets container not found!');
+        return;
+    }
+    
+    // Clear loading message and any existing content
+    container.innerHTML = '';
+    
+    // Update grid columns based on number of sets
+    container.style.gridTemplateColumns = `repeat(${currentSets}, 1fr)`;
+    
+    for (let i = 1; i <= currentSets; i++) {
+        const setDiv = document.createElement('div');
+        setDiv.className = 'card set-column';
+        setDiv.dataset.setNumber = i;
+        
+        setDiv.innerHTML = `
+            <h3>Set ${i} (<span class="set-count">0</span>)</h3>
+            <div class="set-songs" data-set="${i}" style="min-height: 400px; max-height: 500px; overflow-y: auto; border: 2px dashed #e2e8f0; border-radius: 6px; padding: 10px;">
+                <div class="drop-zone-text" style="text-align: center; color: #a0aec0; padding: 20px; font-style: italic;">Drop songs here</div>
+            </div>
+        `;
+        
+        container.appendChild(setDiv);
+    }
+    
+    // Populate sets with existing songs
+    Object.keys(setsSongs).forEach(setNumber => {
+        const setContainer = document.querySelector(`[data-set="${setNumber}"]`);
+        if (setContainer && parseInt(setNumber) <= currentSets) {
+            setContainer.innerHTML = ''; // Clear drop zone text
+            setsSongs[setNumber].forEach(song => {
+                addSongToSet(setContainer, song);
+            });
+            updateSetCount(setNumber);
+        }
+    });
+    
+    setupSetDropZones();
+}
+
+// Add song to set
+function addSongToSet(setContainer, song) {
+    const songDiv = document.createElement('div');
+    songDiv.className = 'song-item set-song';
+    songDiv.dataset.songId = song.id;
+    songDiv.draggable = true;
+    songDiv.style.cssText = 'margin-bottom: 8px; padding: 10px; background: #edf2f7; border: 1px solid #cbd5e0; border-radius: 6px; cursor: grab; transition: all 0.2s ease;';
+    
+    let artistHtml = song.artist ? `<div style="color: #718096; font-size: 0.8rem;">${song.artist}</div>` : '';
+    let keyHtml = song.key ? `<div style="margin-top: 4px;"><span style="background: #667eea; color: white; padding: 2px 6px; border-radius: 10px; font-size: 0.7rem;">${song.key}</span></div>` : '';
+    
+    songDiv.innerHTML = `
+        <div style="font-weight: bold; color: #2d3748; font-size: 0.9rem;">${song.title}</div>
+        ${artistHtml}
+        ${keyHtml}
+        <button type="button" onclick="removeSongFromSet(this)" style="position: absolute; top: 5px; right: 5px; background: #e53e3e; color: white; border: none; border-radius: 50%; width: 20px; height: 20px; font-size: 12px; cursor: pointer;">×</button>
+    `;
+    songDiv.style.position = 'relative';
+    
+    setContainer.appendChild(songDiv);
+    setupSongDragEvents(songDiv);
+}
+
+// Remove song from set
+function removeSongFromSet(button) {
+    const songDiv = button.closest('.song-item');
+    const setContainer = songDiv.closest('.set-songs');
+    const setNumber = setContainer.dataset.set;
+    const songId = songDiv.dataset.songId;
+    
+    // Remove from setsSongs data
+    if (setsSongs[setNumber]) {
+        setsSongs[setNumber] = setsSongs[setNumber].filter(song => song.id !== songId);
+    }
+    
+    // Remove from DOM
+    songDiv.remove();
+    
+    // Update count
+    updateSetCount(setNumber);
+    
+    // Add back to available songs
+    updateAvailableSongs();
+}
+
+// Update available songs (rebuild list in alphabetical order)
+function updateAvailableSongs() {
+    const usedSongIds = new Set();
+    Object.values(setsSongs).forEach(songs => {
+        songs.forEach(song => usedSongIds.add(song.id));
+    });
+    
+    // Filter all band songs to exclude those in sets
+    const availableSongsFiltered = allBandSongs.filter(song => !usedSongIds.has(song.id));
+    
+    // Sort alphabetically by title
+    availableSongsFiltered.sort((a, b) => a.title.toLowerCase().localeCompare(b.title.toLowerCase()));
+    
+    // Rebuild the available songs container
+    const availableContainer = document.getElementById('available-songs');
+    availableContainer.innerHTML = '';
+    
+    availableSongsFiltered.forEach(song => {
+        const songDiv = document.createElement('div');
+        songDiv.className = 'song-item available-song';
+        songDiv.dataset.songId = song.id;
+        songDiv.draggable = true;
+        songDiv.style.cssText = 'margin-bottom: 8px; padding: 10px; background: #f7fafc; border: 1px solid #e2e8f0; border-radius: 6px; cursor: grab; transition: all 0.2s ease;';
+        
+        let artistHtml = song.artist ? `<div style="color: #718096; font-size: 0.8rem;">${song.artist}</div>` : '';
+        let keyHtml = song.key ? `<div style="margin-top: 4px;"><span style="background: #667eea; color: white; padding: 2px 6px; border-radius: 10px; font-size: 0.7rem;">${song.key}</span></div>` : '';
+        
+        songDiv.innerHTML = `
+            <div style="font-weight: bold; color: #2d3748; font-size: 0.9rem;">${song.title}</div>
+            ${artistHtml}
+            ${keyHtml}
+        `;
+        
+        availableContainer.appendChild(songDiv);
+        setupSongDragEvents(songDiv);
+    });
+    
+    // Update count
+    document.getElementById('available-count').textContent = availableSongsFiltered.length;
+    
+    // Reapply current filter if any
+    const currentFilter = document.getElementById('song-filter').value;
+    if (currentFilter) {
+        applyAvailableSongsFilter(currentFilter);
+    }
+}
+
+// Apply filter to available songs
+function applyAvailableSongsFilter(filter) {
+    const filterLower = filter.toLowerCase();
+    const songItems = document.querySelectorAll('.available-song');
+    
+    let visibleCount = 0;
+    songItems.forEach(item => {
+        const title = item.querySelector('div').textContent.toLowerCase();
+        const artistDiv = item.querySelector('div:nth-child(2)');
+        const artist = artistDiv ? artistDiv.textContent.toLowerCase() : '';
+        
+        if (title.includes(filterLower) || artist.includes(filterLower)) {
+            item.style.display = 'block';
+            visibleCount++;
+        } else {
+            item.style.display = 'none';
+        }
+    });
+    
+    // Update count to show filtered results
+    document.getElementById('available-count').textContent = visibleCount;
+}
+
+// Update set count
+function updateSetCount(setNumber) {
+    const setColumn = document.querySelector(`[data-set-number="${setNumber}"]`);
+    if (setColumn) {
+        const count = setsSongs[setNumber] ? setsSongs[setNumber].length : 0;
+        const countSpan = setColumn.querySelector('.set-count');
+        if (countSpan) {
+            countSpan.textContent = count;
+        }
+    }
+}
+
+// Setup event listeners
+function setupEventListeners() {
+    // Number of sets change
+    document.getElementById('num_sets').addEventListener('change', function() {
+        const newSetCount = parseInt(this.value);
+        
+        // If reducing sets, move songs from removed sets back to available
+        if (newSetCount < currentSets) {
+            for (let i = newSetCount + 1; i <= currentSets; i++) {
+                if (setsSongs[i]) {
+                    delete setsSongs[i];
+                }
+            }
+        }
+        
+        currentSets = newSetCount;
+        generateSets();
+        updateAvailableSongs();
+    });
+    
+    // Song filter
+    document.getElementById('song-filter').addEventListener('input', function() {
+        applyAvailableSongsFilter(this.value);
+    });
+    
+    // Note: Drag events for available songs are set up in updateAvailableSongs() when songs are created
+}
+
+// Setup song drag events
+function setupSongDragEvents(songElement) {
+    songElement.addEventListener('dragstart', function(e) {
+        draggedElement = this;
+        this.style.opacity = '0.5';
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/html', this.outerHTML);
+    });
+    
+    songElement.addEventListener('dragend', function() {
+        this.style.opacity = '1';
+        draggedElement = null;
+    });
+}
+
+// Setup set drop zones
+function setupSetDropZones() {
+    document.querySelectorAll('.set-songs').forEach(setContainer => {
+        setContainer.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+            this.style.borderColor = '#667eea';
+            this.style.backgroundColor = '#f7fafc';
+        });
+        
+        setContainer.addEventListener('dragleave', function() {
+            this.style.borderColor = '#e2e8f0';
+            this.style.backgroundColor = 'transparent';
+        });
+        
+        setContainer.addEventListener('drop', function(e) {
+            e.preventDefault();
+            this.style.borderColor = '#e2e8f0';
+            this.style.backgroundColor = 'transparent';
+            
+            if (draggedElement) {
+                const songId = draggedElement.dataset.songId;
+                const setNumber = this.dataset.set;
+                
+                // Find song data
+                const songData = allBandSongs.find(song => song.id === songId);
+                
+                if (songData) {
+                    // Remove from current location
+                    if (draggedElement.classList.contains('available-song')) {
+                        // Moving from available songs
+                    } else {
+                        // Moving from another set
+                        const fromSet = draggedElement.closest('.set-songs').dataset.set;
+                        if (setsSongs[fromSet]) {
+                            setsSongs[fromSet] = setsSongs[fromSet].filter(song => song.id !== songId);
+                            updateSetCount(fromSet);
+                        }
+                    }
+                    
+                    // Add to new set
+                    if (!setsSongs[setNumber]) {
+                        setsSongs[setNumber] = [];
+                    }
+                    
+                    // Check if song is already in this set
+                    if (!setsSongs[setNumber].find(song => song.id === songId)) {
+                        setsSongs[setNumber].push(songData);
+                        
+                        // Clear drop zone text if this is the first song
+                        const dropZoneText = this.querySelector('.drop-zone-text');
+                        if (dropZoneText) {
+                            dropZoneText.remove();
+                        }
+                        
+                        addSongToSet(this, songData);
+                        updateSetCount(setNumber);
+                        updateAvailableSongs();
+                    }
+                    
+                    // Remove dragged element if it was moved from another set
+                    if (!draggedElement.classList.contains('available-song')) {
+                        draggedElement.remove();
+                    }
+                }
+            }
+        });
+    });
+}
+
+// Save song changes
+function saveSongChanges() {
+    const formData = new FormData();
+    
+    // Add sets data
+    Object.keys(setsSongs).forEach(setNumber => {
+        setsSongs[setNumber].forEach((song, index) => {
+            formData.append(`sets[${setNumber}][]`, song.id);
+        });
+    });
+    
+    // Show saving indicator
+    const button = event.target;
+    const originalText = button.textContent;
+    button.textContent = 'Saving...';
+    button.disabled = true;
+    
+    fetch('/gigs/<%= @gig.id %>/update_songs', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            window.location.href = '/gigs/<%= @gig.id %>';
+        } else {
+            alert('Error saving changes. Please try again.');
+            button.textContent = originalText;
+            button.disabled = false;
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error saving changes. Please try again.');
+        button.textContent = originalText;
+        button.disabled = false;
+    });
+}
+</script>
+
+<style>
+.song-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.song-item:active {
+    cursor: grabbing;
+}
+
+.set-songs {
+    transition: all 0.2s ease;
+}
+
+.set-songs.drag-over {
+    border-color: #667eea !important;
+    background-color: #f7fafc !important;
+}
+
+@media (max-width: 768px) {
+    #main-container {
+        grid-template-columns: 1fr;
+    }
+    
+    #sets-container {
+        grid-template-columns: 1fr !important;
+    }
+}
+</style>

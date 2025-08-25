@@ -63,38 +63,52 @@
 
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
         <h3>Songs (<%= @gig.songs.count %>)</h3>
+        <a href="/gigs/<%= @gig.id %>/manage_songs" class="btn">Manage Songs</a>
     </div>
 
     <% if @gig.songs.any? %>
-        <div style="margin-bottom: 15px;">
-            <% @gig.gig_songs.includes(:song).order(:position).each_with_index do |gig_song, index| %>
+        <% 
+          gig_songs_by_set = @gig.gig_songs.includes(:song).order(:set_number, :position).group_by(&:set_number)
+          max_set = gig_songs_by_set.keys.max || 1
+        %>
+        
+        <% (1..max_set).each do |set_number| %>
+          <% if gig_songs_by_set[set_number] %>
+            <div style="margin-bottom: 25px;">
+              <h4 style="color: #2d3748; margin-bottom: 10px; padding-bottom: 5px; border-bottom: 2px solid #e2e8f0;">
+                Set <%= set_number %> (<%= gig_songs_by_set[set_number].count %> songs)
+              </h4>
+              
+              <% gig_songs_by_set[set_number].each_with_index do |gig_song, index| %>
                 <div class="song-card" style="margin-bottom: 4px; padding: 8px 12px; border: 1px solid #e2e8f0; border-radius: 4px; cursor: pointer;" onclick="window.location.href='/songs/<%= gig_song.song.id %>'">
-                    <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px;">
-                        <div style="flex: 1; min-width: 0; display: flex; align-items: center; gap: 10px;">
-                            <span style="background: #667eea; color: white; padding: 3px 8px; border-radius: 12px; font-weight: bold; min-width: 25px; text-align: center; font-size: 0.85rem; flex-shrink: 0;">
-                                <%= index + 1 %>
-                            </span>
-                            <div style="font-weight: 600; font-size: 1rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; flex: 1;">
-                                <%= gig_song.song.title %>
-                                <% if gig_song.song.artist.present? %>
-                                    <span style="color: #718096; font-weight: normal; font-size: 0.9rem;"> • <%= gig_song.song.artist %></span>
-                                <% end %>
-                            </div>
-                            <div style="font-size: 0.85rem; color: #4a5568; flex-shrink: 0;">
-                                <span style="background: #667eea; color: white; padding: 2px 6px; border-radius: 10px; font-size: 0.75rem;">
-                                    <%= gig_song.song.key %>
-                                </span>
-                            </div>
-                        </div>
-                        <% if gig_song.song.url.present? %>
-                            <div class="actions" onclick="event.stopPropagation();" style="display: flex; gap: 5px; flex-shrink: 0;">
-                                <a href="<%= gig_song.song.url %>" target="_blank" class="btn btn-small" style="font-size: 0.75rem; padding: 4px 8px; min-height: 28px;">🎵</a>
-                            </div>
+                  <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px;">
+                    <div style="flex: 1; min-width: 0; display: flex; align-items: center; gap: 10px;">
+                      <span style="background: #667eea; color: white; padding: 3px 8px; border-radius: 12px; font-weight: bold; min-width: 25px; text-align: center; font-size: 0.85rem; flex-shrink: 0;">
+                        <%= index + 1 %>
+                      </span>
+                      <div style="font-weight: 600; font-size: 1rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; flex: 1;">
+                        <%= gig_song.song.title %>
+                        <% if gig_song.song.artist.present? %>
+                          <span style="color: #718096; font-weight: normal; font-size: 0.9rem;"> • <%= gig_song.song.artist %></span>
                         <% end %>
+                      </div>
+                      <div style="font-size: 0.85rem; color: #4a5568; flex-shrink: 0;">
+                        <span style="background: #667eea; color: white; padding: 2px 6px; border-radius: 10px; font-size: 0.75rem;">
+                          <%= gig_song.song.key %>
+                        </span>
+                      </div>
                     </div>
+                    <% if gig_song.song.url.present? %>
+                      <div class="actions" onclick="event.stopPropagation();" style="display: flex; gap: 5px; flex-shrink: 0;">
+                        <a href="<%= gig_song.song.url %>" target="_blank" class="btn btn-small" style="font-size: 0.75rem; padding: 4px 8px; min-height: 28px;">🎵</a>
+                      </div>
+                    <% end %>
+                  </div>
                 </div>
-            <% end %>
-        </div>
+              <% end %>
+            </div>
+          <% end %>
+        <% end %>
 
         <div style="background: #f7fafc; padding: 20px; border-radius: 8px;">
             <h4>Gig Summary</h4>
@@ -123,7 +137,7 @@
         <div style="text-align: center; padding: 40px;">
             <h3>No songs in this gig yet</h3>
             <p>Add some songs to get started!</p>
-            <a href="/songs" class="btn btn-success">Browse Songs</a>
+            <a href="/gigs/<%= @gig.id %>/manage_songs" class="btn btn-success">Manage Songs</a>
         </div>
     <% end %>
 </div>

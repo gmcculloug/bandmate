@@ -168,13 +168,14 @@ bands.each do |band|
       g.notes = "Past performance - great crowd!"
     end
     
-    # Add 3-6 songs to each gig
+    # Add 3-6 songs to each past gig (all in set 1)
     gig_songs = band.songs.sample(rand(3..6))
     gig_songs.each_with_index do |song, position|
       GigSong.find_or_create_by(
         gig: gig,
         song: song,
-        position: position + 1
+        position: position + 1,
+        set_number: 1
       )
     end
     puts "Created past gig: #{gig.name} on #{gig.performance_date}"
@@ -196,16 +197,49 @@ bands.each do |band|
       g.notes = "Upcoming show - get ready!"
     end
     
-    # Add 4-8 songs to each future gig
-    gig_songs = band.songs.sample(rand(4..8))
-    gig_songs.each_with_index do |song, position|
-      GigSong.find_or_create_by(
-        gig: gig,
-        song: song,
-        position: position + 1
-      )
+    # Add songs to future gigs with multiple sets
+    total_songs = rand(6..12)
+    available_songs = band.songs.to_a.shuffle
+    
+    # Determine number of sets (70% chance of 2 sets, 20% chance of 1 set, 10% chance of 3 sets)
+    rand_num = rand(100)
+    num_sets = if rand_num < 20
+                 1
+               elsif rand_num < 90
+                 2
+               else
+                 3
+               end
+    
+    # Distribute songs across sets
+    songs_per_set = (total_songs / num_sets.to_f).ceil
+    current_song_index = 0
+    
+    (1..num_sets).each do |set_number|
+      # Determine songs for this set (slightly random distribution)
+      songs_in_set = if set_number == num_sets
+                       # Last set gets remaining songs
+                       total_songs - current_song_index
+                     else
+                       # Other sets get 3-6 songs
+                       [rand(3..6), total_songs - current_song_index].min
+                     end
+      
+      next if songs_in_set <= 0 || current_song_index >= available_songs.length
+      
+      set_songs = available_songs[current_song_index, songs_in_set] || []
+      set_songs.each_with_index do |song, position|
+        GigSong.find_or_create_by(
+          gig: gig,
+          song: song,
+          position: position + 1,
+          set_number: set_number
+        )
+      end
+      
+      current_song_index += songs_in_set
     end
-    puts "Created future gig: #{gig.name} on #{gig.performance_date}"
+    puts "Created future gig: #{gig.name} on #{gig.performance_date} (#{num_sets} sets, #{total_songs} total songs)"
   end
 end
 

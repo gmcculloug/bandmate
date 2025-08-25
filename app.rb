@@ -171,6 +171,7 @@ class GigSong < ActiveRecord::Base
   belongs_to :song
   
   validates :position, presence: true, numericality: { greater_than: 0 }
+  validates :set_number, presence: true, numericality: { greater_than: 0, less_than_or_equal_to: 3 }
 end
 
 class BlackoutDate < ActiveRecord::Base
@@ -1059,6 +1060,43 @@ get '/gigs/:id/edit' do
   erb :edit_gig
 end
 
+get '/gigs/:id/manage_songs' do
+  require_login
+  @gig = filter_by_current_band(Gig).find(params[:id])
+  
+  # Get all songs for the current band
+  @all_band_songs = filter_by_current_band(Song).order(:title)
+  
+  # Get songs currently available (not in this gig)
+  @available_songs = @all_band_songs.where.not(id: @gig.song_ids)
+  
+  # Get songs already in this gig, organized by set number
+  @gig_songs_by_set = @gig.gig_songs.includes(:song).order(:set_number, :position).group_by(&:set_number) || {}
+  
+  # Prepare JSON data for JavaScript
+  @all_band_songs_json = @all_band_songs.map { |song| 
+    {
+      id: song.id.to_s,
+      title: song.title,
+      artist: song.artist || "",
+      key: song.key || ""
+    }
+  }.to_json
+  
+  @sets_songs_json = @gig_songs_by_set.transform_values { |gig_songs|
+    gig_songs.map { |gig_song|
+      {
+        id: gig_song.song.id.to_s,
+        title: gig_song.song.title,
+        artist: gig_song.song.artist || "",
+        key: gig_song.song.key || ""
+      }
+    }
+  }.to_json
+  
+  erb :manage_gig_songs
+end
+
 put '/gigs/:id' do
   require_login
   @gig = filter_by_current_band(Gig).find(params[:id])
@@ -1096,12 +1134,14 @@ post '/gigs/:id/songs' do
   gig = filter_by_current_band(Gig).find(params[:id])
   
   song = filter_by_current_band(Song).find(params[:song_id])
-  position = gig.gig_songs.count + 1
+  set_number = params[:set_number] || 1
+  position = gig.gig_songs.where(set_number: set_number).count + 1
   
   gig_song = GigSong.new(
     gig: gig,
     song: song,
-    position: position
+    position: position,
+    set_number: set_number
   )
   
   if gig_song.save
@@ -1144,6 +1184,33 @@ post '/gigs/:id/reorder' do
   { success: true }.to_json
 end
 
+post '/gigs/:id/update_songs' do
+  require_login
+  gig = filter_by_current_band(Gig).find(params[:id])
+  
+  # Clear existing songs
+  gig.gig_songs.destroy_all
+  
+  # Process each set
+  sets_data = params[:sets] || {}
+  sets_data.each do |set_number, songs|
+    songs.each_with_index do |song_id, position|
+      next if song_id.blank?
+      
+      song = filter_by_current_band(Song).find(song_id)
+      GigSong.create!(
+        gig: gig,
+        song: song,
+        set_number: set_number.to_i,
+        position: position + 1
+      )
+    end
+  end
+  
+  content_type :json
+  { success: true }.to_json
+end
+
 # Gig utilities
 get '/gigs/:id/print' do
   require_login
@@ -1167,11 +1234,12 @@ post '/gigs/:id/copy' do
     )
     
     # Copy all songs with their positions
-    original_gig.gig_songs.includes(:song).order(:position).each do |gig_song|
+    original_gig.gig_songs.includes(:song).order(:set_number, :position).each do |gig_song|
       GigSong.create!(
         gig_id: new_gig.id,
         song_id: gig_song.song_id,
-        position: gig_song.position
+        position: gig_song.position,
+        set_number: gig_song.set_number
       )
     end
     

@@ -252,16 +252,34 @@
 
     <div class="song-list">
         <% if @gig.songs.any? %>
-            <% @gig.gig_songs.includes(:song).order(:position).each_with_index do |gig_song, index| %>
-                <div class="song-item">
-                    <div class="song-number"><%= index + 1 %></div>
-                    <div class="song-info">
+            <% 
+              gig_songs_by_set = @gig.gig_songs.includes(:song).order(:set_number, :position).group_by(&:set_number)
+              max_set = gig_songs_by_set.keys.max || 1
+            %>
+            
+            <% (1..max_set).each do |set_number| %>
+              <% if gig_songs_by_set[set_number] %>
+                <div class="set-section" style="margin-bottom: 40px; page-break-inside: avoid;">
+                  <h2 style="font-size: 1.8rem; margin-bottom: 20px; border-bottom: 2px solid #333; padding-bottom: 10px;">
+                    Set <%= set_number %> 
+                    <span style="font-size: 1.2rem; color: #666; font-weight: normal;">
+                      (<%= gig_songs_by_set[set_number].count %> songs)
+                    </span>
+                  </h2>
+                  
+                  <% gig_songs_by_set[set_number].each_with_index do |gig_song, index| %>
+                    <div class="song-item">
+                      <div class="song-number"><%= index + 1 %></div>
+                      <div class="song-info">
                         <div class="song-title">
-                            <%= gig_song.song.title %>
+                          <%= gig_song.song.title %>
                         </div>
                         <div class="song-key">(<%= gig_song.song.key %>)</div>
+                      </div>
                     </div>
+                  <% end %>
                 </div>
+              <% end %>
             <% end %>
         <% else %>
             <p style="text-align: center; font-style: italic; color: #666;">No songs in this set list</p>
