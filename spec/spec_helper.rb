@@ -22,15 +22,15 @@ RSpec.configure do |config|
   end
 
   def login_as(user, band = nil)
-    # For testing, we'll use the test login route
+    # For testing, we'll use the test auth route
     # This bypasses the normal authentication flow
     if band
       # Ensure user is a member of the band
       user.bands << band unless user.bands.include?(band)
     end
     
-    # Use the test login route to set the session
-    post '/test_login', user_id: user.id, band_id: band&.id
+    # Use the test auth route to set the session
+    post '/test_auth', user_id: user.id, band_id: band&.id
   end
 
   config.before(:each) do

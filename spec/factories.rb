@@ -16,6 +16,15 @@ FactoryBot.define do
     association :owner, factory: :user
   end
 
+  factory :global_song do
+    sequence(:title) { |n| "Global Song #{n}" }
+    artist { Faker::Music.band }
+    key { ['C', 'G', 'D', 'A', 'E', 'B', 'F#', 'C#', 'F', 'Bb', 'Eb', 'Ab'].sample }
+    tempo { rand(60..180) }
+    genre { ['Rock', 'Pop', 'Jazz', 'Blues', 'Country'].sample }
+    notes { Faker::Lorem.paragraph }
+  end
+
   factory :song do
     sequence(:title) { |n| "Song #{n}" }
     artist { Faker::Music.band }

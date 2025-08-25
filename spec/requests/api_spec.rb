@@ -64,47 +64,6 @@ RSpec.describe 'API Endpoints', type: :request do
     end
   end
 
-  describe 'GET /setup' do
-    it 'sets up the database when no bands exist' do
-      # Ensure no bands exist
-      Band.destroy_all
-      
-      get '/setup'
-      
-      expect(last_response).to be_ok
-      expect(last_response.body).to include('Database setup complete')
-      expect(last_response.body).to include('My Band')
-      
-      # Check that a band was created
-      expect(Band.count).to eq(1)
-      expect(Band.first.name).to eq('My Band')
-    end
-
-    it 'does not create duplicate bands when bands already exist' do
-      existing_band = create(:band, name: 'Existing Band')
-      initial_count = Band.count
-      
-      get '/setup'
-      
-      expect(last_response).to be_ok
-      expect(last_response.body).to include('Database setup complete')
-      
-      # Check that no new band was created
-      expect(Band.count).to eq(initial_count)
-      expect(Band.where(name: 'My Band')).to be_empty
-    end
-
-    it 'handles database setup errors gracefully' do
-      # Mock a database error by temporarily breaking the connection
-      allow(ActiveRecord::Base.connection).to receive(:table_exists?).and_raise(StandardError.new('Database error'))
-      
-      get '/setup'
-      
-      expect(last_response).to be_ok
-      expect(last_response.body).to include('Database setup failed')
-      expect(last_response.body).to include('Please run')
-    end
-  end
 
   describe 'GET /' do
     it 'redirects to create first band when no bands exist' do

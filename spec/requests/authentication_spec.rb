@@ -121,12 +121,11 @@ RSpec.describe 'Authentication', type: :request do
   end
 
   describe 'Account deletion' do
-    let!(:user) { User.create!(username: 'testuser', password: 'password123', email: 'test@example.com') }
-    let!(:band) { Band.create!(name: 'Test Band') }
-    let!(:user_band) { UserBand.create!(user: user, band: band) }
+    let(:user) { create(:user, username: 'testuser', password: 'password123', email: 'test@example.com') }
+    let(:band) { create(:band, name: 'Test Band', owner: user) }
 
     before do
-      post '/login', username: 'testuser', password: 'password123'
+      login_as(user, band)
     end
 
     describe 'GET /account/delete' do
@@ -170,9 +169,8 @@ RSpec.describe 'Authentication', type: :request do
         }.to change(UserBand, :count).by(-1)
         
         expect(last_response.status).to eq(302)
-        # Check that the user was actually removed from the band
-        band.reload
-        expect(band.users).not_to include(user)
+        # Check that the band was deleted since user was the only member and owner
+        expect(Band.find_by(id: band.id)).to be_nil
       end
     end
   end

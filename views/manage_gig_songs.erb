@@ -1,4 +1,14 @@
-<h2>🎵 Manage Songs: <%= @gig.name %></h2>
+<div style="display: flex; align-items: center; gap: 10px; margin-bottom: 20px;">
+    <!-- Burger Menu Button -->
+    <button type="button" id="burger-menu" onclick="toggleAvailableSongs()" style="background: #667eea; color: white; border: none; border-radius: 6px; padding: 8px; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+        <div class="burger-icon">
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
+    </button>
+    <h2 style="margin: 0;">Manage Songs: <%= @gig.name %></h2>
+</div>
 
 <div class="card" style="margin-bottom: 20px;">
     <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
@@ -25,16 +35,21 @@
     </div>
 </div>
 
+
 <div id="main-container" style="display: grid; grid-template-columns: 300px 1fr; gap: 20px; min-height: 600px;">
     <!-- Available Songs Column -->
-    <div class="card">
-        <h3>Available Songs (<span id="available-count"><%= @available_songs.count %></span>)</h3>
-        
+    <div class="card" id="available-songs-column">
         <div style="margin-bottom: 15px;">
-            <input type="text" id="song-filter" placeholder="Search songs..." style="width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 4px;">
+            <h3 style="margin: 0;">Available Songs (<span id="available-count"><%= @available_songs.count %></span>)</h3>
         </div>
         
-        <div id="available-songs" style="max-height: 500px; overflow-y: auto;">
+        <div id="available-songs-content">
+            <div style="margin-bottom: 15px; position: relative;">
+                <input type="text" id="song-filter" placeholder="Search songs..." style="width: 100%; padding: 8px 30px 8px 8px; border: 1px solid #d1d5db; border-radius: 4px;">
+                <button type="button" id="clear-filter" onclick="clearSongFilter()" style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: none; border: none; color: #9ca3af; cursor: pointer; font-size: 16px; padding: 0; width: 20px; height: 20px; display: none; align-items: center; justify-content: center;">×</button>
+            </div>
+            
+            <div id="available-songs" style="max-height: 500px; overflow-y: auto;">
             <% @available_songs.each do |song| %>
                 <div class="song-item available-song" data-song-id="<%= song.id %>" draggable="true" style="margin-bottom: 8px; padding: 10px; background: #f7fafc; border: 1px solid #e2e8f0; border-radius: 6px; cursor: grab; transition: all 0.2s ease;">
                     <div style="font-weight: bold; color: #2d3748; font-size: 0.9rem;"><%= song.title %></div>
@@ -48,6 +63,7 @@
                     <% end %>
                 </div>
             <% end %>
+            </div>
         </div>
     </div>
     
@@ -66,6 +82,7 @@ let draggedElement = null;
 let currentSets = 2;
 let allBandSongs = [];
 let setsSongs = {};
+let availableSongsCollapsed = false;
 
 // Initialize the page
 document.addEventListener('DOMContentLoaded', function() {
@@ -374,6 +391,7 @@ function setupEventListeners() {
     // Song filter
     document.getElementById('song-filter').addEventListener('input', function() {
         applyAvailableSongsFilter(this.value);
+        toggleClearButton(this.value);
     });
     
     // Note: Drag events for available songs are set up in updateAvailableSongs() when songs are created
@@ -604,6 +622,58 @@ function saveSongChanges() {
         button.disabled = false;
     });
 }
+
+// Toggle Available Songs column collapse
+function toggleAvailableSongs() {
+    const column = document.getElementById('available-songs-column');
+    const mainContainer = document.getElementById('main-container');
+    const burgerMenu = document.getElementById('burger-menu');
+    
+    availableSongsCollapsed = !availableSongsCollapsed;
+    
+    if (availableSongsCollapsed) {
+        // Hide - slide left
+        column.classList.add('sliding-out');
+        burgerMenu.classList.add('active');
+        
+        setTimeout(() => {
+            mainContainer.style.gridTemplateColumns = '1fr';
+            column.style.display = 'none';
+        }, 300); // Wait for slide animation to complete
+        
+    } else {
+        // Show - slide right
+        column.style.display = 'block';
+        mainContainer.style.gridTemplateColumns = '300px 1fr';
+        burgerMenu.classList.remove('active');
+        
+        // Trigger reflow to ensure display change takes effect
+        column.offsetHeight;
+        
+        setTimeout(() => {
+            column.classList.remove('sliding-out');
+        }, 10); // Small delay to ensure the display change has taken effect
+    }
+}
+
+// Clear song filter
+function clearSongFilter() {
+    const filterInput = document.getElementById('song-filter');
+    filterInput.value = '';
+    applyAvailableSongsFilter('');
+    toggleClearButton('');
+    filterInput.focus();
+}
+
+// Toggle clear button visibility
+function toggleClearButton(filterValue) {
+    const clearButton = document.getElementById('clear-filter');
+    if (filterValue.trim() !== '') {
+        clearButton.style.display = 'flex';
+    } else {
+        clearButton.style.display = 'none';
+    }
+}
 </script>
 
 <style>
@@ -640,6 +710,73 @@ function saveSongChanges() {
     transition: all 0.2s ease;
 }
 
+/* Burger Menu Styling */
+.burger-icon {
+    width: 20px;
+    height: 15px;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.burger-icon span {
+    display: block;
+    height: 2px;
+    width: 100%;
+    background-color: white;
+    border-radius: 1px;
+    transition: all 0.3s ease;
+}
+
+#burger-menu:hover {
+    background: #5a67d8;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+/* Animated burger to X transformation */
+#burger-menu.active .burger-icon span:nth-child(1) {
+    transform: rotate(45deg) translate(5px, 5px);
+}
+
+#burger-menu.active .burger-icon span:nth-child(2) {
+    opacity: 0;
+}
+
+#burger-menu.active .burger-icon span:nth-child(3) {
+    transform: rotate(-45deg) translate(7px, -6px);
+}
+
+/* Clear filter button styling */
+#clear-filter {
+    transition: all 0.2s ease;
+    border-radius: 50%;
+}
+
+#clear-filter:hover {
+    background-color: #f3f4f6;
+    color: #374151;
+    transform: translateY(-50%) scale(1.1);
+}
+
+/* Contain animations within the white border */
+.main-content {
+    overflow: hidden !important;
+}
+
+/* Available Songs Column Animations */
+#available-songs-column {
+    transition: transform 0.3s ease, opacity 0.3s ease;
+    overflow: hidden;
+    transform: translateX(0);
+}
+
+#available-songs-column.sliding-out {
+    transform: translateX(-100%);
+    opacity: 0;
+}
+
 @media (max-width: 768px) {
     #main-container {
         grid-template-columns: 1fr;
@@ -647,6 +784,18 @@ function saveSongChanges() {
     
     #sets-container {
         grid-template-columns: 1fr !important;
+    }
+    
+    /* On mobile, the available songs column takes full width when shown */
+    #available-songs-column {
+        width: 100%;
+        position: relative;
+    }
+    
+    /* Ensure animations still work on mobile */
+    #available-songs-column.sliding-out {
+        transform: translateX(-100%);
+        opacity: 0;
     }
 }
 </style>

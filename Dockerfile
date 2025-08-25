@@ -48,5 +48,5 @@ USER bandmate
 HEALTHCHECK --interval=30s --timeout=3s --start-period=30s --retries=3 \
     CMD curl -k -f https://localhost:4567/ || exit 1
 
-# Start the application
-CMD ["ruby", "app.rb"] 
+# Start the application with database migration
+CMD ["sh", "-c", "bundle exec rake db:migrate && ruby app.rb"] 

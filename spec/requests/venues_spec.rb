@@ -11,8 +11,8 @@ RSpec.describe 'Venues API', type: :request do
   end
   
   def login_as(user, band)
-    # Use the test login route for authentication
-    post '/test_login', user_id: user.id, band_id: band.id
+    # Use the test auth route for authentication
+    post '/test_auth', user_id: user.id, band_id: band.id
   end
   describe 'GET /venues' do
     it 'redirects to login when not authenticated' do
@@ -23,7 +23,7 @@ RSpec.describe 'Venues API', type: :request do
 
     it 'redirects to gigs when no band selected' do
       # Login without selecting a band
-      post '/test_login', user_id: user.id
+      post '/test_auth', user_id: user.id
       get '/venues'
       expect(last_response).to be_redirect
       expect(last_response.location).to end_with('/gigs')

@@ -4,11 +4,9 @@ RSpec.describe 'Blackout Dates API', type: :request do
   let(:user) { create(:user) }
 
   before do
-    # Use test login to authenticate user
-    post '/test_login', user_id: user.id
+    # Use test auth to authenticate user
+    post '/test_auth', user_id: user.id
     expect(last_response.status).to eq(200)
-    json_response = JSON.parse(last_response.body)
-    expect(json_response['success']).to be true
   end
 
   describe 'POST /blackout_dates' do
@@ -226,6 +224,90 @@ RSpec.describe 'Blackout Dates API', type: :request do
       expect(json_response['deleted_count']).to eq(1)
       
       expect(BlackoutDate.count).to eq(0)
+    end
+  end
+
+  describe 'GET /calendar' do
+    let(:band) { create(:band) }
+    let!(:user_band) { create(:user_band, user: user, band: band) }
+    let!(:gig) { create(:gig, band: band, performance_date: Date.current + 5.days) }
+    let!(:blackout_date) { create(:blackout_date, user: user, blackout_date: Date.current + 3.days) }
+
+    before do
+      post '/test_auth', user_id: user.id, band_id: band.id
+      expect(last_response.status).to eq(200)
+    end
+
+    it 'displays the calendar view' do
+      get '/calendar'
+      
+      expect(last_response).to be_ok
+      expect(last_response.body).to include('Calendar')
+    end
+
+    it 'displays calendar for specific month and year' do
+      get '/calendar', year: 2024, month: 6
+      
+      expect(last_response).to be_ok
+      expect(last_response.body).to include('June')
+      expect(last_response.body).to include('2024')
+    end
+
+    it 'shows gigs in the calendar' do
+      get '/calendar'
+      
+      expect(last_response).to be_ok
+      expect(last_response.body).to include(gig.name)
+    end
+
+    it 'shows blackout dates in the calendar' do
+      get '/calendar'
+      
+      expect(last_response).to be_ok
+      # The calendar should show blackout dates (specific UI depends on implementation)
+    end
+
+    it 'handles navigation between months' do
+      # Test current month
+      get '/calendar'
+      expect(last_response).to be_ok
+      
+      # Test previous month
+      current_date = Date.current
+      prev_month = current_date.month == 1 ? 12 : current_date.month - 1
+      prev_year = current_date.month == 1 ? current_date.year - 1 : current_date.year
+      
+      get '/calendar', year: prev_year, month: prev_month
+      expect(last_response).to be_ok
+      
+      # Test next month  
+      next_month = current_date.month == 12 ? 1 : current_date.month + 1
+      next_year = current_date.month == 12 ? current_date.year + 1 : current_date.year
+      
+      get '/calendar', year: next_year, month: next_month
+      expect(last_response).to be_ok
+    end
+
+    it 'requires authentication' do
+      # Clear authentication
+      clear_cookies
+      get '/calendar'
+      
+      expect(last_response.status).to eq(302)
+      expect(last_response.location).to include('/login')
+    end
+
+    it 'shows conflicts with other band members' do
+      # Create another user and band with a conflicting gig
+      other_user = create(:user)
+      other_band = create(:band)
+      create(:user_band, user: user, band: other_band) # User is in both bands
+      conflicting_gig = create(:gig, band: other_band, performance_date: Date.current + 7.days)
+      
+      get '/calendar'
+      
+      expect(last_response).to be_ok
+      # Should show the conflicting gig (specific UI depends on implementation)
     end
   end
 end

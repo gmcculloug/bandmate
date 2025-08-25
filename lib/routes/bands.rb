@@ -1,0 +1,270 @@
+require 'sinatra/base'
+
+module Routes
+end
+
+class Routes::Bands < Sinatra::Base
+  configure do
+    set :views, File.join(File.dirname(__FILE__), '..', '..', 'views')
+  end
+  
+  helpers ApplicationHelpers
+  
+  # ============================================================================
+  # BAND ROUTES
+  # ============================================================================
+
+  get '/bands' do
+    require_login
+    @bands = user_bands.order(:name)
+    erb :bands
+  end
+
+  get '/bands/new' do
+    require_login
+    erb :new_band
+  end
+
+  post '/bands' do
+    require_login
+    
+    band = Band.new(params[:band])
+    band.owner = current_user
+    
+    if band.save
+      # Associate the current user with the new band
+      current_user.bands << band
+      
+      # Set this as the current band if it's the user's first band
+      if current_user.bands.count == 1
+        session[:band_id] = band.id
+        # Save this as the user's preferred band
+        current_user.update(last_selected_band_id: band.id)
+        redirect '/gigs'
+      else
+        redirect '/bands'
+      end
+    else
+      @errors = band.errors.full_messages
+      erb :new_band
+    end
+  end
+
+  get '/bands/:id' do
+    require_login
+    @band = user_bands.find(params[:id])
+    erb :show_band
+  end
+
+  get '/bands/:id/edit' do
+    require_login
+    @band = user_bands.find(params[:id])
+    
+    # Any band member can edit the band
+    unless @band.users.include?(current_user)
+      @errors = ["You must be a member of this band to edit it"]
+      return erb :show_band
+    end
+    
+    erb :edit_band
+  end
+
+  put '/bands/:id' do
+    require_login
+    @band = user_bands.find(params[:id])
+    
+    # Any band member can edit the band
+    unless @band.users.include?(current_user)
+      @errors = ["You must be a member of this band to edit it"]
+      return erb :show_band
+    end
+    
+    if @band.update(params[:band])
+      redirect "/bands/#{@band.id}"
+    else
+      @errors = @band.errors.full_messages
+      erb :edit_band
+    end
+  end
+
+  delete '/bands/:id' do
+    require_login
+    band = user_bands.find(params[:id])
+    
+    # Only the owner can delete the band
+    unless band.owned_by?(current_user)
+      @errors = ["Only the band owner can delete this band"]
+      return erb :show_band
+    end
+    
+    # If this was the current band, clear the session
+    if current_band&.id == band.id
+      session[:band_id] = nil
+    end
+    
+    # Remove all user associations with the band
+    band.users.clear
+    
+    # Delete the band
+    band.destroy
+    
+    redirect '/bands'
+  end
+
+  # ============================================================================
+  # BAND USER MANAGEMENT ROUTES
+  # ============================================================================
+
+  post '/bands/:id/add_user' do
+    require_login
+    @band = user_bands.find(params[:id])
+    
+    # Any band member can add users
+    unless @band.users.include?(current_user)
+      @user_error = "You must be a member of this band to add new members"
+      return erb :edit_band
+    end
+    
+    username = params[:username]&.strip
+    
+    if username.blank?
+      @user_error = "Username cannot be empty"
+      return erb :edit_band
+    end
+    
+    # Find user by username (case insensitive)
+    user = User.where('LOWER(username) = ?', username.downcase).first
+    
+    if user.nil?
+      @user_error = "User '#{username}' not found"
+      return erb :edit_band
+    end
+    
+    if @band.users.include?(user)
+      @user_error = "User '#{username}' is already a member of this band"
+      return erb :edit_band
+    end
+    
+    # Add user to band
+    @band.users << user
+    @user_success = "Successfully added '#{username}' to the band"
+    
+    erb :edit_band
+  end
+
+  post '/bands/:id/remove_user' do
+    require_login
+    @band = user_bands.find(params[:id])
+    user_to_remove = User.find(params[:user_id])
+    
+    # Any band member can remove other members, but users can always remove themselves
+    if user_to_remove != current_user && !@band.users.include?(current_user)
+      @user_error = "You must be a member of this band to remove other members"
+      return erb :edit_band
+    end
+    
+    # Prevent removing the band owner
+    if user_to_remove == @band.owner
+      @user_error = "Cannot remove the band owner. The owner must transfer ownership first."
+      return erb :edit_band
+    end
+    
+    # Prevent removing the last user from the band
+    if @band.users.count <= 1
+      @user_error = "Cannot remove the last member from the band"
+      return erb :edit_band
+    end
+    
+    if @band.users.include?(user_to_remove)
+      @band.users.delete(user_to_remove)
+      
+      if user_to_remove == current_user
+        # User is removing themselves - redirect to bands list with message
+        redirect '/bands?left_band=true'
+      else
+        # Member removing another user - stay on edit page with success message
+        @user_success = "Successfully removed '#{user_to_remove.username}' from the band"
+        erb :edit_band
+      end
+    else
+      @user_error = "User is not a member of this band"
+      erb :edit_band
+    end
+  end
+
+  post '/bands/:id/transfer_ownership' do
+    require_login
+    @band = user_bands.find(params[:id])
+    new_owner = User.find(params[:new_owner_id])
+    
+    # Only the current owner can transfer ownership
+    unless @band.owned_by?(current_user)
+      @user_error = "Only the band owner can transfer ownership"
+      return erb :edit_band
+    end
+    
+    # New owner must be a member of the band
+    unless @band.users.include?(new_owner)
+      @user_error = "The new owner must be a member of this band"
+      return erb :edit_band
+    end
+    
+    # Cannot transfer ownership to yourself
+    if new_owner == current_user
+      @user_error = "You are already the owner of this band"
+      return erb :edit_band
+    end
+    
+    # Transfer ownership
+    @band.update(owner: new_owner)
+    @user_success = "Successfully transferred ownership to '#{new_owner.username}'"
+    
+    erb :edit_band
+  end
+
+  # ============================================================================
+  # COPY SONGS TO BAND ROUTES
+  # ============================================================================
+
+  get '/bands/:band_id/copy_songs' do
+    require_login
+    @band = user_bands.find(params[:band_id])
+    @search = params[:search]
+    @global_songs = GlobalSong.order('LOWER(title)')
+    
+    # Apply search filter
+    if @search.present?
+      @global_songs = @global_songs.search(@search)
+    end
+    
+    # Exclude songs already copied to this band based on global_song_id
+    existing_global_song_ids = @band.songs.where.not(global_song_id: nil).pluck(:global_song_id)
+    @global_songs = @global_songs.where.not(id: existing_global_song_ids)
+    
+    erb :copy_songs_to_band
+  end
+
+  post '/bands/:band_id/copy_songs' do
+    require_login
+    @band = user_bands.find(params[:band_id])
+    global_song_ids = params[:global_song_ids] || []
+    
+    copied_count = 0
+    global_song_ids.each do |global_song_id|
+      global_song = GlobalSong.find(global_song_id)
+      song = Song.create_from_global_song(global_song, [@band.id])
+      
+      if song.save
+        copied_count += 1
+      end
+    end
+    
+    # If copying from a specific global song page, redirect back to that song
+    if params[:from_global_song]
+      redirect "/global_songs/#{params[:from_global_song]}?copied=#{copied_count}"
+    else
+      # Otherwise redirect to the band page (bulk copy)
+      redirect "/bands/#{@band.id}?copied=#{copied_count}"
+    end
+  end
+end

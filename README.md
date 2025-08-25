@@ -26,8 +26,6 @@ This will:
 - Run all pending migrations
 - Seed the database with initial data (default band)
 
-#### Alternative Setup (Legacy)
-You can still use the web interface at `http://localhost:4567/setup` for first-time setup.
 
 ### Environment Variables
 The application requires certain environment variables to be set for security and functionality:

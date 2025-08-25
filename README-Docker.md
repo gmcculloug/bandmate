@@ -46,7 +46,6 @@ docker-compose logs -f bandmate
 ### 3. Access the Application
 
 - **HTTPS URL**: `https://localhost:4567`
-- **Setup Database**: `https://localhost:4567/setup` (first time only)
 
 ⚠️ **Browser Warning**: You'll see a security warning due to the self-signed certificate. Click "Advanced" then "Proceed to localhost".
 
