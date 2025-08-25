@@ -52,15 +52,12 @@
             <div id="available-songs" style="max-height: 500px; overflow-y: auto;">
             <% @available_songs.each do |song| %>
                 <div class="song-item available-song" data-song-id="<%= song.id %>" draggable="true" style="margin-bottom: 8px; padding: 10px; background: #f7fafc; border: 1px solid #e2e8f0; border-radius: 6px; cursor: grab; transition: all 0.2s ease;">
-                    <div style="font-weight: bold; color: #2d3748; font-size: 0.9rem;"><%= song.title %></div>
-                    <% if song.artist.present? %>
-                        <div style="color: #718096; font-size: 0.8rem;"><%= song.artist %></div>
-                    <% end %>
-                    <% if song.key.present? %>
-                        <div style="margin-top: 4px;">
-                            <span style="background: #667eea; color: white; padding: 2px 6px; border-radius: 10px; font-size: 0.7rem;"><%= song.key %></span>
-                        </div>
-                    <% end %>
+                    <div style="font-weight: bold; color: #2d3748; font-size: 0.9rem;">
+                        <%= song.title %>
+                        <% if song.key.present? %>
+                            <span style="background: #667eea; color: white; padding: 2px 6px; border-radius: 10px; font-size: 0.7rem; margin-left: 8px;"><%= song.key %></span>
+                        <% end %>
+                    </div>
                 </div>
             <% end %>
             </div>
@@ -171,13 +168,10 @@ function addSongToSet(setContainer, song) {
     songDiv.draggable = true;
     songDiv.style.cssText = 'margin-bottom: 8px; padding: 10px; background: #edf2f7; border: 1px solid #cbd5e0; border-radius: 6px; cursor: grab; transition: all 0.2s ease;';
     
-    let artistHtml = song.artist ? `<div style="color: #718096; font-size: 0.8rem;">${song.artist}</div>` : '';
-    let keyHtml = song.key ? `<div style="margin-top: 4px;"><span style="background: #667eea; color: white; padding: 2px 6px; border-radius: 10px; font-size: 0.7rem;">${song.key}</span></div>` : '';
+    let keyHtml = song.key ? `<span style="background: #667eea; color: white; padding: 2px 6px; border-radius: 10px; font-size: 0.7rem; margin-left: 8px;">${song.key}</span>` : '';
     
     songDiv.innerHTML = `
-        <div style="font-weight: bold; color: #2d3748; font-size: 0.9rem;">${song.title}</div>
-        ${artistHtml}
-        ${keyHtml}
+        <div style="font-weight: bold; color: #2d3748; font-size: 0.9rem;">${song.title}${keyHtml}</div>
         <button type="button" onclick="removeSongFromSet(this)" style="position: absolute; top: 5px; right: 5px; background: #e53e3e; color: white; border: none; border-radius: 50%; width: 20px; height: 20px; font-size: 12px; cursor: pointer;">×</button>
     `;
     songDiv.style.position = 'relative';
@@ -233,13 +227,10 @@ function updateAvailableSongs() {
         songDiv.draggable = true;
         songDiv.style.cssText = 'margin-bottom: 8px; padding: 10px; background: #f7fafc; border: 1px solid #e2e8f0; border-radius: 6px; cursor: grab; transition: all 0.2s ease;';
         
-        let artistHtml = song.artist ? `<div style="color: #718096; font-size: 0.8rem;">${song.artist}</div>` : '';
-        let keyHtml = song.key ? `<div style="margin-top: 4px;"><span style="background: #667eea; color: white; padding: 2px 6px; border-radius: 10px; font-size: 0.7rem;">${song.key}</span></div>` : '';
+        let keyHtml = song.key ? `<span style="background: #667eea; color: white; padding: 2px 6px; border-radius: 10px; font-size: 0.7rem; margin-left: 8px;">${song.key}</span>` : '';
         
         songDiv.innerHTML = `
-            <div style="font-weight: bold; color: #2d3748; font-size: 0.9rem;">${song.title}</div>
-            ${artistHtml}
-            ${keyHtml}
+            <div style="font-weight: bold; color: #2d3748; font-size: 0.9rem;">${song.title}${keyHtml}</div>
         `;
         
         availableContainer.appendChild(songDiv);
@@ -264,10 +255,8 @@ function applyAvailableSongsFilter(filter) {
     let visibleCount = 0;
     songItems.forEach(item => {
         const title = item.querySelector('div').textContent.toLowerCase();
-        const artistDiv = item.querySelector('div:nth-child(2)');
-        const artist = artistDiv ? artistDiv.textContent.toLowerCase() : '';
         
-        if (title.includes(filterLower) || artist.includes(filterLower)) {
+        if (title.includes(filterLower)) {
             item.style.display = 'block';
             visibleCount++;
         } else {
