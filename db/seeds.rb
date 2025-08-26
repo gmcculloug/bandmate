@@ -216,24 +216,36 @@ venue_types = [
   { name: "The Underground", location: "789 Basement Ave, Arts District", contact_name: "Tony Martinez", phone_number: "(555) 345-6789", website: "http://underground-venue.com" },
   { name: "Sunset Rooftop", location: "321 High St, Uptown", contact_name: "Lisa Chen", phone_number: "(555) 456-7890", website: "http://sunset-rooftop.com" },
   { name: "The Garden Stage", location: "654 Park Blvd, Midtown", contact_name: "David Brown", phone_number: "(555) 567-8901", website: "http://garden-stage.com" },
-  { name: "Electric Lounge", location: "987 Neon Ave, Entertainment District", contact_name: "Jennifer Davis", phone_number: "(555) 678-9012", website: "http://electric-lounge.com" }
+  { name: "Electric Lounge", location: "987 Neon Ave, Entertainment District", contact_name: "Jennifer Davis", phone_number: "(555) 678-9012", website: "http://electric-lounge.com" },
+  { name: "Jazz Corner", location: "111 Melody Lane, Cultural District", contact_name: "Frank Miller", phone_number: "(555) 789-0123", website: "http://jazz-corner.com" },
+  { name: "Rock & Roll Hall", location: "222 Rock Ave, Music Row", contact_name: "Joan Wilson", phone_number: "(555) 890-1234", website: "http://rockrollhall.com" },
+  { name: "Acoustic Cafe", location: "333 Coffee St, Bohemian Quarter", contact_name: "Paul Garcia", phone_number: "(555) 901-2345", website: "http://acoustic-cafe.com" },
+  { name: "Stadium Arena", location: "444 Sports Blvd, Arena District", contact_name: "Maria Rodriguez", phone_number: "(555) 012-3456", website: "http://stadium-arena.com" }
 ]
 
 venues = []
-bands.each_with_index do |band, index|
-  venue_data = venue_types[index % venue_types.length]
-  venue = Venue.find_or_create_by(
-    name: venue_data[:name],
-    band: band
-  ) do |v|
-    v.location = venue_data[:location]
-    v.contact_name = venue_data[:contact_name]
-    v.phone_number = venue_data[:phone_number]
-    v.website = venue_data[:website]
-    v.notes = "Venue for #{band.name}"
+bands.each do |band|
+  # Each band gets 2-3 venues
+  num_venues = rand(2..3)
+  band_venue_types = venue_types.shuffle.first(num_venues)
+  
+  band_venue_types.each_with_index do |venue_data, index|
+    # Make venue name unique per band
+    venue_name = "#{venue_data[:name]} (#{band.name})"
+    
+    venue = Venue.find_or_create_by(
+      name: venue_name,
+      band: band
+    ) do |v|
+      v.location = venue_data[:location]
+      v.contact_name = venue_data[:contact_name]
+      v.phone_number = venue_data[:phone_number]
+      v.website = venue_data[:website]
+      v.notes = "Venue for #{band.name}"
+    end
+    venues << venue
+    puts "Created/found venue: #{venue.name} for band #{band.name}"
   end
-  venues << venue
-  puts "Created/found venue: #{venue.name} for band #{band.name}"
 end
 
 # Create songs for bands from global songs
@@ -270,12 +282,11 @@ end
 # Create gigs for each band
 bands.each do |band|
   band_venues = venues.select { |v| v.band == band }
-  all_venues = venues # Can also play at other venues
   
   # Create 3-4 past gigs
   rand(3..4).times do |i|
     past_date = Date.current - rand(30..365).days
-    venue = all_venues.sample
+    venue = band_venues.sample
     
     gig = Gig.find_or_create_by(
       name: "#{venue.name}",
@@ -304,7 +315,7 @@ bands.each do |band|
   # Create 6-8 future gigs  
   rand(6..8).times do |i|
     future_date = Date.current + rand(7..365).days
-    venue = all_venues.sample
+    venue = band_venues.sample
     
     gig = Gig.find_or_create_by(
       name: "#{venue.name}",

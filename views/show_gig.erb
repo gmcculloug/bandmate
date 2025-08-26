@@ -62,7 +62,21 @@
     <% end %>
 
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
-        <h3>Songs (<%= @gig.songs.count %>)</h3>
+        <h3>Songs (<%= @gig.songs.count %>) • 
+            <span style="color: #4a5568; font-weight: normal;">Estimated Duration: 
+                <% 
+                  total_minutes = @gig.songs.sum do |s| 
+                    if s.duration.present? && s.duration.match?(/^\d+:\d+$/)
+                      parts = s.duration.split(':').map(&:to_i)
+                      parts[0] + parts[1]/60.0
+                    else
+                      0
+                    end
+                  end
+                %>
+                <%= total_minutes > 0 ? "#{total_minutes.to_i}:#{((total_minutes % 1) * 60).round.to_s.rjust(2, '0')}" : 'N/A' %>
+            </span>
+        </h3>
         <a href="/gigs/<%= @gig.id %>/manage_songs" class="btn">Manage Songs</a>
     </div>
 
@@ -110,29 +124,6 @@
           <% end %>
         <% end %>
 
-        <div style="background: #f7fafc; padding: 20px; border-radius: 8px;">
-            <h4>Gig Summary</h4>
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-top: 15px;">
-                <div class="detail-item">
-                    <span class="detail-label">Total Songs:</span> <%= @gig.songs.count %>
-                </div>
-                <div class="detail-item">
-                    <span class="detail-label">Estimated Duration:</span> 
-                    <% 
-                      total_minutes = @gig.songs.sum do |s| 
-                        if s.duration.present? && s.duration.match?(/^\d+:\d+$/)
-                          parts = s.duration.split(':').map(&:to_i)
-                          parts[0] + parts[1]/60.0
-                        else
-                          0
-                        end
-                      end
-                    %>
-                    <%= total_minutes > 0 ? "#{total_minutes.to_i}:#{((total_minutes % 1) * 60).round.to_s.rjust(2, '0')}" : 'N/A' %>
-                </div>
-
-            </div>
-        </div>
     <% else %>
         <div style="text-align: center; padding: 40px;">
             <h3>No songs in this gig yet</h3>
