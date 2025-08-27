@@ -1,4 +1,21 @@
 services:
+  postgres:
+    image: postgres:15
+    environment:
+      - POSTGRES_DB=bandmate_production
+      - POSTGRES_USER=bandmate
+      - POSTGRES_PASSWORD=bandmate_password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U bandmate -d bandmate_production"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
   bandmate:
     build: .
     ports:
@@ -12,13 +29,15 @@ services:
       - RACK_ENV=production
       - PORT=4567
       - BANDMATE_ACCT_CREATION_SECRET=${BANDMATE_ACCT_CREATION_SECRET:-your_secret_here}
-      # External PostgreSQL connection settings (for macOS host)
-      # Use host.docker.internal for Docker, host.containers.internal for Podman
-      - DATABASE_HOST=${DATABASE_HOST:-host.docker.internal}
-      - DATABASE_PORT=${DATABASE_PORT:-5432}
-      - DATABASE_NAME=${DATABASE_NAME:-bandmate_production}
-      - DATABASE_USERNAME=${DATABASE_USERNAME:-}
-      - DATABASE_PASSWORD=${DATABASE_PASSWORD:-}
+      # PostgreSQL connection settings for Docker service
+      - DATABASE_HOST=postgres
+      - DATABASE_PORT=5432
+      - DATABASE_NAME=bandmate_production
+      - DATABASE_USERNAME=bandmate
+      - DATABASE_PASSWORD=bandmate_password
+    depends_on:
+      postgres:
+        condition: service_healthy
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-k", "-f", "https://localhost:4567/"]
@@ -28,10 +47,11 @@ services:
       start_period: 40s
     command: >
       sh -c "
-        echo 'Connecting to external PostgreSQL at ${DATABASE_HOST}:${DATABASE_PORT}...' &&
+        echo 'Connecting to PostgreSQL at ${DATABASE_HOST}:${DATABASE_PORT}...' &&
         (bundle exec rake db:migrate || echo 'Migration failed or already applied, continuing...') &&
         echo 'Starting Bandmate application with HTTPS...' &&
         ruby app.rb
       "
 
-# No internal volumes needed since using external PostgreSQL 
+volumes:
+  postgres_data: 

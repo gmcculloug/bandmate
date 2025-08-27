@@ -875,6 +875,7 @@
                         <div class="band-section">
                                                     <% if user_bands.count > 1 %>
                             <form method="post" action="/select_band" style="display: inline;">
+                                <input type="hidden" name="current_path" value="<%= request.path %>">
                                 <select name="band_id" onchange="this.form.submit()" class="band-selector">
                                     <% user_bands.each do |band| %>
                                         <option value="<%= band.id %>" <%= 'selected' if current_band&.id == band.id %>><%= band.name %></option>

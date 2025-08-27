@@ -107,6 +107,85 @@ RSpec.describe 'Root Routes', type: :request do
       
       expect(last_response.status).to eq(404) # Sinatra converts RecordNotFound to 404
     end
+
+    context 'section preservation' do
+      it 'preserves songs section' do
+        post '/select_band', band_id: band.id, current_path: '/songs'
+        
+        expect(last_response.status).to eq(302)
+        expect(last_response.location).to end_with('/songs')
+      end
+
+      it 'preserves songs section from detailed view' do
+        post '/select_band', band_id: band.id, current_path: '/songs/123'
+        
+        expect(last_response.status).to eq(302)
+        expect(last_response.location).to end_with('/songs')
+      end
+
+      it 'preserves venues section' do
+        post '/select_band', band_id: band.id, current_path: '/venues'
+        
+        expect(last_response.status).to eq(302)
+        expect(last_response.location).to end_with('/venues')
+      end
+
+      it 'preserves venues section from detailed view' do
+        post '/select_band', band_id: band.id, current_path: '/venues/456'
+        
+        expect(last_response.status).to eq(302)
+        expect(last_response.location).to end_with('/venues')
+      end
+
+      it 'preserves gigs section' do
+        post '/select_band', band_id: band.id, current_path: '/gigs'
+        
+        expect(last_response.status).to eq(302)
+        expect(last_response.location).to end_with('/gigs')
+      end
+
+      it 'preserves gigs section from detailed view' do
+        post '/select_band', band_id: band.id, current_path: '/gigs/789'
+        
+        expect(last_response.status).to eq(302)
+        expect(last_response.location).to end_with('/gigs')
+      end
+
+      it 'preserves calendar section' do
+        post '/select_band', band_id: band.id, current_path: '/calendar'
+        
+        expect(last_response.status).to eq(302)
+        expect(last_response.location).to end_with('/calendar')
+      end
+
+      it 'preserves profile section' do
+        post '/select_band', band_id: band.id, current_path: '/profile'
+        
+        expect(last_response.status).to eq(302)
+        expect(last_response.location).to end_with('/profile')
+      end
+
+      it 'redirects global songs to regular songs section' do
+        post '/select_band', band_id: band.id, current_path: '/global_songs'
+        
+        expect(last_response.status).to eq(302)
+        expect(last_response.location).to end_with('/songs')
+      end
+
+      it 'redirects global songs detailed view to regular songs section' do
+        post '/select_band', band_id: band.id, current_path: '/global_songs/123'
+        
+        expect(last_response.status).to eq(302)
+        expect(last_response.location).to end_with('/songs')
+      end
+
+      it 'defaults to gigs for unknown paths' do
+        post '/select_band', band_id: band.id, current_path: '/unknown/path'
+        
+        expect(last_response.status).to eq(302)
+        expect(last_response.location).to end_with('/gigs')
+      end
+    end
   end
 
   describe 'POST /test_auth' do

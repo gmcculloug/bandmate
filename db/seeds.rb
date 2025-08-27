@@ -231,7 +231,7 @@ bands.each do |band|
   
   band_venue_types.each_with_index do |venue_data, index|
     # Make venue name unique per band
-    venue_name = "#{venue_data[:name]} (#{band.name})"
+    venue_name = venue_data[:name]
     
     venue = Venue.find_or_create_by(
       name: venue_name,

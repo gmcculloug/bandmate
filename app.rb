@@ -137,8 +137,28 @@ post '/select_band' do
     session[:band_id] = band.id
     # Save this as the user's preferred band
     current_user.update(last_selected_band_id: band.id)
-    # Redirect to the referrer or gigs page
-    redirect_to = params[:redirect_to] || '/gigs'
+    
+    # Determine which section to redirect to based on current path
+    current_path = params[:current_path] || params[:redirect_to] || '/gigs'
+    
+    # Map current path to appropriate list view
+    redirect_to = case current_path
+    when /^\/songs/
+      '/songs'
+    when /^\/venues/
+      '/venues'
+    when /^\/gigs/
+      '/gigs'
+    when /^\/calendar/
+      '/calendar'
+    when /^\/profile/
+      '/profile'
+    when /^\/global_songs/
+      '/songs'  # Redirect to regular songs list instead
+    else
+      '/gigs'  # Default fallback
+    end
+    
     redirect redirect_to
   else
     status 404
