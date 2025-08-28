@@ -58,7 +58,7 @@ class Routes::Gigs < Sinatra::Base
     
     gig = Gig.new(gig_params)
     if gig.save
-      redirect '/gigs'
+      redirect "/gigs/#{gig.id}"
     else
       @errors = gig.errors.full_messages
       @venues = filter_by_current_band(Venue).order(:name)

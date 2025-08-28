@@ -2,11 +2,21 @@ puts "Seeding database with sample data..."
 
 # Create users with password "test123"
 users_data = [
-  { username: "alice", email: "alice@bandmate.com" },
-  { username: "bob", email: "bob@bandmate.com" },
-  { username: "charlie", email: "charlie@bandmate.com" },
-  { username: "diana", email: "diana@bandmate.com" },
-  { username: "eve", email: "eve@bandmate.com" }
+  { username: "greg", email: "greg@bandmate.com" },
+  { username: "vik", email: "vik@bandmate.com" },
+  { username: "gershom", email: "gershom@bandmate.com" },
+  { username: "ingrid", email: "ingrid@bandmate.com" },
+  { username: "dave", email: "dave@bandmate.com" },
+  { username: "armaan", email: "armaan@bandmate.com" },
+  { username: "jim", email: "jim@bandmate.com" },
+  { username: "bill", email: "bill@bandmate.com" },
+  { username: "davep", email: "davep@bandmate.com" },
+  { username: "deb", email: "deb@bandmate.com" },
+  { username: "courtney", email: "courtney@bandmate.com" },
+  { username: "steve", email: "steve@bandmate.com" },
+  { username: "faith", email: "faith@bandmate.com" },
+  { username: "gregb", email: "gregb@bandmate.com" },
+  { username: "jen", email: "jen@bandmate.com" }
 ]
 
 users = []
@@ -20,42 +30,77 @@ users_data.each do |user_data|
   puts "Created/found user: #{user.username}"
 end
 
-# Create bands for each user
-band_names = [
-  "The Midnight Rockers", "Electric Dreams", "Sunset Boulevard",
-  "Vinyl Revival", "Neon Nights", "The Sound Factory",
-  "Vintage Vibes", "Urban Legends", "The Groove Machine"
-]
-
+# Create the three specific bands
 bands = []
-users.each_with_index do |user, index|
-  band_name = band_names[index] || "#{user.username.capitalize}'s Band"
-  band = Band.find_or_create_by(name: band_name) do |b|
-    b.owner = user
-    b.notes = "Band owned by #{user.username}"
+
+# Get users for easy reference
+greg = users.find { |u| u.username == "greg" }
+steve = users.find { |u| u.username == "steve" }
+
+# Create Side Piece band with Greg as owner
+side_piece_band = Band.find_or_create_by(name: "Side Piece") do |b|
+  b.owner = greg
+  b.notes = "Side Piece band"
+end
+bands << side_piece_band
+
+# Create Sound Bite band with Greg as owner
+sound_bite_band = Band.find_or_create_by(name: "Sound Bite") do |b|
+  b.owner = greg
+  b.notes = "Sound Bite band with extensive song list"
+end
+bands << sound_bite_band
+
+# Create On Tap band with Steve as owner
+on_tap_band = Band.find_or_create_by(name: "On Tap") do |b|
+  b.owner = steve
+  b.notes = "On Tap band"
+end
+bands << on_tap_band
+
+puts "Created/found band: #{side_piece_band.name} (owner: #{greg.username})"
+puts "Created/found band: #{sound_bite_band.name} (owner: #{greg.username})"
+puts "Created/found band: #{on_tap_band.name} (owner: #{steve.username})"
+
+# Assign users to Side Piece band (Greg, Vik, Gershom, Ingrid, Dave, Armaan)
+side_piece_users = ["greg", "vik", "gershom", "ingrid", "dave", "armaan"]
+side_piece_users.each do |username|
+  user = users.find { |u| u.username == username }
+  if user && !side_piece_band.users.include?(user)
+    side_piece_band.users << user
   end
-  
-  # Add user to their own band
-  unless band.users.include?(user)
-    band.users << user
-  end
-  
   # Set as user's last selected band
-  user.update(last_selected_band: band)
-  
-  bands << band
-  puts "Created/found band: #{band.name} (owner: #{user.username})"
+  user.update(last_selected_band: side_piece_band) if user
 end
+puts "Added members to Side Piece: #{side_piece_users.join(', ')}"
 
-# Add bob to alice's band (The Midnight Rockers)
-alice = users.find { |u| u.username == "alice" }
-bob = users.find { |u| u.username == "bob" }
-alice_band = bands.find { |b| b.owner == alice }
-
-if alice_band && bob && !alice_band.users.include?(bob)
-  alice_band.users << bob
-  puts "Added #{bob.username} to band #{alice_band.name}"
+# Assign users to Sound Bite band (Greg, Jim, Bill, DaveP, Deb, Courtney)
+sound_bite_users = ["greg", "jim", "bill", "davep", "deb", "courtney"]
+sound_bite_users.each do |username|
+  user = users.find { |u| u.username == username }
+  if user && !sound_bite_band.users.include?(user)
+    sound_bite_band.users << user
+  end
+  # Set as user's last selected band if they're not already in Side Piece
+  unless side_piece_users.include?(username)
+    user.update(last_selected_band: sound_bite_band) if user
+  end
 end
+puts "Added members to Sound Bite: #{sound_bite_users.join(', ')}"
+
+# Assign users to On Tap band (Steve, Faith, Greg, GregB, Vik, Jen)
+on_tap_users = ["steve", "faith", "greg", "gregb", "vik", "jen"]
+on_tap_users.each do |username|
+  user = users.find { |u| u.username == username }
+  if user && !on_tap_band.users.include?(user)
+    on_tap_band.users << user
+  end
+  # Set as user's last selected band if they're not already in other bands
+  unless side_piece_users.include?(username) || sound_bite_users.include?(username)
+    user.update(last_selected_band: on_tap_band) if user
+  end
+end
+puts "Added members to On Tap: #{on_tap_users.join(', ')}"
 
 # Create 100+ global songs for variety
 global_songs_data = [
@@ -188,7 +233,88 @@ global_songs_data = [
   { title: "La Bamba", artist: "Ritchie Valens", key: "C", original_key: "C", tempo: 144, genre: "Rock & Roll", year: 1958, album: "Ritchie Valens", duration: "2:06" },
   { title: "Twist and Shout", artist: "The Beatles", key: "D", original_key: "D", tempo: 124, genre: "Rock & Roll", year: 1963, album: "Please Please Me", duration: "2:33" },
   { title: "Good Lovin'", artist: "The Young Rascals", key: "A", original_key: "A", tempo: 132, genre: "Rock", year: 1966, album: "The Young Rascals", duration: "2:53" },
-  { title: "Hang on Sloopy", artist: "The McCoys", key: "C", original_key: "C", tempo: 150, genre: "Rock", year: 1965, album: "Hang On Sloopy", duration: "3:12" }
+  { title: "Hang on Sloopy", artist: "The McCoys", key: "C", original_key: "C", tempo: 150, genre: "Rock", year: 1965, album: "Hang On Sloopy", duration: "3:12" },
+  
+  # Side Piece specific songs
+  { title: "My Church", artist: "Maren Morris", key: "E", original_key: "E", tempo: 120, genre: "Country", year: 2016, album: "Hero", duration: "3:30" },
+  { title: "Glory Days", artist: "Bruce Springsteen", key: "E", original_key: "E", tempo: 140, genre: "Rock", year: 1984, album: "Born in the U.S.A.", duration: "4:15" },
+  { title: "Faith", artist: "George Michael", key: "C", original_key: "C", tempo: 96, genre: "Pop", year: 1987, album: "Faith", duration: "3:16" },
+  { title: "Lay Down Sally", artist: "Eric Clapton", key: "A", original_key: "A", tempo: 105, genre: "Rock", year: 1977, album: "Slowhand", duration: "3:54" },
+  { title: "Tipsy", artist: "J-Kwon", key: "Bb", original_key: "Bb", tempo: 95, genre: "Hip Hop", year: 2004, album: "Hood Hop", duration: "4:17" },
+  { title: "Let Your Love Flow", artist: "Bellamy Brothers", key: "D", original_key: "D", tempo: 120, genre: "Country Rock", year: 1976, album: "Bellamy Brothers", duration: "3:18" },
+  { title: "Jolene", artist: "Dolly Parton", key: "Am", original_key: "Am", tempo: 120, genre: "Country", year: 1973, album: "Jolene", duration: "2:42" },
+  { title: "Have You Ever Seen the Rain", artist: "Creedence Clearwater Revival", key: "C", original_key: "C", tempo: 117, genre: "Rock", year: 1970, album: "Pendulum", duration: "2:40" },
+  { title: "Flowers", artist: "Miley Cyrus", key: "G", original_key: "G", tempo: 95, genre: "Pop", year: 2023, album: "Endless Summer Vacation", duration: "3:20" },
+  { title: "Pink Houses", artist: "John Mellencamp", key: "G", original_key: "G", tempo: 122, genre: "Rock", year: 1983, album: "Uh-Huh", duration: "4:44" },
+  { title: "Mary Jane's Last Dance", artist: "Tom Petty and the Heartbreakers", key: "Am", original_key: "Am", tempo: 100, genre: "Rock", year: 1993, album: "Greatest Hits", duration: "4:33" },
+  { title: "Crazy Little Thing", artist: "Queen", key: "D", original_key: "D", tempo: 156, genre: "Rock", year: 1979, album: "The Game", duration: "2:42" },
+  { title: "Don't Start Now", artist: "Dua Lipa", key: "Am", original_key: "Am", tempo: 124, genre: "Pop", year: 2019, album: "Future Nostalgia", duration: "3:03" },
+  { title: "Karma Chameleon", artist: "Culture Club", key: "Bb", original_key: "Bb", tempo: 150, genre: "Pop", year: 1983, album: "Colour by Numbers", duration: "4:07" },
+  { title: "Santeria", artist: "Sublime", key: "E", original_key: "E", tempo: 80, genre: "Alternative Rock", year: 1996, album: "Sublime", duration: "3:03" },
+  { title: "Jenny", artist: "Tommy Tutone", key: "F#", original_key: "F#", tempo: 140, genre: "Rock", year: 1981, album: "Tommy Tutone 2", duration: "3:58" },
+  { title: "American Girl", artist: "Tom Petty and the Heartbreakers", key: "D", original_key: "D", tempo: 122, genre: "Rock", year: 1976, album: "Tom Petty and the Heartbreakers", duration: "3:31" },
+  { title: "Country Roads", artist: "John Denver", key: "A", original_key: "A", tempo: 80, genre: "Country Folk", year: 1971, album: "Poems, Prayers & Promises", duration: "3:13" },
+  { title: "When Will I Be Loved", artist: "The Everly Brothers", key: "A", original_key: "A", tempo: 140, genre: "Country Rock", year: 1960, album: "A Date with the Everly Brothers", duration: "2:03" },
+  { title: "Your Mama Don't Dance", artist: "Loggins and Messina", key: "E", original_key: "E", tempo: 120, genre: "Rock", year: 1972, album: "Loggins and Messina", duration: "2:56" },
+  { title: "Hurts So Good", artist: "John Mellencamp", key: "A", original_key: "A", tempo: 120, genre: "Rock", year: 1982, album: "American Fool", duration: "3:28" },
+  { title: "You May Be Right", artist: "Billy Joel", key: "E", original_key: "E", tempo: 150, genre: "Rock", year: 1980, album: "Glass Houses", duration: "4:14" },
+  { title: "You Belong With Me", artist: "Taylor Swift", key: "G", original_key: "G", tempo: 130, genre: "Country Pop", year: 2008, album: "Fearless", duration: "3:51" },
+  { title: "Tennessee Whiskey", artist: "Chris Stapleton", key: "A", original_key: "A", tempo: 67, genre: "Country", year: 2015, album: "Traveller", duration: "4:53" },
+  { title: "Rolling in the Deep", artist: "Adele", key: "Cm", original_key: "Cm", tempo: 105, genre: "Pop", year: 2010, album: "21", duration: "3:48" },
+  { title: "Take It On the Run", artist: "REO Speedwagon", key: "D", original_key: "D", tempo: 118, genre: "Rock", year: 1980, album: "Hi Infidelity", duration: "3:59" },
+  { title: "The Weight", artist: "The Band", key: "A", original_key: "A", tempo: 90, genre: "Americana", year: 1968, album: "Music from Big Pink", duration: "4:35" },
+  { title: "Hard to Handle", artist: "The Black Crowes", key: "A", original_key: "A", tempo: 100, genre: "Rock", year: 1990, album: "Shake Your Money Maker", duration: "3:07" },
+  { title: "Go Your Own Way", artist: "Fleetwood Mac", key: "F", original_key: "F", tempo: 130, genre: "Rock", year: 1976, album: "Rumours", duration: "3:38" },
+  { title: "Suspicious Minds", artist: "Elvis Presley", key: "G", original_key: "G", tempo: 120, genre: "Rock", year: 1969, album: "From Elvis in Memphis", duration: "4:22" },
+  { title: "Who Says You Can't Go Home", artist: "Bon Jovi", key: "D", original_key: "D", tempo: 76, genre: "Country Rock", year: 2005, album: "Have a Nice Day", duration: "4:40" },
+  { title: "Every Rose Has Its Thorn", artist: "Poison", key: "G", original_key: "G", tempo: 65, genre: "Rock Ballad", year: 1988, album: "Open Up and Say... Ahh!", duration: "4:20" },
+  { title: "Good Riddance", artist: "Green Day", key: "G", original_key: "G", tempo: 94, genre: "Alternative Rock", year: 1997, album: "Nimrod", duration: "2:34" },
+  
+  # Sound Bite specific songs
+  { title: "Authority Song", artist: "John Mellencamp", key: "E", original_key: "E", tempo: 120, genre: "Rock", year: 1983, album: "Uh-Huh", duration: "3:49" },
+  { title: "Back On The Chain Gang", artist: "The Pretenders", key: "A", original_key: "A", tempo: 120, genre: "Rock", year: 1982, album: "Learning to Crawl", duration: "3:49" },
+  { title: "Bang a Gong", artist: "T-Rex", key: "E", original_key: "E", tempo: 110, genre: "Glam Rock", year: 1971, album: "Electric Warrior", duration: "4:28" },
+  { title: "Because the Night", artist: "Patti Smith", key: "E", original_key: "E", tempo: 120, genre: "Rock", year: 1978, album: "Easter", duration: "3:23" },
+  { title: "Black Velvet", artist: "Alannah Myles", key: "Em", original_key: "Em", tempo: 90, genre: "Rock", year: 1989, album: "Alannah Myles", duration: "4:48" },
+  { title: "Blood and Roses", artist: "The Smithereens", key: "A", original_key: "A", tempo: 130, genre: "Alternative Rock", year: 1986, album: "Especially for You", duration: "3:58" },
+  { title: "Blue On Black", artist: "Kenny Wayne Shepherd", key: "Em", original_key: "Em", tempo: 80, genre: "Blues Rock", year: 1997, album: "Trouble Is...", duration: "4:15" },
+  { title: "Comfortably Numb", artist: "Pink Floyd", key: "Bm", original_key: "Bm", tempo: 63, genre: "Progressive Rock", year: 1979, album: "The Wall", duration: "6:23" },
+  { title: "Dreams", artist: "Fleetwood Mac", key: "F", original_key: "F", tempo: 120, genre: "Rock", year: 1977, album: "Rumours", duration: "4:14" },
+  { title: "Everybody Talks", artist: "Neon Trees", key: "C", original_key: "C", tempo: 120, genre: "Alternative Rock", year: 2011, album: "Picture Show", duration: "2:58" },
+  { title: "Ex's & Oh's", artist: "Elle King", key: "G", original_key: "G", tempo: 95, genre: "Alternative Rock", year: 2014, album: "Love Stuff", duration: "2:58" },
+  { title: "Gimme Some Lovin", artist: "The Blues Brothers", key: "C", original_key: "C", tempo: 140, genre: "R&B", year: 1980, album: "Briefcase Full of Blues", duration: "3:05" },
+  { title: "Girlfriend", artist: "Matthew Sweet", key: "G", original_key: "G", tempo: 120, genre: "Alternative Rock", year: 1991, album: "Girlfriend", duration: "3:19" },
+  { title: "Gold On the Ceiling", artist: "The Black Keys", key: "C", original_key: "C", tempo: 120, genre: "Blues Rock", year: 2011, album: "El Camino", duration: "3:39" },
+  { title: "Good", artist: "Better than Ezra", key: "G", original_key: "G", tempo: 120, genre: "Alternative Rock", year: 1995, album: "Deluxe", duration: "3:28" },
+  { title: "Hold the Line", artist: "Toto", key: "Am", original_key: "Am", tempo: 120, genre: "Rock", year: 1978, album: "Toto", duration: "3:56" },
+  { title: "I Feel Fine", artist: "The Beatles", key: "G", original_key: "G", tempo: 125, genre: "Rock", year: 1964, album: "Beatles '65", duration: "2:20" },
+  { title: "I Hate Myself for Loving You", artist: "Joan Jett", key: "E", original_key: "E", tempo: 120, genre: "Rock", year: 1988, album: "Up Your Alley", duration: "4:10" },
+  { title: "I'm a Believer", artist: "The Monkees", key: "G", original_key: "G", tempo: 140, genre: "Pop Rock", year: 1966, album: "More of the Monkees", duration: "2:47" },
+  { title: "Learn To Fly", artist: "Foo Fighters", key: "B", original_key: "B", tempo: 136, genre: "Alternative Rock", year: 1999, album: "There Is Nothing Left to Lose", duration: "3:56" },
+  { title: "Lonely is the Night", artist: "Billy Squier", key: "Em", original_key: "Em", tempo: 120, genre: "Rock", year: 1981, album: "Don't Say No", duration: "4:39" },
+  { title: "Love Shack", artist: "The B-52's", key: "C", original_key: "C", tempo: 130, genre: "New Wave", year: 1989, album: "Cosmic Thing", duration: "5:20" },
+  { title: "Lovin Touchin Squeezin", artist: "Journey", key: "E", original_key: "E", tempo: 120, genre: "Rock", year: 1979, album: "Evolution", duration: "3:55" },
+  { title: "My Own Worst Enemy", artist: "Lit", key: "G", original_key: "G", tempo: 160, genre: "Alternative Rock", year: 1999, album: "A Place in the Sun", duration: "2:51" },
+  { title: "New Orleans", artist: "Joan Jett", key: "A", original_key: "A", tempo: 120, genre: "Rock", year: 1988, album: "Up Your Alley", duration: "4:18" },
+  { title: "No Excuses", artist: "Alice In Chains", key: "G", original_key: "G", tempo: 120, genre: "Grunge", year: 1994, album: "Jar of Flies", duration: "4:15" },
+  { title: "No Matter What", artist: "Badfinger", key: "Ab", original_key: "Ab", tempo: 120, genre: "Rock", year: 1970, album: "No Dice", duration: "3:02" },
+  { title: "Not Dead Yet", artist: "Lord Huron", key: "Am", original_key: "Am", tempo: 120, genre: "Indie Folk", year: 2015, album: "Strange Trails", duration: "4:06" },
+  { title: "Play that Funky Music", artist: "Wild Cherry", key: "E", original_key: "E", tempo: 108, genre: "Funk Rock", year: 1976, album: "Wild Cherry", duration: "5:07" },
+  { title: "Promises in the Dark", artist: "Pat Benatar", key: "C", original_key: "C", tempo: 120, genre: "Rock", year: 1981, album: "Precious Time", duration: "4:48" },
+  { title: "Proud Mary", artist: "Ike and Tina Turner", key: "D", original_key: "D", tempo: 100, genre: "Rock", year: 1971, album: "Workin' Together", duration: "5:07" },
+  { title: "Son of a Preacher Man", artist: "Dusty Springfield", key: "F", original_key: "F", tempo: 100, genre: "Soul", year: 1968, album: "Dusty in Memphis", duration: "2:28" },
+  { title: "Stop Draggin' My Heart Around", artist: "Stevie Nicks with Tom Petty", key: "G", original_key: "G", tempo: 120, genre: "Rock", year: 1981, album: "Bella Donna", duration: "4:06" },
+  { title: "Stuck in the middle with you", artist: "Stealers Wheel", key: "D", original_key: "D", tempo: 120, genre: "Folk Rock", year: 1972, album: "Stealers Wheel", duration: "3:23" },
+  { title: "Stupid Girl", artist: "Garbage", key: "Bb", original_key: "Bb", tempo: 110, genre: "Alternative Rock", year: 1996, album: "Garbage", duration: "4:18" },
+  { title: "Summer of 69", artist: "Bryan Adams", key: "D", original_key: "D", tempo: 138, genre: "Rock", year: 1984, album: "Reckless", duration: "3:34" },
+  { title: "Sweet Caroline (B) (capo 2)", artist: "Neil Diamond", key: "B", original_key: "C", tempo: 125, genre: "Pop", year: 1969, album: "Brother Love's Travelling Salvation Show", duration: "3:21" },
+  { title: "Tainted Love", artist: "Soft Cell", key: "Am", original_key: "Am", tempo: 132, genre: "Synth-pop", year: 1981, album: "Non-Stop Erotic Cabaret", duration: "2:39" },
+  { title: "Take It Easy", artist: "Eagles", key: "G", original_key: "G", tempo: 138, genre: "Rock", year: 1972, album: "Eagles", duration: "3:29" },
+  { title: "The Letter", artist: "Joe Cocker", key: "Am", original_key: "Am", tempo: 140, genre: "Rock", year: 1970, album: "Mad Dogs & Englishmen", duration: "4:10" },
+  { title: "Two Princes", artist: "Spin Doctors", key: "Em", original_key: "Em", tempo: 120, genre: "Alternative Rock", year: 1992, album: "Pocket Full of Kryptonite", duration: "4:17" },
+  { title: "We're an American Band", artist: "Grand Funk Railroad", key: "E", original_key: "E", tempo: 120, genre: "Rock", year: 1973, album: "We're an American Band", duration: "3:25" },
+  { title: "Wicked Game", artist: "Chris Isaak", key: "Bm", original_key: "Bm", tempo: 110, genre: "Alternative Rock", year: 1989, album: "Heart Shaped World", duration: "4:45" },
+  { title: "You Oughta Know", artist: "Alanis Morissette", key: "F#m", original_key: "F#m", tempo: 103, genre: "Alternative Rock", year: 1995, album: "Jagged Little Pill", duration: "4:09" }
 ]
 
 global_songs = []
@@ -250,8 +376,56 @@ end
 
 # Create songs for bands from global songs
 bands.each do |band|
-  # Each band gets 30-50 random global songs
-  selected_global_songs = global_songs.sample(rand(30..50))
+  if band.name == "Side Piece"
+    # Side Piece gets specific songs
+    side_piece_song_titles = [
+      "My Church", "Glory Days", "Faith", "Lay Down Sally", "Tipsy", "Let Your Love Flow",
+      "Jolene", "Have You Ever Seen the Rain", "Flowers", "Wagon Wheel", "Pink Houses",
+      "Mary Jane's Last Dance", "Crazy Little Thing", "Don't Start Now", "Karma Chameleon",
+      "Santeria", "Jenny", "American Girl", "Country Roads", "When Will I Be Loved",
+      "Your Mama Don't Dance", "Hurts So Good", "You May Be Right", "You Belong With Me",
+      "Tennessee Whiskey", "Rolling in the Deep", "Take It On the Run", "The Weight",
+      "Hotel California", "Hard to Handle", "Go Your Own Way", "Suspicious Minds",
+      "Friends in Low Places", "Sweet Caroline", "Who Says You Can't Go Home",
+      "Every Rose Has Its Thorn", "Good Riddance"
+    ]
+    
+    selected_global_songs = global_songs.select { |gs| side_piece_song_titles.include?(gs.title) }
+  elsif band.name == "Sound Bite"
+    # Sound Bite gets specific songs
+    sound_bite_song_titles = [
+      "American Girl", "Authority Song", "Back On The Chain Gang", "Bang a Gong", 
+      "Because the Night", "Black Velvet", "Blood and Roses", "Blue On Black", 
+      "Comfortably Numb", "Creep", "Dreams", "Everybody Talks", "Ex's & Oh's", 
+      "Friends in Low Places", "Gimme Some Lovin", "Girlfriend", "Gold On the Ceiling", 
+      "Good", "Hold the Line", "Hurts So Good", "I Feel Fine", "I Hate Myself for Loving You", 
+      "I'm a Believer", "Lay Down Sally", "Learn To Fly", "Lonely is the Night", 
+      "Love Shack", "Lovin Touchin Squeezin", "Mary Jane's Last Dance", "My Own Worst Enemy", 
+      "New Orleans", "No Excuses", "No Matter What", "Not Dead Yet", "Play that Funky Music", 
+      "Promises in the Dark", "Proud Mary", "Son of a Preacher Man", "Stop Draggin' My Heart Around", 
+      "Stuck in the middle with you", "Stupid Girl", "Summer of 69", "Sweet Caroline (B) (capo 2)", 
+      "Tainted Love", "Take It Easy", "The Letter", "Two Princes", "We're an American Band", 
+      "Who Says You Can't Go Home", "Wicked Game", "You Oughta Know"
+    ]
+    
+    selected_global_songs = global_songs.select { |gs| sound_bite_song_titles.include?(gs.title) }
+  elsif band.name == "On Tap"
+    # On Tap gets a mix of popular songs
+    on_tap_song_titles = [
+      "Sweet Home Alabama", "Hotel California", "Don't Stop Believin'", "Livin' on a Prayer",
+      "Brown Eyed Girl", "Sweet Caroline", "Fire and Rain", "Eye of the Tiger", "Don't Stop Me Now",
+      "Jump", "Walk This Way", "Wonderwall", "Smells Like Teen Spirit", "Black", "Mr. Brightside",
+      "Friends in Low Places", "Wagon Wheel", "Take Me Home, Country Roads", "Pride and Joy",
+      "Mustang Sally", "No Woman No Cry", "Three Little Birds", "Float On", "Seven Nation Army",
+      "Dancing Queen", "My Girl", "Superstition", "Blitzkrieg Bop", "London Calling", "Enter Sandman",
+      "Torn", "1979", "Zombie", "Fly Me to the Moon", "Brown Sugar", "Start Me Up", "Wild Thing"
+    ]
+    
+    selected_global_songs = global_songs.select { |gs| on_tap_song_titles.include?(gs.title) }
+  else
+    # Other bands get 30-50 random global songs
+    selected_global_songs = global_songs.sample(rand(30..50))
+  end
   
   selected_global_songs.each do |global_song|
     song = Song.find_or_create_by(
