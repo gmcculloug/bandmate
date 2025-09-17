@@ -267,4 +267,100 @@ class Routes::Bands < Sinatra::Base
       redirect "/bands/#{@band.id}?copied=#{copied_count}"
     end
   end
+
+  # ============================================================================
+  # GOOGLE CALENDAR INTEGRATION ROUTES
+  # ============================================================================
+
+  post '/bands/:id/google_calendar_settings' do
+    require_login
+    @band = user_bands.find(params[:id])
+    
+    # Any band member can configure Google Calendar settings
+    unless @band.users.include?(current_user)
+      @google_calendar_error = "You must be a member of this band to configure Google Calendar settings"
+      return erb :edit_band
+    end
+    
+    # Update Google Calendar settings
+    google_calendar_enabled = params[:google_calendar_enabled] == '1'
+    google_calendar_id = params[:google_calendar_id]&.strip
+    
+    if google_calendar_enabled && google_calendar_id.blank?
+      @google_calendar_error = "Calendar ID is required when Google Calendar sync is enabled"
+      return erb :edit_band
+    end
+    
+    @band.update!(
+      google_calendar_enabled: google_calendar_enabled,
+      google_calendar_id: google_calendar_id
+    )
+    
+    @google_calendar_success = "Google Calendar settings updated successfully"
+    erb :edit_band
+  end
+
+  post '/bands/:id/test_google_calendar' do
+    require_login
+    @band = user_bands.find(params[:id])
+    
+    unless @band.users.include?(current_user)
+      content_type :json
+      return { success: false, error: "You must be a member of this band" }.to_json
+    end
+    
+    calendar_id = params[:google_calendar_id]&.strip
+    
+    if calendar_id.blank?
+      content_type :json
+      return { success: false, error: "Calendar ID is required" }.to_json
+    end
+    
+    # Temporarily update the band's calendar ID for testing
+    original_calendar_id = @band.google_calendar_id
+    @band.update!(google_calendar_id: calendar_id, google_calendar_enabled: true)
+    
+    begin
+      result = @band.test_google_calendar_connection
+      
+      # Restore original calendar ID if test failed
+      if !result[:success]
+        @band.update!(google_calendar_id: original_calendar_id)
+      end
+      
+      content_type :json
+      result.to_json
+    rescue => e
+      # Restore original calendar ID on error
+      @band.update!(google_calendar_id: original_calendar_id)
+      
+      content_type :json
+      { success: false, error: e.message }.to_json
+    end
+  end
+
+  post '/bands/:id/sync_google_calendar' do
+    require_login
+    @band = user_bands.find(params[:id])
+    
+    unless @band.users.include?(current_user)
+      content_type :json
+      return { success: false, error: "You must be a member of this band" }.to_json
+    end
+    
+    unless @band.google_calendar_enabled?
+      content_type :json
+      return { success: false, error: "Google Calendar sync is not enabled for this band" }.to_json
+    end
+    
+    begin
+      result = @band.sync_all_gigs_to_google_calendar
+
+      content_type :json
+      result.to_json
+    rescue => e
+      content_type :json
+      { success: false, error: e.message, synced_count: 0, total_count: 0 }.to_json
+    end
+  end
 end

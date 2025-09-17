@@ -58,6 +58,8 @@ class Routes::Gigs < Sinatra::Base
     
     gig = Gig.new(gig_params)
     if gig.save
+      # Sync to Google Calendar if enabled
+      current_band.sync_gig_to_google_calendar(gig) if current_band.google_calendar_enabled?
       redirect "/gigs/#{gig.id}"
     else
       @errors = gig.errors.full_messages
@@ -137,6 +139,8 @@ class Routes::Gigs < Sinatra::Base
     }
     
     if @gig.update(gig_params)
+      # Sync to Google Calendar if enabled
+      current_band.sync_gig_to_google_calendar(@gig) if current_band.google_calendar_enabled?
       redirect "/gigs/#{@gig.id}"
     else
       @errors = @gig.errors.full_messages
@@ -148,6 +152,9 @@ class Routes::Gigs < Sinatra::Base
   delete '/gigs/:id' do
     require_login
     gig = filter_by_current_band(Gig).find(params[:id])
+    
+    # Remove from Google Calendar if enabled
+    current_band.remove_gig_from_google_calendar(gig) if current_band.google_calendar_enabled?
     
     gig.destroy
     redirect '/gigs'

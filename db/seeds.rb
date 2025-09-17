@@ -499,7 +499,6 @@ bands.each do |band|
       g.venue = venue
       g.start_time = Time.parse("#{rand(19..22)}:#{['00', '30'].sample}")
       g.end_time = g.start_time + rand(2..4).hours
-      g.notes = "Upcoming show - get ready!"
     end
     
     # Add songs to future gigs with multiple sets

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_08_25_002201) do
+ActiveRecord::Schema[8.0].define(version: 2025_09_16_135841) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -20,6 +20,11 @@ ActiveRecord::Schema[8.0].define(version: 2025_08_25_002201) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.bigint "owner_id"
+    t.string "google_calendar_id"
+    t.boolean "google_calendar_enabled", default: false
+    t.string "google_calendar_sync_token"
+    t.index ["google_calendar_enabled"], name: "index_bands_on_google_calendar_enabled"
+    t.index ["google_calendar_id"], name: "index_bands_on_google_calendar_id"
     t.index ["name"], name: "index_bands_on_name", unique: true
     t.index ["owner_id"], name: "index_bands_on_owner_id"
   end
@@ -81,6 +86,20 @@ ActiveRecord::Schema[8.0].define(version: 2025_08_25_002201) do
     t.index ["artist"], name: "index_global_songs_on_artist"
     t.index ["key"], name: "index_global_songs_on_key"
     t.index ["title"], name: "index_global_songs_on_title"
+  end
+
+  create_table "google_calendar_events", force: :cascade do |t|
+    t.bigint "band_id", null: false
+    t.bigint "gig_id", null: false
+    t.string "google_event_id", null: false
+    t.datetime "last_synced_at", precision: nil, default: -> { "CURRENT_TIMESTAMP" }
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["band_id", "google_event_id"], name: "index_google_calendar_events_on_band_id_and_google_event_id", unique: true
+    t.index ["band_id"], name: "index_google_calendar_events_on_band_id"
+    t.index ["gig_id"], name: "index_google_calendar_events_on_gig_id"
+    t.index ["google_event_id"], name: "index_google_calendar_events_on_google_event_id"
+    t.index ["last_synced_at"], name: "index_google_calendar_events_on_last_synced_at"
   end
 
   create_table "songs", force: :cascade do |t|
@@ -154,6 +173,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_08_25_002201) do
   add_foreign_key "gig_songs", "songs"
   add_foreign_key "gigs", "bands"
   add_foreign_key "gigs", "venues"
+  add_foreign_key "google_calendar_events", "bands"
+  add_foreign_key "google_calendar_events", "gigs"
   add_foreign_key "songs", "global_songs"
   add_foreign_key "songs_bands", "bands"
   add_foreign_key "songs_bands", "songs"

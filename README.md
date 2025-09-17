@@ -32,6 +32,7 @@ The application requires certain environment variables to be set for security an
 
 - **SESSION_SECRET**: A secure random string for session encryption (at least 64 characters)
 - **BANDMATE_ACCT_CREATION_SECRET**: An account creation code required for new user registration
+- **GOOGLE_SERVICE_ACCOUNT_JSON**: JSON credentials for Google Calendar integration (optional)
 
 You can set these in several ways:
 1. Create a `.env` file in the project root (copy from `env.example`)
@@ -107,8 +108,37 @@ bandmate/
 - **Set Lists**: Create and organize set lists for performances
 - **Venue Management**: Track venues with contact information
 - **Performance Scheduling**: Schedule performances with dates and times
+- **Google Calendar Integration**: Sync gigs to Google Calendar automatically
 - **Mobile Responsive**: Works great on mobile devices
 - **Print Support**: Print-friendly set list views
+
+## 📅 Google Calendar Integration
+
+Bandmate includes optional Google Calendar integration that allows bands to automatically sync their gigs to a shared Google Calendar. This enables band members to see upcoming performances in their personal calendar apps.
+
+### Features
+- **Automatic Sync**: Gigs are automatically synced when created, updated, or deleted
+- **Shared Calendars**: Each band can have its own Google Calendar
+- **Event Details**: Includes venue information, performance times, and setlists
+- **Real-time Updates**: Changes in Bandmate are immediately reflected in Google Calendar
+
+### Setup
+Google Calendar integration requires additional setup including:
+1. Creating a Google Cloud Project
+2. Enabling the Google Calendar API
+3. Creating a service account and downloading credentials
+4. Configuring environment variables
+5. Sharing calendars with the service account
+
+For detailed setup instructions, see `GOOGLE_CALENDAR_SETUP.md` in the project root.
+
+### Usage
+Once configured:
+1. Edit your band settings
+2. Enable "Google Calendar Sync"
+3. Enter your Google Calendar ID
+4. Test the connection
+5. All future gigs will automatically sync to Google Calendar
 
 ## 🔧 Development
 

@@ -11,7 +11,7 @@
     <div style="position: relative; max-width: 400px;">
         <input type="text" id="search-input" value="<%= @search %>" placeholder="Search songs by title or artist..." style="width: 100%; padding: 10px 40px 10px 10px; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 16px;">
         <% if @search.present? %>
-            <a href="/songs" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; color: #718096; font-size: 18px; cursor: pointer; text-decoration: none; display: flex; align-items: center; justify-content: center; width: 20px; height: 20px;">✕</a>
+            <a href="#" onclick="clearSearch(); return false;" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; color: #718096; font-size: 18px; cursor: pointer; text-decoration: none; display: flex; align-items: center; justify-content: center; width: 20px; height: 20px;">✕</a>
         <% end %>
     </div>
 </div>
@@ -46,16 +46,33 @@ function filterSongs() {
     window.location.href = currentUrl.toString();
 }
 
-// Focus the search input when page loads if there's a search term
+function clearSearch() {
+    const searchInput = document.getElementById('search-input');
+    searchInput.value = '';
+    const currentUrl = new URL(window.location);
+    currentUrl.searchParams.delete('search');
+    window.location.href = currentUrl.toString();
+    
+    // Focus will be restored by the DOMContentLoaded handler when the page reloads
+}
+
+// Focus the search input when page loads
 document.addEventListener('DOMContentLoaded', function() {
     const searchInput = document.getElementById('search-input');
-    if (searchInput && searchInput.value.trim() !== '') {
-        // Small delay to ensure the page is fully loaded
-        setTimeout(function() {
-            searchInput.focus();
-            // Move cursor to end of text
-            searchInput.setSelectionRange(searchInput.value.length, searchInput.value.length);
-        }, 100);
+    if (searchInput) {
+        // Check if we came from a clear action (no search param but input was just cleared)
+        const urlParams = new URLSearchParams(window.location.search);
+        const hasSearchTerm = searchInput.value.trim() !== '';
+        const wasCleared = !urlParams.has('search') && document.referrer.includes('search=');
+        
+        if (hasSearchTerm || wasCleared) {
+            // Small delay to ensure the page is fully loaded
+            setTimeout(function() {
+                searchInput.focus();
+                // Move cursor to end of text
+                searchInput.setSelectionRange(searchInput.value.length, searchInput.value.length);
+            }, 100);
+        }
     }
 });
 </script>

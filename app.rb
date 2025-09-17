@@ -1,3 +1,4 @@
+require 'dotenv/load'
 require 'sinatra'
 require 'sinatra/activerecord'
 require 'json'
@@ -15,6 +16,10 @@ require_relative 'lib/models/venue'
 require_relative 'lib/models/gig'
 require_relative 'lib/models/gig_song'
 require_relative 'lib/models/blackout_date'
+require_relative 'lib/models/google_calendar_event'
+
+# Load services
+require_relative 'lib/services/google_calendar_service'
 
 # Load helpers
 require_relative 'lib/helpers/application_helpers'

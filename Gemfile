@@ -7,6 +7,11 @@ gem 'rake'
 gem 'erb'
 gem 'bcrypt'
 gem 'puma'
+gem 'ostruct'
+gem 'google-apis-calendar_v3'
+gem 'googleauth'
+gem 'json'
+gem 'dotenv'
 
 group :development, :test do
   gem 'rspec'

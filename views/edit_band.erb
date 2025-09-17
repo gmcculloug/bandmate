@@ -115,4 +115,153 @@
             </div>
         </form>
     </div>
+
+    <!-- Google Calendar Integration Section -->
+    <div class="card" style="margin-top: 30px;">
+        <h3>📅 Google Calendar Integration</h3>
+        <p style="color: #666; margin-bottom: 20px;">
+            Sync your band's gigs to a Google Calendar. All band members can subscribe to this calendar to see gigs in their personal Google Calendar.
+        </p>
+
+        <% if @google_calendar_error %>
+            <div class="errors" style="margin-bottom: 20px;">
+                <p><%= @google_calendar_error %></p>
+            </div>
+        <% end %>
+
+        <% if @google_calendar_success %>
+            <div class="success" style="margin-bottom: 20px;">
+                <p><%= @google_calendar_success %></p>
+            </div>
+        <% end %>
+
+        <form method="POST" action="/bands/<%= @band.id %>/google_calendar_settings">
+            <div style="margin-bottom: 20px;">
+                <label style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
+                    <input type="checkbox" 
+                           name="google_calendar_enabled" 
+                           value="1" 
+                           <%= 'checked' if @band.google_calendar_enabled? %>
+                           onchange="toggleCalendarFields(this)">
+                    <span style="font-weight: bold;">Enable Google Calendar Sync</span>
+                </label>
+            </div>
+
+            <div id="calendar-fields" style="<%= 'display: none;' unless @band.google_calendar_enabled? %>">
+                <div style="margin-bottom: 20px;">
+                    <label for="google_calendar_id" style="display: block; margin-bottom: 5px; font-weight: bold;">Google Calendar ID *</label>
+                    <input type="text" 
+                           id="google_calendar_id" 
+                           name="google_calendar_id" 
+                           value="<%= @band.google_calendar_id %>" 
+                           placeholder="your-email@gmail.com or calendar-id@group.calendar.google.com"
+                           style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 16px;">
+                    <small style="color: #666; margin-top: 5px; display: block;">
+                        Enter your Google Calendar ID. This can be your email address or a shared calendar ID.
+                        <br><strong>How to find your Calendar ID:</strong>
+                        <br>1. Go to <a href="https://calendar.google.com" target="_blank">Google Calendar</a>
+                        <br>2. Click the three dots next to your calendar name
+                        <br>3. Select "Settings and sharing"
+                        <br>4. Copy the "Calendar ID" from the "Integrate calendar" section
+                    </small>
+                </div>
+
+                <div style="margin-bottom: 20px;">
+                    <button type="button" 
+                            onclick="testCalendarConnection()" 
+                            class="btn btn-secondary" 
+                            style="margin-right: 10px;">
+                        Test Connection
+                    </button>
+                    <button type="button" 
+                            onclick="syncAllGigs()" 
+                            class="btn btn-primary">
+                        Sync All Gigs
+                    </button>
+                </div>
+
+                <div id="connection-status" style="margin-bottom: 20px;"></div>
+            </div>
+
+            <div class="actions">
+                <button type="submit" class="btn btn-success">Save Calendar Settings</button>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        function toggleCalendarFields(checkbox) {
+            const fields = document.getElementById('calendar-fields');
+            const calendarIdField = document.getElementById('google_calendar_id');
+            
+            if (checkbox.checked) {
+                fields.style.display = 'block';
+                calendarIdField.required = true;
+            } else {
+                fields.style.display = 'none';
+                calendarIdField.required = false;
+            }
+        }
+
+        function testCalendarConnection() {
+            const statusDiv = document.getElementById('connection-status');
+            const calendarId = document.getElementById('google_calendar_id').value;
+            
+            if (!calendarId) {
+                statusDiv.innerHTML = '<div class="errors"><p>Please enter a Calendar ID first</p></div>';
+                return;
+            }
+
+            statusDiv.innerHTML = '<div style="color: #666;">Testing connection...</div>';
+
+            fetch(`/bands/<%= @band.id %>/test_google_calendar`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `google_calendar_id=${encodeURIComponent(calendarId)}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    statusDiv.innerHTML = `<div class="success"><p>✅ Connection successful! Calendar: ${data.calendar_name}</p></div>`;
+                } else {
+                    statusDiv.innerHTML = `<div class="errors"><p>❌ Connection failed: ${data.error}</p></div>`;
+                }
+            })
+            .catch(error => {
+                statusDiv.innerHTML = `<div class="errors"><p>❌ Error testing connection: ${error.message}</p></div>`;
+            });
+        }
+
+        function syncAllGigs() {
+            const statusDiv = document.getElementById('connection-status');
+            statusDiv.innerHTML = '<div style="color: #666;">Syncing all gigs to Google Calendar...</div>';
+
+            fetch(`/bands/<%= @band.id %>/sync_google_calendar`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    statusDiv.innerHTML = `<div class="success"><p>✅ Successfully synced ${data.synced_count}/${data.total_count} gigs to Google Calendar!</p></div>`;
+                } else {
+                    let message = `❌ Sync failed: ${data.synced_count || 0}/${data.total_count || 0} gigs synced successfully.`;
+                    if (data.error) {
+                        message += ` Error: ${data.error}`;
+                    }
+                    if (data.errors && data.errors.length > 0) {
+                        message += ` Issues: ${data.errors.join(', ')}`;
+                    }
+                    statusDiv.innerHTML = `<div class="errors"><p>${message}</p></div>`;
+                }
+            })
+            .catch(error => {
+                statusDiv.innerHTML = `<div class="errors"><p>❌ Error syncing gigs: ${error.message}</p></div>`;
+            });
+        }
+    </script>
 </div> 

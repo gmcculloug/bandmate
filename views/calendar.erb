@@ -354,8 +354,12 @@ function addBlackoutDate(dateStr, reason) {
                 // The blackout exists on server but not in our UI, add it to sync
                 addBlackoutToCalendar(dateStr);
             } else {
-                // Only show alerts for unexpected errors
-                alert('Error: ' + (data.error || 'Failed to add blackout date'));
+                // Only show alerts for unexpected errors that aren't generic failures
+                console.error('Blackout creation error:', data.error);
+                // Don't show alert for generic "Failed to create blackout date" as it might still work
+                if (data.error && !data.error.includes('Failed to create blackout date')) {
+                    alert('Error: ' + data.error);
+                }
             }
         }
     })
