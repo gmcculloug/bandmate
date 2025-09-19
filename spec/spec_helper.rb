@@ -10,7 +10,6 @@ require_relative '../app'
 # Load factories
 require_relative 'factories'
 
-puts "[DEBUG] ActiveRecord DB file: #{ActiveRecord::Base.connection_db_config.database}"
 
 RSpec.configure do |config|
   config.include Rack::Test::Methods
@@ -35,6 +34,7 @@ RSpec.configure do |config|
 
   config.before(:each) do
     # Clear in proper order to respect foreign key constraints
+    GoogleCalendarEvent.delete_all
     GigSong.delete_all
     Gig.delete_all
     UserBand.delete_all

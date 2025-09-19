@@ -377,4 +377,137 @@ RSpec.describe 'Gigs API', type: :request do
       expect(new_gig.songs).to include(song1, song2)
     end
   end
+
+  describe 'Google Calendar Integration' do
+    let(:google_calendar_band) { create(:band, owner: user, google_calendar_enabled: true, google_calendar_id: 'test_calendar_id') }
+    let(:venue) { create(:venue, band: google_calendar_band) }
+
+    before do
+      create(:user_band, user: user, band: google_calendar_band)
+    end
+
+    describe 'POST /gigs with Google Calendar enabled' do
+      it 'syncs gig to Google Calendar when creating a new gig' do
+        login_as(user, google_calendar_band)
+
+        expect_any_instance_of(Band).to receive(:sync_gig_to_google_calendar).and_return(true)
+
+        gig_params = {
+          name: 'New Calendar Gig',
+          band_id: google_calendar_band.id,
+          venue_id: venue.id,
+          performance_date: '2024-12-25',
+          start_time: '20:00',
+          end_time: '22:00'
+        }
+
+        expect {
+          post '/gigs', gig_params
+        }.to change(Gig, :count).by(1)
+
+        expect(last_response).to be_redirect
+      end
+
+      it 'creates gig even if Google Calendar sync fails' do
+        login_as(user, google_calendar_band)
+
+        expect_any_instance_of(Band).to receive(:sync_gig_to_google_calendar).and_return(false)
+
+        gig_params = {
+          name: 'New Calendar Gig',
+          band_id: google_calendar_band.id,
+          venue_id: venue.id,
+          performance_date: '2024-12-25'
+        }
+
+        expect {
+          post '/gigs', gig_params
+        }.to change(Gig, :count).by(1)
+
+        expect(last_response).to be_redirect
+      end
+
+      it 'does not sync when Google Calendar is disabled' do
+        disabled_band = create(:band, owner: user, google_calendar_enabled: false)
+        create(:user_band, user: user, band: disabled_band)
+        disabled_venue = create(:venue, band: disabled_band)
+        login_as(user, disabled_band)
+
+        expect_any_instance_of(Band).not_to receive(:sync_gig_to_google_calendar)
+
+        gig_params = {
+          name: 'New Gig',
+          band_id: disabled_band.id,
+          venue_id: disabled_venue.id,
+          performance_date: '2024-12-25'
+        }
+
+        expect {
+          post '/gigs', gig_params
+        }.to change(Gig, :count).by(1)
+      end
+    end
+
+    describe 'PUT /gigs/:id with Google Calendar enabled' do
+      it 'syncs gig updates to Google Calendar' do
+        login_as(user, google_calendar_band)
+        gig = create(:gig, band: google_calendar_band, venue: venue)
+
+        expect_any_instance_of(Band).to receive(:sync_gig_to_google_calendar).and_return(true)
+
+        put "/gigs/#{gig.id}", {
+          name: 'Updated Gig Name',
+          performance_date: gig.performance_date.to_s,
+          venue_id: venue.id
+        }
+
+        expect(last_response).to be_redirect
+        expect(gig.reload.name).to eq('Updated Gig Name')
+      end
+
+      it 'updates gig even if Google Calendar sync fails' do
+        login_as(user, google_calendar_band)
+        gig = create(:gig, band: google_calendar_band, venue: venue)
+
+        expect_any_instance_of(Band).to receive(:sync_gig_to_google_calendar).and_return(false)
+
+        put "/gigs/#{gig.id}", {
+          name: 'Updated Gig Name',
+          performance_date: gig.performance_date.to_s,
+          venue_id: venue.id
+        }
+
+        expect(last_response).to be_redirect
+        expect(gig.reload.name).to eq('Updated Gig Name')
+      end
+    end
+
+    describe 'DELETE /gigs/:id with Google Calendar enabled' do
+      it 'removes gig from Google Calendar when deleting' do
+        login_as(user, google_calendar_band)
+        gig = create(:gig, band: google_calendar_band, venue: venue)
+
+        expect_any_instance_of(Band).to receive(:remove_gig_from_google_calendar).and_return(true)
+
+        expect {
+          delete "/gigs/#{gig.id}"
+        }.to change(Gig, :count).by(-1)
+
+        expect(last_response).to be_redirect
+      end
+
+      it 'deletes gig even if Google Calendar removal fails' do
+        login_as(user, google_calendar_band)
+        gig = create(:gig, band: google_calendar_band, venue: venue)
+
+        expect_any_instance_of(Band).to receive(:remove_gig_from_google_calendar).and_return(false)
+
+        expect {
+          delete "/gigs/#{gig.id}"
+        }.to change(Gig, :count).by(-1)
+
+        expect(last_response).to be_redirect
+      end
+    end
+  end
 end 

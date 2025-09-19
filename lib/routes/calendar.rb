@@ -141,7 +141,6 @@ class Routes::Calendar < Sinatra::Base
       { error: e.record.errors.full_messages.join(', ') }.to_json
     rescue => e
       # Log the actual error for debugging
-      puts "Blackout date creation error: #{e.class}: #{e.message}"
       content_type :json
       { error: 'Failed to create blackout date' }.to_json
     end
@@ -203,7 +202,6 @@ class Routes::Calendar < Sinatra::Base
       
     rescue => e
       # Log the actual error for debugging
-      puts "Bulk blackout date creation error: #{e.class}: #{e.message}"
       content_type :json
       { error: 'Failed to create blackout dates' }.to_json
     end
@@ -251,7 +249,6 @@ class Routes::Calendar < Sinatra::Base
       
     rescue => e
       # Log the actual error for debugging
-      puts "Bulk blackout date deletion error: #{e.class}: #{e.message}"
       content_type :json
       { error: 'Failed to remove blackout dates' }.to_json
     end
@@ -289,7 +286,6 @@ class Routes::Calendar < Sinatra::Base
       { error: 'Invalid date format' }.to_json
     rescue => e
       # Log the actual error for debugging
-      puts "Blackout date deletion error: #{e.class}: #{e.message}"
       content_type :json
       { error: 'Failed to remove blackout date' }.to_json
     end

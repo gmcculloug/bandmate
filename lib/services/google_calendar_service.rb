@@ -25,7 +25,6 @@ class GoogleCalendarService
 
       true
     rescue => e
-      puts "ERROR: Failed to sync gig #{gig.id} to Google Calendar: #{e.message}"
       false
     end
   end
@@ -43,7 +42,6 @@ class GoogleCalendarService
       end
       true
     rescue => e
-      puts "ERROR: Failed to remove gig #{gig.id} from Google Calendar: #{e.message}"
       false
     end
   end
@@ -198,8 +196,6 @@ class GoogleCalendarService
   def build_event_description(gig, start_time, end_time)
     description_parts = []
 
-    puts "start_time: #{start_time.inspect}"
-    puts "end_time: #{end_time.inspect}"
 
     # Add start and end times
     if start_time.present?

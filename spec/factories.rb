@@ -65,4 +65,12 @@ FactoryBot.define do
     blackout_date { Date.current + rand(0..30).days }
     reason { ['Vacation', 'Personal', 'Work', nil].sample }
   end
+
+  factory :google_calendar_event do
+    sequence(:google_event_id) { |n| "google_event_#{n}" }
+    last_synced_at { Time.current }
+
+    association :band
+    association :gig
+  end
 end 

@@ -227,4 +227,183 @@ RSpec.describe 'Bands API', type: :request do
       }.to raise_error(ActiveRecord::RecordNotFound)
     end
   end
+
+  describe 'Google Calendar Integration' do
+    let(:google_calendar_band) { create(:band, owner: user, google_calendar_enabled: true, google_calendar_id: 'test_calendar_id') }
+    let(:mock_service) { instance_double(GoogleCalendarService) }
+
+    before do
+      create(:user_band, user: user, band: google_calendar_band)
+      allow(GoogleCalendarService).to receive(:new).with(google_calendar_band).and_return(mock_service)
+    end
+
+    describe 'POST /bands/:id/google_calendar_settings' do
+      it 'updates Google Calendar settings successfully' do
+        login_as(user, google_calendar_band)
+
+        post "/bands/#{google_calendar_band.id}/google_calendar_settings", {
+          google_calendar_enabled: '1',
+          google_calendar_id: 'new_calendar_id'
+        }
+
+        expect(last_response).to be_ok
+        expect(last_response.body).to include('Google Calendar settings updated successfully')
+        google_calendar_band.reload
+        expect(google_calendar_band.google_calendar_enabled).to be true
+        expect(google_calendar_band.google_calendar_id).to eq('new_calendar_id')
+      end
+
+      it 'validates calendar ID when Google Calendar is enabled' do
+        login_as(user, google_calendar_band)
+
+        post "/bands/#{google_calendar_band.id}/google_calendar_settings", {
+          google_calendar_enabled: '1',
+          google_calendar_id: ''
+        }
+
+        expect(last_response).to be_ok
+        expect(last_response.body).to include('Calendar ID is required when Google Calendar sync is enabled')
+      end
+
+      it 'allows disabling Google Calendar without calendar ID' do
+        login_as(user, google_calendar_band)
+
+        post "/bands/#{google_calendar_band.id}/google_calendar_settings", {
+          google_calendar_enabled: '0',
+          google_calendar_id: ''
+        }
+
+        expect(last_response).to be_ok
+        google_calendar_band.reload
+        expect(google_calendar_band.google_calendar_enabled).to be false
+      end
+
+      it 'requires band membership' do
+        other_user = create(:user)
+        other_band = create(:band, owner: other_user)
+        create(:user_band, user: other_user, band: other_band)
+        login_as(other_user, other_band)
+
+        expect {
+          post "/bands/#{google_calendar_band.id}/google_calendar_settings", {
+            google_calendar_enabled: '1',
+            google_calendar_id: 'test_id'
+          }
+        }.to raise_error(ActiveRecord::RecordNotFound)
+      end
+    end
+
+    describe 'POST /bands/:id/test_google_calendar' do
+      it 'tests Google Calendar connection successfully' do
+        login_as(user, google_calendar_band)
+        allow(mock_service).to receive(:test_connection).and_return({
+          success: true,
+          calendar_name: 'Test Calendar'
+        })
+
+        post "/bands/#{google_calendar_band.id}/test_google_calendar", {
+          google_calendar_id: 'test_calendar_id'
+        }
+
+        expect(last_response.status).to eq(200)
+        expect(last_response.content_type).to include('application/json')
+        response_data = JSON.parse(last_response.body)
+        expect(response_data['success']).to be true
+        expect(response_data['calendar_name']).to eq('Test Calendar')
+      end
+
+      it 'handles connection failure' do
+        login_as(user, google_calendar_band)
+        allow(mock_service).to receive(:test_connection).and_return({
+          success: false,
+          error: 'Calendar not found'
+        })
+
+        post "/bands/#{google_calendar_band.id}/test_google_calendar", {
+          google_calendar_id: 'invalid_calendar_id'
+        }
+
+        expect(last_response.status).to eq(200)
+        response_data = JSON.parse(last_response.body)
+        expect(response_data['success']).to be false
+        expect(response_data['error']).to eq('Calendar not found')
+      end
+
+      it 'requires band membership' do
+        other_user = create(:user)
+        other_band = create(:band, owner: other_user)
+        create(:user_band, user: other_user, band: other_band)
+        login_as(other_user, other_band)
+
+        expect {
+          post "/bands/#{google_calendar_band.id}/test_google_calendar", {
+            google_calendar_id: 'test_id'
+          }
+        }.to raise_error(ActiveRecord::RecordNotFound)
+      end
+    end
+
+    describe 'POST /bands/:id/sync_google_calendar' do
+      it 'syncs all gigs to Google Calendar successfully' do
+        login_as(user, google_calendar_band)
+        allow(mock_service).to receive(:sync_all_gigs).and_return({
+          success: true,
+          synced_count: 5,
+          total_count: 5,
+          errors: []
+        })
+
+        post "/bands/#{google_calendar_band.id}/sync_google_calendar"
+
+        expect(last_response.status).to eq(200)
+        expect(last_response.content_type).to include('application/json')
+        response_data = JSON.parse(last_response.body)
+        expect(response_data['success']).to be true
+        expect(response_data['synced_count']).to eq(5)
+        expect(response_data['total_count']).to eq(5)
+      end
+
+      it 'handles partial sync failures' do
+        login_as(user, google_calendar_band)
+        allow(mock_service).to receive(:sync_all_gigs).and_return({
+          success: false,
+          synced_count: 3,
+          total_count: 5,
+          errors: ['Failed to sync gig: Test Gig 1', 'Failed to sync gig: Test Gig 2']
+        })
+
+        post "/bands/#{google_calendar_band.id}/sync_google_calendar"
+
+        expect(last_response.status).to eq(200)
+        response_data = JSON.parse(last_response.body)
+        expect(response_data['success']).to be false
+        expect(response_data['synced_count']).to eq(3)
+        expect(response_data['errors'].length).to eq(2)
+      end
+
+      it 'returns error when Google Calendar is not enabled' do
+        disabled_band = create(:band, owner: user, google_calendar_enabled: false)
+        create(:user_band, user: user, band: disabled_band)
+        login_as(user, disabled_band)
+
+        post "/bands/#{disabled_band.id}/sync_google_calendar"
+
+        expect(last_response.status).to eq(200)
+        response_data = JSON.parse(last_response.body)
+        expect(response_data['success']).to be false
+        expect(response_data['error']).to eq('Google Calendar sync is not enabled for this band')
+      end
+
+      it 'requires band membership' do
+        other_user = create(:user)
+        other_band = create(:band, owner: other_user)
+        create(:user_band, user: other_user, band: other_band)
+        login_as(other_user, other_band)
+
+        expect {
+          post "/bands/#{google_calendar_band.id}/sync_google_calendar"
+        }.to raise_error(ActiveRecord::RecordNotFound)
+      end
+    end
+  end
 end 
