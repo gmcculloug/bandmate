@@ -22,4 +22,4 @@ bundle install
 # Start the application
 echo "🚀 Starting the application..."
 echo ""
-BANDMATE_ACCT_CREATION_SECRET=1234 ruby app.rb 
+ruby app.rb 
