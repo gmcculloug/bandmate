@@ -189,30 +189,41 @@ class GoogleCalendarService
     end
 
     Time.parse("#{date} #{time}")
+  rescue ArgumentError => e
+    # Log the error for debugging but return a fallback
+    Rails.logger.warn("Failed to parse time '#{time}' for date '#{date}': #{e.message}") if defined?(Rails)
+    date.to_time
   rescue => e
+    # Log unexpected errors
+    Rails.logger.error("Unexpected error parsing time '#{time}' for date '#{date}': #{e.message}") if defined?(Rails)
     date.to_time
   end
 
   def build_event_description(gig, start_time, end_time)
     description_parts = []
 
-
     # Add start and end times
     if start_time.present?
-      description_parts << "Start Time: #{start_time.strftime("%-I:%M %p")}"
+      description_parts << "Start Time: #{format_time(start_time)}"
     end
     if end_time.present?
-      description_parts << "End Time: #{end_time.strftime("%-I:%M %p")}"
+      description_parts << "End Time: #{format_time(end_time)}"
     end
 
-    if gig.venue
-      description_parts << "Venue: #{gig.venue.name}"
-      description_parts << "Location: #{gig.venue.location}"
-      if gig.venue.phone_number.present?
-        description_parts << "Phone: #{gig.venue.phone_number}"
-      end
-    end
+    # Add venue information
+    add_venue_info(description_parts, gig.venue) if gig.venue
 
     description_parts.join("\n")
+  end
+
+  def format_time(time)
+    time.strftime("%-I:%M %p")
+  end
+
+  def add_venue_info(description_parts, venue)
+    description_parts << "Venue: #{venue.name}"
+    description_parts << "Location: #{venue.location}"
+    description_parts << "Phone: #{venue.phone_number}" if venue.phone_number.present?
+    description_parts << "Website: #{venue.website}" if venue.website.present?
   end
 end

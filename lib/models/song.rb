@@ -9,6 +9,15 @@ class Song < ActiveRecord::Base
   validates :key, presence: true
   validates :tempo, numericality: { greater_than: 0 }, allow_nil: true
   
+  # Scopes
+  scope :by_band, ->(band) { joins(:bands).where(bands: { id: band.id }) }
+  scope :by_artist, ->(artist) { where('LOWER(artist) LIKE ?', "%#{artist.downcase}%") }
+  scope :by_title, ->(title) { where('LOWER(title) LIKE ?', "%#{title.downcase}%") }
+  scope :search, ->(query) { where('LOWER(title) LIKE ? OR LOWER(artist) LIKE ?', "%#{query.downcase}%", "%#{query.downcase}%") }
+  scope :with_lyrics, -> { where.not(lyrics: [nil, '']) }
+  scope :by_key, ->(key) { where(key: key) }
+  scope :by_tempo_range, ->(min, max) { where(tempo: min..max) }
+
   # Create a band-specific copy of a global song
   def self.create_from_global_song(global_song, band_ids = [])
     song = new(

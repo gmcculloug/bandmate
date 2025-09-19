@@ -188,6 +188,8 @@ bundle exec rspec --format documentation
 **Model Tests**: Validations, associations, scopes, and business logic
 **Request Tests**: CRUD operations, form handling, search/filtering, API endpoints
 **Integration Tests**: Set list management, band associations, database setup
+**Helper Tests**: Application helper methods and calendar functionality
+**Service Tests**: Google Calendar integration and external API handling
 
 ### Test Structure
 
