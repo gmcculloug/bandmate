@@ -5,7 +5,8 @@ A Sinatra-based web application for managing bands, songs, set lists, and venues
 ## 🚀 Quick Start
 
 ### Prerequisites
-- Ruby 2.7 or higher
+- Ruby 3.1+ or higher
+- PostgreSQL 14+ (recommended 17+)
 - Bundler
 
 ### Installation
