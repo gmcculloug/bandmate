@@ -5,7 +5,7 @@ echo ""
 
 # Check if Ruby is installed
 if ! command -v ruby &> /dev/null; then
-    echo "❌ Ruby is not installed. Please install Ruby 2.7 or higher."
+    echo "❌ Ruby is not installed. Please install Ruby 3.1 or higher."
     exit 1
 fi
 
