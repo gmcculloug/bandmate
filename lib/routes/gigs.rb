@@ -207,14 +207,23 @@ class Routes::Gigs < Sinatra::Base
     require_login
     gig = filter_by_current_band(Gig).find(params[:id])
     song_order = params[:song_order]
-    
+
     if song_order && song_order.is_a?(Array)
-      song_order.each_with_index do |song_id, index|
-        gig_song = gig.gig_songs.find_by(song_id: song_id)
-        gig_song.update(position: index + 1) if gig_song
+      # Use a transaction to ensure atomicity and avoid uniqueness conflicts
+      ActiveRecord::Base.transaction do
+        # First, set all positions to negative values to avoid conflicts
+        gig.gig_songs.each_with_index do |gig_song, index|
+          gig_song.update_column(:position, -(index + 1))
+        end
+
+        # Then set the correct positions based on the new order
+        song_order.each_with_index do |song_id, index|
+          gig_song = gig.gig_songs.find_by(song_id: song_id)
+          gig_song.update_column(:position, index + 1) if gig_song
+        end
       end
     end
-    
+
     content_type :json
     { success: true }.to_json
   end

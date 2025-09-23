@@ -46,7 +46,7 @@
     
     <!-- Calendar days -->
     <% calendar_days_for_month(@year, @month).each do |date| %>
-        <% gigs = gigs_for_date(date) %>
+        <% gigs = gigs_for_date_legacy(date) %>
         <% is_current_month = date.month == @month %>
         <% is_today = date == Date.current %>
         <% is_past = date < Date.current %>

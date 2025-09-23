@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_09_16_135841) do
+ActiveRecord::Schema[8.0].define(version: 2025_09_23_084953) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -131,7 +131,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_09_16_135841) do
     t.index ["song_id"], name: "index_songs_bands_on_song_id"
   end
 
-  create_table "user_bands", id: false, force: :cascade do |t|
+  create_table "user_bands", force: :cascade do |t|
     t.bigint "user_id", null: false
     t.bigint "band_id", null: false
     t.datetime "created_at", null: false

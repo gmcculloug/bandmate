@@ -44,42 +44,14 @@
             </div>
         </div>
 
+        <% if @song.url.present? %>
         <div>
             <h3>Actions</h3>
-            <% if @song.url.present? %>
-                <div style="margin-bottom: 20px;">
-                    <a href="<%= @song.url %>" target="_blank" class="btn btn-success">🎵 Listen on Streaming Platform</a>
-                </div>
-            <% end %>
-            
             <div style="margin-bottom: 20px;">
-                <h4>Add to Gig</h4>
-                <form method="POST" action="/gigs" style="display: flex; gap: 10px; align-items: end;">
-                    <div class="form-group" style="flex: 1;">
-                        <label for="gig_name">Gig Name</label>
-                        <input type="text" id="gig_name" name="name" placeholder="e.g., Friday Night Set" required>
-                    </div>
-                    <button type="submit" class="btn">Create & Add</button>
-                </form>
+                <a href="<%= @song.url %>" target="_blank" class="btn btn-success">🎵 Listen on Streaming Platform</a>
             </div>
-
-            <% existing_gigs = Gig.joins(:band).where(bands: { id: @song.band_ids }) %>
-            <% if existing_gigs.any? %>
-                <div>
-                    <h4>Add to Existing Gig</h4>
-                    <% existing_gigs.each do |gig| %>
-                        <% unless gig.songs.include?(@song) %>
-                            <form method="POST" action="/gigs/<%= gig.id %>/songs" style="margin-bottom: 10px;">
-                                <input type="hidden" name="song_id" value="<%= @song.id %>">
-                                <button type="submit" class="btn" style="width: 100%; text-align: left;">
-                                    ➕ Add to "<%= gig.name %>" (<%= gig.band.name %>)
-                                </button>
-                            </form>
-                        <% end %>
-                    <% end %>
-                </div>
-            <% end %>
         </div>
+        <% end %>
     </div>
 
     <% if @song.notes.present? %>

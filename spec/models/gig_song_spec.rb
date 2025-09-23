@@ -119,14 +119,17 @@ RSpec.describe GigSong, type: :model do
       gig = create(:gig)
       song1 = create(:song)
       song2 = create(:song)
-      
+
       gig_song1 = create(:gig_song, gig: gig, song: song1, position: 1)
       gig_song2 = create(:gig_song, gig: gig, song: song2, position: 2)
-      
-      # Swap positions
-      gig_song1.update!(position: 2)
-      gig_song2.update!(position: 1)
-      
+
+      # Swap positions using transaction to avoid uniqueness constraint conflict
+      ActiveRecord::Base.transaction do
+        gig_song1.update_column(:position, -1)  # temp position
+        gig_song2.update_column(:position, 1)
+        gig_song1.update_column(:position, 2)
+      end
+
       expect(gig_song1.reload.position).to eq(2)
       expect(gig_song2.reload.position).to eq(1)
     end

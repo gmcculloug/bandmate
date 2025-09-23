@@ -10,7 +10,10 @@ RSpec.describe GoogleCalendarService do
   before do
     allow(Google::Apis::CalendarV3::CalendarService).to receive(:new).and_return(mock_calendar_service)
     allow(mock_calendar_service).to receive(:authorization=)
-    allow(service).to receive(:authorize).and_return(double('credentials'))
+
+    # Mock the Google Auth credentials creation to avoid requiring real credentials
+    mock_credentials = double('credentials')
+    allow(Google::Auth::ServiceAccountCredentials).to receive(:make_creds).and_return(mock_credentials)
   end
 
   describe '#initialize' do

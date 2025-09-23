@@ -14,11 +14,10 @@
     </div>
 </div>
 
-<% if @band.owner? %>
-    <div style="margin-bottom: 20px; padding: 15px; background: #f0f9ff; border-radius: 8px; border-left: 4px solid #0ea5e9;">
-        <p style="margin: 0; color: #0c4a6e; font-weight: 500;">
-            👑 Band Owner: <strong><%= @band.owner.username %></strong>
-        </p>
+<% if @band.notes.present? %>
+    <div style="margin-bottom: 20px; padding: 15px; background: #f7fafc; border-radius: 8px;">
+        <h4>Notes</h4>
+        <p><%= @band.notes %></p>
     </div>
 <% end %>
 
@@ -76,64 +75,18 @@
 
 <div class="card" style="margin-top: 30px;">
     <div class="card-header">
-        <h3 class="card-title">Gigs (<%= @band.gigs.count %>)</h3>
-        <div class="card-actions">
-            <a href="/gigs/new" class="btn btn-success">➕ Create Gig</a>
-        </div>
+        <h3 class="card-title">🎤 Gigs (<%= @band.gigs.count %>)</h3>
+        <% if @band.gigs.any? %>
+            <div class="card-actions">
+                <a href="/gigs" class="btn">View All Gigs</a>
+            </div>
+        <% end %>
     </div>
 
-    <% if @band.gigs.any? %>
-        <div style="margin-bottom: 15px;">
-            <% @band.gigs.order(:performance_date).each do |gig| %>
-                <div class="set-list-card" style="margin-bottom: 8px; padding: 10px; border: 1px solid #e2e8f0; border-radius: 6px; cursor: pointer;" onclick="window.location.href='/gigs/<%= gig.id %>'">
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <div style="flex: 1;">
-                            <div style="font-weight: 600; font-size: 1rem;"><%= gig.name %></div>
-                            <div style="margin-top: 4px; display: flex; gap: 15px; font-size: 0.85rem; color: #4a5568;">
-                                <span><strong>Songs:</strong> <%= gig.songs.count %></span>
-                                <span><strong>Duration:</strong> 
-                                    <% 
-                                      total_minutes = gig.songs.sum do |s| 
-                                        if s.duration && s.duration.include?(':')
-                                          parts = s.duration.split(':')
-                                          if parts.length >= 2
-                                            minutes = parts[0].to_i
-                                            seconds = parts[1].to_i
-                                            minutes + seconds/60.0
-                                          else
-                                            0
-                                          end
-                                        else
-                                          0
-                                        end
-                                      end
-                                    %>
-                                    <%= total_minutes > 0 ? "#{total_minutes.to_i}:#{((total_minutes % 1) * 60).round.to_s.rjust(2, '0')}" : 'N/A' %>
-                                </span>
-                            </div>
-                            <% if gig.notes.present? %>
-                                <div style="margin-top: 4px; font-size: 0.85rem; color: #718096; font-style: italic;">
-                                    <%= gig.notes.truncate(100) %>
-                                </div>
-                            <% end %>
-                        </div>
-                        <div class="actions" onclick="event.stopPropagation();" style="display: flex; gap: 5px;">
-                            <a href="/gigs/<%= gig.id %>/edit" class="btn" style="font-size: 0.8rem; padding: 5px 10px;">Edit</a>
-                            <a href="/gigs/<%= gig.id %>/print" class="btn" style="font-size: 0.8rem; padding: 5px 10px;" target="_blank">Print</a>
-                            <form method="POST" action="/gigs/<%= gig.id %>" style="display: inline;">
-                                <input type="hidden" name="_method" value="DELETE">
-                                <button type="submit" class="btn btn-danger" style="font-size: 0.8rem; padding: 5px 10px;" onclick="return confirm('Delete this gig?')">Delete</button>
-                            </form>
-                        </div>
-                    </div>
-                </div>
-            <% end %>
-        </div>
-    <% else %>
+    <% unless @band.gigs.any? %>
         <div style="text-align: center; padding: 40px;">
             <h3>No gigs for this band yet</h3>
             <p>Create a gig to get started!</p>
-            <a href="/gigs/new" class="btn btn-success">Create Gig</a>
         </div>
     <% end %>
 </div>
@@ -142,105 +95,38 @@
     <div class="card-header">
         <h3 class="card-title">🏛️ Venues (<%= @band.venues.count %>)</h3>
         <div class="card-actions">
+            <% if @band.venues.any? %>
+                <a href="/venues" class="btn">View All Venues</a>
+            <% end %>
             <% if current_user.bands.count > 1 %>
                 <a href="/bands/<%= @band.id %>/copy_venues" class="btn">📋 Copy from Other Bands</a>
             <% end %>
-            <a href="/venues/new" class="btn btn-success">➕ Add Venue</a>
         </div>
     </div>
 
-    <% if @band.venues.any? %>
-        <div style="margin-bottom: 15px;">
-            <% @band.venues.order(:name).each do |venue| %>
-                <div class="venue-card" style="margin-bottom: 8px; padding: 10px; border: 1px solid #e2e8f0; border-radius: 6px; cursor: pointer;" onclick="window.location.href='/venues/<%= venue.id %>'">
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <div style="flex: 1;">
-                            <div style="font-weight: 600; font-size: 1rem;"><%= venue.name %></div>
-                            <div style="color: #718096; font-size: 0.9rem;"><%= venue.location %></div>
-                            <div style="margin-top: 4px; display: flex; gap: 15px; font-size: 0.85rem; color: #4a5568;">
-                                <span><strong>Contact:</strong> <%= venue.contact_name %></span>
-                                <span><strong>Phone:</strong> <%= venue.phone_number %></span>
-                                <% if venue.website.present? %>
-                                    <span><strong>Website:</strong> <a href="<%= venue.website %>" target="_blank" onclick="event.stopPropagation();" style="color: #2563eb; text-decoration: underline;"><%= venue.website %></a></span>
-                                <% end %>
-                            </div>
-                        </div>
-                        <div class="actions" onclick="event.stopPropagation();" style="display: flex; gap: 5px;">
-                            <a href="/venues/<%= venue.id %>/edit" class="btn" style="font-size: 0.8rem; padding: 5px 10px;">Edit</a>
-                            <form method="POST" action="/venues/<%= venue.id %>" style="display: inline;">
-                                <input type="hidden" name="_method" value="DELETE">
-                                <button type="submit" class="btn btn-danger" style="font-size: 0.8rem; padding: 5px 10px;" onclick="return confirm('Delete this venue?')">Delete</button>
-                            </form>
-                        </div>
-                    </div>
-                </div>
-            <% end %>
-        </div>
-    <% else %>
+    <% unless @band.venues.any? %>
         <div style="text-align: center; padding: 40px;">
             <h3>No venues for this band yet</h3>
             <p>Add some venues to get started!</p>
-            <div class="actions" style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
-                <% if current_user.bands.count > 1 %>
-                    <a href="/bands/<%= @band.id %>/copy_venues" class="btn">📋 Copy from Other Bands</a>
-                <% end %>
-                <a href="/venues/new" class="btn btn-success">Add Venue</a>
-            </div>
         </div>
     <% end %>
 </div>
 
 <div class="card" style="margin-top: 30px;">
-    <% if @band.notes.present? %>
-        <div style="margin-bottom: 20px; padding: 15px; background: #f7fafc; border-radius: 8px;">
-            <h4>Notes</h4>
-            <p><%= @band.notes %></p>
-        </div>
-    <% end %>
-
     <div class="card-header">
-        <h3 class="card-title">Songs (<%= @band.songs.count %>)</h3>
+        <h3 class="card-title">🎵 Songs (<%= @band.songs.count %>)</h3>
         <div class="card-actions">
+            <% if @band.songs.any? %>
+                <a href="/songs" class="btn">View All Songs</a>
+            <% end %>
             <a href="/bands/<%= @band.id %>/copy_songs" class="btn">📋 Copy from Global Library</a>
-            <a href="/global_songs/new" class="btn btn-success">➕ Add Song</a>
         </div>
     </div>
 
-    <% if @band.songs.any? %>
-        <div style="margin-bottom: 15px;">
-            <% @band.songs.order(:title).each do |song| %>
-                <div class="song-card" style="margin-bottom: 8px; padding: 10px; border: 1px solid #e2e8f0; border-radius: 6px; cursor: pointer;" onclick="window.location.href='/songs/<%= song.id %>'">
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <div style="flex: 1;">
-                            <div style="font-weight: 600; font-size: 1rem;">
-                                <%= song.title %>
-                                <% if song.artist.present? %>
-                                    <span style="color: #718096; font-weight: normal; font-size: 0.9rem;"> • <%= song.artist %></span>
-                                <% end %>
-                            </div>
-                            <div style="margin-top: 4px; display: flex; gap: 15px; font-size: 0.85rem; color: #4a5568;">
-                                <span><strong>Key:</strong> <%= song.key %></span>
-                                <span><strong>Tempo:</strong> <%= song.tempo ? "#{song.tempo} BPM" : 'N/A' %></span>
-                                <span><strong>Duration:</strong> <%= song.duration || 'N/A' %></span>
-                                <span><strong>Genre:</strong> <%= song.genre || 'N/A' %></span>
-                            </div>
-                        </div>
-                        <div class="actions" onclick="event.stopPropagation();" style="display: flex; gap: 5px;">
-                            <a href="/songs/<%= song.id %>/edit" class="btn" style="font-size: 0.8rem; padding: 5px 10px;">Edit</a>
-                            <form method="POST" action="/songs/<%= song.id %>" style="display: inline;">
-                                <input type="hidden" name="_method" value="DELETE">
-                                <button type="submit" class="btn btn-danger" style="font-size: 0.8rem; padding: 5px 10px;" onclick="return confirm('Delete this song?')">Delete</button>
-                            </form>
-                        </div>
-                    </div>
-                </div>
-            <% end %>
-        </div>
-    <% else %>
+    <% unless @band.songs.any? %>
         <div style="text-align: center; padding: 40px;">
             <h3>No songs for this band yet</h3>
             <p>Add some songs to get started!</p>
-            <a href="/global_songs/new" class="btn btn-success">Add Song</a>
         </div>
     <% end %>
 </div>
