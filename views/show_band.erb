@@ -95,11 +95,11 @@
     <div class="card-header">
         <h3 class="card-title">🏛️ Venues (<%= @band.venues.count %>)</h3>
         <div class="card-actions">
-            <% if @band.venues.any? %>
-                <a href="/venues" class="btn">View All Venues</a>
-            <% end %>
             <% if current_user.bands.count > 1 %>
                 <a href="/bands/<%= @band.id %>/copy_venues" class="btn">📋 Copy from Other Bands</a>
+            <% end %>
+            <% if @band.venues.any? %>
+                <a href="/venues" class="btn">View All Venues</a>
             <% end %>
         </div>
     </div>
@@ -116,10 +116,10 @@
     <div class="card-header">
         <h3 class="card-title">🎵 Songs (<%= @band.songs.count %>)</h3>
         <div class="card-actions">
+            <a href="/bands/<%= @band.id %>/copy_songs" class="btn">📋 Copy from Global Library</a>
             <% if @band.songs.any? %>
                 <a href="/songs" class="btn">View All Songs</a>
             <% end %>
-            <a href="/bands/<%= @band.id %>/copy_songs" class="btn">📋 Copy from Global Library</a>
         </div>
     </div>
 

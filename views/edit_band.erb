@@ -21,6 +21,28 @@
     <% end %>
 
     <div class="card" style="margin-bottom: 30px;">
+        <form method="POST" action="/bands/<%= @band.id %>">
+            <input type="hidden" name="_method" value="PUT">
+
+            <div style="margin-bottom: 20px;">
+                <label for="band_name" style="display: block; margin-bottom: 5px; font-weight: bold;">Band Name *</label>
+                <input type="text" id="band_name" name="band[name]" value="<%= @band.name %>" required autofocus style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 16px;">
+            </div>
+
+            <div style="margin-bottom: 20px;">
+                <label for="band_notes" style="display: block; margin-bottom: 5px; font-weight: bold;">Notes</label>
+                <textarea id="band_notes" name="band[notes]" rows="4" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 16px; font-family: inherit;"><%= @band.notes %></textarea>
+                <small style="color: #666;">Optional notes about the band, members, style, etc.</small>
+            </div>
+
+            <div class="actions">
+                <button type="submit" class="btn btn-success">Update Band</button>
+                <a href="/bands/<%= @band.id %>" class="btn">Cancel</a>
+            </div>
+        </form>
+    </div>
+
+    <div class="card" style="margin-bottom: 30px;">
         <h3>👥 Band Members</h3>
         <p style="color: #666; margin-bottom: 15px;">
             Any band member can add or remove other members. The band owner cannot be removed and must transfer ownership first.
@@ -92,28 +114,6 @@
             </form>
             <small style="color: #666; margin-top: 5px; display: block;">Enter the exact username of the user you want to add to this band.</small>
         </div>
-    </div>
-
-    <div class="card">
-        <form method="POST" action="/bands/<%= @band.id %>">
-            <input type="hidden" name="_method" value="PUT">
-            
-            <div style="margin-bottom: 20px;">
-                <label for="band_name" style="display: block; margin-bottom: 5px; font-weight: bold;">Band Name *</label>
-                <input type="text" id="band_name" name="band[name]" value="<%= @band.name %>" required autofocus style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 16px;">
-            </div>
-
-            <div style="margin-bottom: 20px;">
-                <label for="band_notes" style="display: block; margin-bottom: 5px; font-weight: bold;">Notes</label>
-                <textarea id="band_notes" name="band[notes]" rows="4" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 16px; font-family: inherit;"><%= @band.notes %></textarea>
-                <small style="color: #666;">Optional notes about the band, members, style, etc.</small>
-            </div>
-
-            <div class="actions">
-                <button type="submit" class="btn btn-success">Update Band</button>
-                <a href="/bands/<%= @band.id %>" class="btn">Cancel</a>
-            </div>
-        </form>
     </div>
 
     <!-- Google Calendar Integration Section -->
