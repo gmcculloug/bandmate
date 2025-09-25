@@ -1,11 +1,11 @@
 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
-    <h2>🌍 Global Song Library</h2>
-    <a href="/global_songs/new" class="btn btn-success">➕ Add New Song</a>
+    <h2>🌍 Song Catalog</h2>
+    <a href="/song_catalogs/new" class="btn btn-success">➕ Add New Song</a>
 </div>
 
 <div style="margin-bottom: 20px;">
     <div style="position: relative; max-width: 400px;">
-        <input type="text" id="search-input" value="<%= @search %>" placeholder="Search global songs by title or artist..." style="width: 100%; padding: 10px 40px 10px 10px; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 16px;">
+        <input type="text" id="search-input" value="<%= @search %>" placeholder="Search song catalog by title or artist..." style="width: 100%; padding: 10px 40px 10px 10px; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 16px;">
         <% if @search.present? %>
             <a href="#" onclick="clearSearch(); return false;" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; color: #718096; font-size: 18px; cursor: pointer; text-decoration: none; display: flex; align-items: center; justify-content: center; width: 20px; height: 20px;">✕</a>
         <% end %>
@@ -77,49 +77,49 @@ document.addEventListener('DOMContentLoaded', function() {
     <div style="margin-bottom: 20px; padding: 10px; background: #f7fafc; border-radius: 8px; border-left: 4px solid #667eea;">
         <p style="margin: 0; color: #4a5568;">
             Showing results for "<strong><%= @search %></strong>"
-            (<%= @global_songs.count %> song<%= @global_songs.count == 1 ? '' : 's' %>)
+            (<%= @song_catalogs.count %> song<%= @song_catalogs.count == 1 ? '' : 's' %>)
         </p>
     </div>
 <% end %>
 
 <div style="margin-bottom: 20px; padding: 15px; background: #e6fffa; border-radius: 8px; border-left: 4px solid #38a169;">
     <p style="margin: 0; color: #2f855a; font-weight: 500;">
-        ℹ️ This is the global song library that all bands can use. Add songs here to make them available to everyone, or browse to copy songs to your band's repertoire.
+        ℹ️ This is the song catalog that all bands can use. Add songs here to make them available to everyone, or browse to copy songs to your band's repertoire.
     </p>
 </div>
 
-<% if @global_songs.any? %>
+<% if @song_catalogs.any? %>
     <div style="display: flex; flex-direction: column; gap: 8px;">
-        <% @global_songs.each do |global_song| %>
-            <div class="song-card" style="padding: 15px; margin-bottom: 0; cursor: pointer;" onclick="window.location.href='/global_songs/<%= global_song.id %>'">
+        <% @song_catalogs.each do |song_catalog| %>
+            <div class="song-card" style="padding: 15px; margin-bottom: 0; cursor: pointer;" onclick="window.location.href='/song_catalogs/<%= song_catalog.id %>'">
                 <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
                     <div style="flex: 1; min-width: 0;">
                         <div style="font-weight: bold; color: #2d3748; margin-bottom: 5px; word-break: break-word;">
-                            <%= global_song.title %>
-                            <% if global_song.artist.present? %>
-                                <span style="color: #718096; font-weight: normal; font-size: 0.9rem;"> • <%= global_song.artist %></span>
+                            <%= song_catalog.title %>
+                            <% if song_catalog.artist.present? %>
+                                <span style="color: #718096; font-weight: normal; font-size: 0.9rem;"> • <%= song_catalog.artist %></span>
                             <% end %>
                         </div>
                         <div style="font-size: 0.8rem; color: #a0aec0; display: flex; flex-wrap: wrap; gap: 5px;">
                             <span style="background: #667eea; color: white; padding: 2px 6px; border-radius: 10px;">
-                                <%= global_song.key %>
+                                <%= song_catalog.key %>
                             </span>
 
-                            <% if global_song.tempo %>
+                            <% if song_catalog.tempo %>
                                 <span style="background: #38a169; color: white; padding: 2px 6px; border-radius: 10px;">
-                                    <%= global_song.tempo %> BPM
+                                    <%= song_catalog.tempo %> BPM
                                 </span>
                             <% end %>
-                            <% if global_song.genre.present? %>
+                            <% if song_catalog.genre.present? %>
                                 <span style="background: #ed8936; color: white; padding: 2px 6px; border-radius: 10px;">
-                                    <%= global_song.genre %>
+                                    <%= song_catalog.genre %>
                                 </span>
                             <% end %>
                         </div>
                     </div>
                     <div class="actions" onclick="event.stopPropagation();" style="margin-left: 15px; display: flex; gap: 5px; flex-shrink: 0;">
-                        <% if global_song.url.present? %>
-                            <a href="<%= global_song.url %>" target="_blank" class="btn" style="padding: 6px 12px; font-size: 0.8rem;">🎵</a>
+                        <% if song_catalog.url.present? %>
+                            <a href="<%= song_catalog.url %>" target="_blank" class="btn" style="padding: 6px 12px; font-size: 0.8rem;">🎵</a>
                         <% end %>
                     </div>
                 </div>
@@ -128,8 +128,8 @@ document.addEventListener('DOMContentLoaded', function() {
     </div>
 <% else %>
     <div class="card">
-        <h3>No global songs yet!</h3>
-        <p>Get started by adding the first song to the global library. This will make it available for all bands to copy and use.</p>
-        <a href="/global_songs/new" class="btn btn-success">Add First Global Song</a>
+        <h3>No songs in catalog yet!</h3>
+        <p>Get started by adding the first song to the song catalog. This will make it available for all bands to copy and use.</p>
+        <a href="/song_catalogs/new" class="btn btn-success">Add First Song to Catalog</a>
     </div>
 <% end %>

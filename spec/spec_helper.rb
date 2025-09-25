@@ -48,7 +48,7 @@ RSpec.configure do |config|
     User.update_all(last_selected_band_id: nil)
     Band.delete_all
     User.delete_all
-    GlobalSong.delete_all
+    SongCatalog.delete_all
   end
 end
 

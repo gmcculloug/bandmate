@@ -1,5 +1,5 @@
 class Song < ActiveRecord::Base
-  belongs_to :global_song, optional: true
+  belongs_to :song_catalog, optional: true
   has_and_belongs_to_many :bands, join_table: 'songs_bands'
   has_many :gig_songs
   has_many :gigs, through: :gig_songs
@@ -18,22 +18,22 @@ class Song < ActiveRecord::Base
   scope :by_key, ->(key) { where(key: key) }
   scope :by_tempo_range, ->(min, max) { where(tempo: min..max) }
 
-  # Create a band-specific copy of a global song
-  def self.create_from_global_song(global_song, band_ids = [])
+  # Create a band-specific copy from song catalog
+  def self.create_from_song_catalog(song_catalog, band_ids = [])
     song = new(
-      title: global_song.title,
-      artist: global_song.artist,
-      key: global_song.key,
-      original_key: global_song.original_key,
-      tempo: global_song.tempo,
-      genre: global_song.genre,
-      url: global_song.url,
-      notes: global_song.notes,
-      duration: global_song.duration,
-      year: global_song.year,
-      album: global_song.album,
-      lyrics: global_song.lyrics,
-      global_song: global_song
+      title: song_catalog.title,
+      artist: song_catalog.artist,
+      key: song_catalog.key,
+      original_key: song_catalog.original_key,
+      tempo: song_catalog.tempo,
+      genre: song_catalog.genre,
+      url: song_catalog.url,
+      notes: song_catalog.notes,
+      duration: song_catalog.duration,
+      year: song_catalog.year,
+      album: song_catalog.album,
+      lyrics: song_catalog.lyrics,
+      song_catalog: song_catalog
     )
     song.band_ids = band_ids
     song

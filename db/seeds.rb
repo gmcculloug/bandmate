@@ -117,7 +117,7 @@ global_songs_data = [
   { title: "Born to Run", artist: "Bruce Springsteen", key: "E", original_key: "E", tempo: 147, genre: "Rock", year: 1975, album: "Born to Run", duration: "4:30" },
   { title: "Smoke on the Water", artist: "Deep Purple", key: "G", original_key: "G", tempo: 112, genre: "Hard Rock", year: 1972, album: "Machine Head", duration: "5:40" },
   { title: "More Than a Feeling", artist: "Boston", key: "G", original_key: "G", tempo: 115, genre: "Rock", year: 1976, album: "Boston", duration: "4:45" },
-  { title: "Tom Sawyer", artist: "Rush", key: "E", original_key: "E", tempo: 176, genre: "Progressive Rock", year: 1981, album: "Moving Pictures", duration: "4:33" },
+  { title: "Tom Sawyer", artist: "Rush", key: "E", original_key: "E", tempo: 88, genre: "Progressive Rock", year: 1981, album: "Moving Pictures", duration: "4:33" },
   { title: "Back in Black", artist: "AC/DC", key: "E", original_key: "E", tempo: 94, genre: "Hard Rock", year: 1980, album: "Back in Black", duration: "4:15" },
   { title: "Highway to Hell", artist: "AC/DC", key: "A", original_key: "A", tempo: 115, genre: "Hard Rock", year: 1979, album: "Highway to Hell", duration: "3:28" },
   
@@ -125,7 +125,7 @@ global_songs_data = [
   { title: "Brown Eyed Girl", artist: "Van Morrison", key: "G", original_key: "G", tempo: 150, genre: "Folk Rock", year: 1967, album: "Blowin' Your Mind!", duration: "3:05" },
   { title: "Sweet Caroline", artist: "Neil Diamond", key: "C", original_key: "C", tempo: 125, genre: "Pop", year: 1969, album: "Brother Love's Travelling Salvation Show", duration: "3:21" },
   { title: "Fire and Rain", artist: "James Taylor", key: "A", original_key: "A", tempo: 76, genre: "Folk Rock", year: 1970, album: "Sweet Baby James", duration: "3:20" },
-  { title: "American Pie", artist: "Don McLean", key: "G", original_key: "G", tempo: 76, genre: "Folk Rock", year: 1971, album: "American Pie", duration: "8:37" },
+  { title: "American Pie", artist: "Don McLean", key: "G", original_key: "G", tempo: 76, genre: "Folk Rock", year: 1971, album: "American Pie", duration: "8:36" },
   { title: "The Sound of Silence", artist: "Simon & Garfunkel", key: "Am", original_key: "Am", tempo: 90, genre: "Folk Rock", year: 1964, album: "Wednesday Morning, 3 A.M.", duration: "3:05" },
   { title: "Mrs. Robinson", artist: "Simon & Garfunkel", key: "E", original_key: "E", tempo: 120, genre: "Folk Rock", year: 1968, album: "Bookends", duration: "4:04" },
   { title: "Blackbird", artist: "The Beatles", key: "G", original_key: "G", tempo: 96, genre: "Folk Rock", year: 1968, album: "The Beatles (White Album)", duration: "2:18" },
@@ -136,7 +136,7 @@ global_songs_data = [
   { title: "Don't Stop Me Now", artist: "Queen", key: "F", original_key: "F", tempo: 156, genre: "Rock", year: 1978, album: "Jazz", duration: "3:29" },
   { title: "Billie Jean", artist: "Michael Jackson", key: "F#m", original_key: "F#m", tempo: 117, genre: "Pop", year: 1982, album: "Thriller", duration: "4:54" },
   { title: "Beat It", artist: "Michael Jackson", key: "Em", original_key: "Em", tempo: 139, genre: "Pop Rock", year: 1982, album: "Thriller", duration: "4:18" },
-  { title: "Sweet Child O' Mine", artist: "Guns N' Roses", key: "Db", original_key: "Db", tempo: 125, genre: "Hard Rock", year: 1987, album: "Appetite for Destruction", duration: "5:03" },
+  { title: "Sweet Child O' Mine", artist: "Guns N' Roses", key: "D", original_key: "D", tempo: 125, genre: "Hard Rock", year: 1987, album: "Appetite for Destruction", duration: "5:03" },
   { title: "Pour Some Sugar on Me", artist: "Def Leppard", key: "E", original_key: "E", tempo: 96, genre: "Hard Rock", year: 1987, album: "Hysteria", duration: "4:25" },
   { title: "Jump", artist: "Van Halen", key: "C", original_key: "C", tempo: 131, genre: "Hard Rock", year: 1983, album: "1984", duration: "4:04" },
   { title: "Runnin' with the Devil", artist: "Van Halen", key: "E", original_key: "E", tempo: 100, genre: "Hard Rock", year: 1978, album: "Van Halen", duration: "3:35" },
@@ -172,10 +172,10 @@ global_songs_data = [
   { title: "No Woman No Cry", artist: "Bob Marley", key: "C", original_key: "C", tempo: 76, genre: "Reggae", year: 1974, album: "Natty Dread", duration: "7:08" },
   { title: "Three Little Birds", artist: "Bob Marley", key: "A", original_key: "A", tempo: 76, genre: "Reggae", year: 1977, album: "Exodus", duration: "3:00" },
   { title: "Red Red Wine", artist: "UB40", key: "Bb", original_key: "Bb", tempo: 78, genre: "Reggae", year: 1983, album: "Labour of Love", duration: "3:06" },
-  { title: "The Impression That I Get", artist: "The Mighty Mighty Bosstones", key: "F", original_key: "F", tempo: 180, genre: "Ska", year: 1997, album: "Let's Face It", duration: "3:13" },
+  { title: "The Impression That I Get", artist: "The Mighty Mighty Bosstones", key: "F", original_key: "F", tempo: 150, genre: "Ska", year: 1997, album: "Let's Face It", duration: "3:13" },
   
   # Indie & Modern Rock
-  { title: "Float On", artist: "Modest Mouse", key: "F", original_key: "F", tempo: 180, genre: "Indie Rock", year: 2004, album: "Good News for People Who Love Bad News", duration: "3:28" },
+  { title: "Float On", artist: "Modest Mouse", key: "F", original_key: "F", tempo: 90, genre: "Indie Rock", year: 2004, album: "Good News for People Who Love Bad News", duration: "3:28" },
   { title: "Seven Nation Army", artist: "The White Stripes", key: "Em", original_key: "Em", tempo: 124, genre: "Alternative Rock", year: 2003, album: "Elephant", duration: "3:51" },
   { title: "I Will Follow", artist: "U2", key: "A", original_key: "A", tempo: 150, genre: "Rock", year: 1980, album: "Boy", duration: "3:36" },
   { title: "Where the Streets Have No Name", artist: "U2", key: "D", original_key: "D", tempo: 131, genre: "Rock", year: 1987, album: "The Joshua Tree", duration: "5:36" },
@@ -194,8 +194,8 @@ global_songs_data = [
   { title: "I Want You Back", artist: "The Jackson 5", key: "Ab", original_key: "Ab", tempo: 100, genre: "Motown", year: 1969, album: "Diana Ross Presents The Jackson 5", duration: "2:59" },
   
   # Punk & New Wave
-  { title: "Blitzkrieg Bop", artist: "Ramones", key: "A", original_key: "A", tempo: 180, genre: "Punk Rock", year: 1976, album: "Ramones", duration: "2:12" },
-  { title: "I Wanna Be Sedated", artist: "Ramones", key: "E", original_key: "E", tempo: 166, genre: "Punk Rock", year: 1978, album: "Road to Ruin", duration: "2:30" },
+  { title: "Blitzkrieg Bop", artist: "Ramones", key: "A", original_key: "A", tempo: 176, genre: "Punk Rock", year: 1976, album: "Ramones", duration: "2:12" },
+  { title: "I Wanna Be Sedated", artist: "Ramones", key: "E", original_key: "E", tempo: 150, genre: "Punk Rock", year: 1978, album: "Road to Ruin", duration: "2:30" },
   { title: "London Calling", artist: "The Clash", key: "Em", original_key: "Em", tempo: 133, genre: "Punk Rock", year: 1979, album: "London Calling", duration: "3:19" },
   { title: "Should I Stay or Should I Go", artist: "The Clash", key: "G", original_key: "G", tempo: 115, genre: "Punk Rock", year: 1982, album: "Combat Rock", duration: "3:06" },
   { title: "Once in a Lifetime", artist: "Talking Heads", key: "C", original_key: "C", tempo: 102, genre: "New Wave", year: 1980, album: "Remain in Light", duration: "4:20" },
@@ -203,10 +203,10 @@ global_songs_data = [
   
   # Metal & Hard Rock
   { title: "Enter Sandman", artist: "Metallica", key: "Em", original_key: "Em", tempo: 123, genre: "Metal", year: 1991, album: "Metallica (Black Album)", duration: "5:31" },
-  { title: "Master of Puppets", artist: "Metallica", key: "Em", original_key: "Em", tempo: 212, genre: "Metal", year: 1986, album: "Master of Puppets", duration: "8:35" },
-  { title: "Breaking the Law", artist: "Judas Priest", key: "F#", original_key: "F#", tempo: 150, genre: "Metal", year: 1980, album: "British Steel", duration: "2:35" },
+  { title: "Master of Puppets", artist: "Metallica", key: "Em", original_key: "Em", tempo: 220, genre: "Metal", year: 1986, album: "Master of Puppets", duration: "8:35" },
+  { title: "Breaking the Law", artist: "Judas Priest", key: "A", original_key: "A", tempo: 150, genre: "Metal", year: 1980, album: "British Steel", duration: "2:35" },
   { title: "Ace of Spades", artist: "Motörhead", key: "E", original_key: "E", tempo: 134, genre: "Metal", year: 1980, album: "Ace of Spades", duration: "2:49" },
-  { title: "Crazy Train", artist: "Ozzy Osbourne", key: "F#", original_key: "F#", tempo: 138, genre: "Metal", year: 1980, album: "Blizzard of Ozz", duration: "4:53" },
+  { title: "Crazy Train", artist: "Ozzy Osbourne", key: "A", original_key: "A", tempo: 138, genre: "Metal", year: 1980, album: "Blizzard of Ozz", duration: "4:53" },
   { title: "Iron Man", artist: "Black Sabbath", key: "B", original_key: "B", tempo: 71, genre: "Metal", year: 1970, album: "Paranoid", duration: "5:56" },
   { title: "Paranoid", artist: "Black Sabbath", key: "E", original_key: "E", tempo: 164, genre: "Metal", year: 1970, album: "Paranoid", duration: "2:48" },
   
@@ -251,7 +251,7 @@ global_songs_data = [
   { title: "Don't Start Now", artist: "Dua Lipa", key: "Am", original_key: "Am", tempo: 124, genre: "Pop", year: 2019, album: "Future Nostalgia", duration: "3:03" },
   { title: "Karma Chameleon", artist: "Culture Club", key: "Bb", original_key: "Bb", tempo: 150, genre: "Pop", year: 1983, album: "Colour by Numbers", duration: "4:07" },
   { title: "Santeria", artist: "Sublime", key: "E", original_key: "E", tempo: 80, genre: "Alternative Rock", year: 1996, album: "Sublime", duration: "3:03" },
-  { title: "Jenny", artist: "Tommy Tutone", key: "F#", original_key: "F#", tempo: 140, genre: "Rock", year: 1981, album: "Tommy Tutone 2", duration: "3:58" },
+  { title: "Jenny", artist: "Tommy Tutone", key: "F#m", original_key: "F#m", tempo: 140, genre: "Rock", year: 1981, album: "Tommy Tutone 2", duration: "3:58" },
   { title: "American Girl", artist: "Tom Petty and the Heartbreakers", key: "D", original_key: "D", tempo: 122, genre: "Rock", year: 1976, album: "Tom Petty and the Heartbreakers", duration: "3:31" },
   { title: "Country Roads", artist: "John Denver", key: "A", original_key: "A", tempo: 80, genre: "Country Folk", year: 1971, album: "Poems, Prayers & Promises", duration: "3:13" },
   { title: "When Will I Be Loved", artist: "The Everly Brothers", key: "A", original_key: "A", tempo: 140, genre: "Country Rock", year: 1960, album: "A Date with the Everly Brothers", duration: "2:03" },
@@ -317,9 +317,9 @@ global_songs_data = [
   { title: "You Oughta Know", artist: "Alanis Morissette", key: "F#m", original_key: "F#m", tempo: 103, genre: "Alternative Rock", year: 1995, album: "Jagged Little Pill", duration: "4:09" }
 ]
 
-global_songs = []
+song_catalogs = []
 global_songs_data.each do |song_data|
-  global_song = GlobalSong.find_or_create_by(
+  song_catalog = SongCatalog.find_or_create_by(
     title: song_data[:title], 
     artist: song_data[:artist]
   ) do |gs|
@@ -331,8 +331,8 @@ global_songs_data.each do |song_data|
     gs.album = song_data[:album]
     gs.duration = song_data[:duration]
   end
-  global_songs << global_song
-  puts "Created/found global song: #{global_song.title} by #{global_song.artist}"
+  song_catalogs << song_catalog
+  puts "Created/found song catalog entry: #{song_catalog.title} by #{song_catalog.artist}"
 end
 
 # Create venues for each band
@@ -390,7 +390,7 @@ bands.each do |band|
       "Every Rose Has Its Thorn", "Good Riddance"
     ]
     
-    selected_global_songs = global_songs.select { |gs| side_piece_song_titles.include?(gs.title) }
+    selected_song_catalogs = song_catalogs.select { |sc| side_piece_song_titles.include?(sc.title) }
   elsif band.name == "Sound Bite"
     # Sound Bite gets specific songs
     sound_bite_song_titles = [
@@ -408,7 +408,7 @@ bands.each do |band|
       "Who Says You Can't Go Home", "Wicked Game", "You Oughta Know"
     ]
     
-    selected_global_songs = global_songs.select { |gs| sound_bite_song_titles.include?(gs.title) }
+    selected_song_catalogs = song_catalogs.select { |sc| sound_bite_song_titles.include?(sc.title) }
   elsif band.name == "On Tap"
     # On Tap gets a mix of popular songs
     on_tap_song_titles = [
@@ -421,28 +421,28 @@ bands.each do |band|
       "Torn", "1979", "Zombie", "Fly Me to the Moon", "Brown Sugar", "Start Me Up", "Wild Thing"
     ]
     
-    selected_global_songs = global_songs.select { |gs| on_tap_song_titles.include?(gs.title) }
+    selected_song_catalogs = song_catalogs.select { |sc| on_tap_song_titles.include?(sc.title) }
   else
     # Other bands get 30-50 random global songs
-    selected_global_songs = global_songs.sample(rand(30..50))
+    selected_song_catalogs = song_catalogs.sample(rand(30..50))
   end
   
-  selected_global_songs.each do |global_song|
+  selected_song_catalogs.each do |song_catalog|
     song = Song.find_or_create_by(
-      title: global_song.title,
-      artist: global_song.artist,
-      global_song: global_song
+      title: song_catalog.title,
+      artist: song_catalog.artist,
+      song_catalog: song_catalog
     ) do |s|
-      s.key = global_song.key
-      s.original_key = global_song.original_key
-      s.tempo = global_song.tempo
-      s.genre = global_song.genre
-      s.url = global_song.url
-      s.notes = global_song.notes
-      s.duration = global_song.duration
-      s.year = global_song.year
-      s.album = global_song.album
-      s.lyrics = global_song.lyrics
+      s.key = song_catalog.key
+      s.original_key = song_catalog.original_key
+      s.tempo = song_catalog.tempo
+      s.genre = song_catalog.genre
+      s.url = song_catalog.url
+      s.notes = song_catalog.notes
+      s.duration = song_catalog.duration
+      s.year = song_catalog.year
+      s.album = song_catalog.album
+      s.lyrics = song_catalog.lyrics
     end
     
     # Add song to band if not already added
@@ -551,7 +551,7 @@ puts "\nSeeding completed successfully!"
 puts "Created:"
 puts "- #{User.count} users (all with password 'test123')"
 puts "- #{Band.count} bands"
-puts "- #{GlobalSong.count} global songs"
+puts "- #{SongCatalog.count} song catalog entries"
 puts "- #{Song.count} band-specific songs"
 puts "- #{Venue.count} venues"
 puts "- #{Gig.count} gigs (past and future)"

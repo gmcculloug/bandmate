@@ -116,7 +116,7 @@
     <div class="card-header">
         <h3 class="card-title">🎵 Songs (<%= @band.songs.count %>)</h3>
         <div class="card-actions">
-            <a href="/bands/<%= @band.id %>/copy_songs" class="btn">📋 Copy from Global Library</a>
+            <a href="/bands/<%= @band.id %>/copy_songs" class="btn">📋 Copy from Song Catalog</a>
             <% if @band.songs.any? %>
                 <a href="/songs" class="btn">View All Songs</a>
             <% end %>

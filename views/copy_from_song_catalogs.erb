@@ -1,47 +1,47 @@
 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
-    <h2>📋 Copy from Global Song List</h2>
+    <h2>📋 Copy from Song Catalog</h2>
     <a href="/songs" class="btn btn-secondary">← Back to Songs</a>
 </div>
 
-<form id="copy-songs-form" method="post" action="/songs/copy_from_global">
+<form id="copy-songs-form" method="post" action="/songs/copy_from_song_catalog">
     <div class="copy-interface" style="display: grid; grid-template-columns: 1fr auto 1fr; gap: 20px; margin-bottom: 20px;">
         
-        <!-- Left Column: Global Songs -->
-        <div class="global-songs-section">
+        <!-- Left Column: Song Catalog -->
+        <div class="song-catalog-section">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                <h3 style="margin: 0;">🌍 Global Songs (<span id="global-count"><%= @global_songs.count %></span>)</h3>
+                <h3 style="margin: 0;">🌍 Song Catalog (<span id="catalog-count"><%= @song_catalogs.count %></span>)</h3>
                 <div style="display: flex; gap: 10px;">
-                    <button type="button" id="select-all-global" class="btn btn-outline" style="padding: 5px 10px; font-size: 0.8rem;">Select All</button>
-                    <button type="button" id="clear-global" class="btn btn-outline" style="padding: 5px 10px; font-size: 0.8rem;">Clear</button>
+                    <button type="button" id="select-all-catalog" class="btn btn-outline" style="padding: 5px 10px; font-size: 0.8rem;">Select All</button>
+                    <button type="button" id="clear-catalog" class="btn btn-outline" style="padding: 5px 10px; font-size: 0.8rem;">Clear</button>
                 </div>
             </div>
             
             <!-- Search Filter -->
             <div style="margin-bottom: 15px;">
-                <input type="text" id="global-search" value="<%= @search %>" placeholder="Filter global songs..." style="width: 100%; padding: 8px; border: 2px solid #e2e8f0; border-radius: 6px; font-size: 14px;">
+                <input type="text" id="catalog-search" value="<%= @search %>" placeholder="Filter song catalog..." style="width: 100%; padding: 8px; border: 2px solid #e2e8f0; border-radius: 6px; font-size: 14px;">
             </div>
             
-            <!-- Global Songs List -->
-            <div id="global-songs-list" class="songs-list" style="border: 2px solid #e2e8f0; border-radius: 8px; max-height: 400px; overflow-y: auto; background: #f8fafc;">
-                <% if @global_songs.any? %>
-                    <% @global_songs.each do |global_song| %>
-                        <div class="song-item global-song" data-id="<%= global_song.id %>" style="padding: 10px; border-bottom: 1px solid #e2e8f0; cursor: pointer; user-select: none;">
+            <!-- Song Catalog List -->
+            <div id="song-catalog-list" class="songs-list" style="border: 2px solid #e2e8f0; border-radius: 8px; max-height: 400px; overflow-y: auto; background: #f8fafc;">
+                <% if @song_catalogs.any? %>
+                    <% @song_catalogs.each do |song_catalog| %>
+                        <div class="song-item catalog-song" data-id="<%= song_catalog.id %>" style="padding: 10px; border-bottom: 1px solid #e2e8f0; cursor: pointer; user-select: none;">
                             <div style="display: flex; align-items: center; gap: 10px;">
-                                <input type="checkbox" class="song-checkbox" name="global_song_ids[]" value="<%= global_song.id %>" style="margin: 0;">
+                                <input type="checkbox" class="song-checkbox" name="song_catalog_ids[]" value="<%= song_catalog.id %>" style="margin: 0;">
                                 <div style="flex: 1;">
                                     <div style="font-weight: bold; color: #2d3748; margin-bottom: 3px;">
-                                        <%= global_song.title %>
-                                        <% if global_song.artist.present? %>
-                                            <span style="color: #718096; font-weight: normal; font-size: 0.9rem;"> • <%= global_song.artist %></span>
+                                        <%= song_catalog.title %>
+                                        <% if song_catalog.artist.present? %>
+                                            <span style="color: #718096; font-weight: normal; font-size: 0.9rem;"> • <%= song_catalog.artist %></span>
                                         <% end %>
                                     </div>
                                     <div style="font-size: 0.8rem; color: #a0aec0; display: flex; flex-wrap: wrap; gap: 5px;">
                                         <span style="background: #667eea; color: white; padding: 2px 6px; border-radius: 10px;">
-                                            <%= global_song.key %>
+                                            <%= song_catalog.key %>
                                         </span>
-                                        <% if global_song.tempo %>
+                                        <% if song_catalog.tempo %>
                                             <span style="background: #38a169; color: white; padding: 2px 6px; border-radius: 10px;">
-                                                <%= global_song.tempo %> BPM
+                                                <%= song_catalog.tempo %> BPM
                                             </span>
                                         <% end %>
                                     </div>
@@ -52,9 +52,9 @@
                 <% else %>
                     <div style="padding: 40px; text-align: center; color: #718096;">
                         <% if @search.present? %>
-                            No global songs found matching "<%= @search %>"
+                            No songs found matching "<%= @search %>"
                         <% else %>
-                            No available global songs to copy
+                            No available songs to copy
                         <% end %>
                     </div>
                 <% end %>
@@ -195,7 +195,7 @@
         order: 2;
     }
     
-    .global-songs-section {
+    .catalog-songs-section {
         order: 0;
     }
     
@@ -219,20 +219,20 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function initializeEventListeners() {
-    // Global song checkboxes
-    document.querySelectorAll('.global-song .song-checkbox').forEach(checkbox => {
+    // Song catalog checkboxes
+    document.querySelectorAll('.catalog-song .song-checkbox').forEach(checkbox => {
         checkbox.addEventListener('change', function() {
-            handleGlobalSongSelection(this);
+            handleCatalogSongSelection(this);
         });
     });
     
     // Song item clicks (excluding checkbox)
-    document.querySelectorAll('.global-song').forEach(item => {
+    document.querySelectorAll('.catalog-song').forEach(item => {
         item.addEventListener('click', function(e) {
             if (e.target.type !== 'checkbox') {
                 const checkbox = this.querySelector('.song-checkbox');
                 checkbox.checked = !checkbox.checked;
-                handleGlobalSongSelection(checkbox);
+                handleCatalogSongSelection(checkbox);
             }
         });
     });
@@ -242,12 +242,12 @@ function initializeEventListeners() {
     document.getElementById('move-left').addEventListener('click', moveSelectedFromRight);
     
     // Utility buttons
-    document.getElementById('select-all-global').addEventListener('click', selectAllGlobal);
-    document.getElementById('clear-global').addEventListener('click', clearGlobalSelection);
+    document.getElementById('select-all-catalog').addEventListener('click', selectAllCatalog);
+    document.getElementById('clear-catalog').addEventListener('click', clearCatalogSelection);
     document.getElementById('clear-selected').addEventListener('click', clearSelectedSongs);
 }
 
-function handleGlobalSongSelection(checkbox) {
+function handleCatalogSongSelection(checkbox) {
     const songItem = checkbox.closest('.song-item');
     
     if (checkbox.checked) {
@@ -258,7 +258,7 @@ function handleGlobalSongSelection(checkbox) {
 }
 
 function moveSelectedToRight() {
-    const checkedBoxes = document.querySelectorAll('.global-song .song-checkbox:checked');
+    const checkedBoxes = document.querySelectorAll('.catalog-song .song-checkbox:checked');
     const selectedList = document.getElementById('selected-songs-list');
     const emptyMessage = document.getElementById('empty-message');
     
@@ -278,7 +278,7 @@ function moveSelectedToRight() {
             
             selectedList.appendChild(clonedItem);
             
-            // Remove the song from the global list
+            // Remove the song from the catalog list
             songItem.remove();
         }
     });
@@ -289,17 +289,17 @@ function moveSelectedToRight() {
 
 function moveSelectedFromRight() {
     const selectedItems = document.querySelectorAll('.selected-song-item input:checked');
-    const globalList = document.getElementById('global-songs-list');
+    const catalogList = document.getElementById('catalog-songs-list');
     
     selectedItems.forEach(checkbox => {
         const songId = checkbox.value;
         const songItem = checkbox.closest('.selected-song-item');
         
-        // Create a copy of the song item for the global list
-        const globalItem = createGlobalSongItem(songItem, songId);
+        // Create a copy of the song item for the catalog list
+        const catalogItem = createCatalogSongItem(songItem, songId);
         
-        // Add it back to the global list (maintain alphabetical order)
-        insertInAlphabeticalOrder(globalList, globalItem);
+        // Add it back to the catalog list (maintain alphabetical order)
+        insertInAlphabeticalOrder(catalogList, catalogItem);
         
         selectedSongs.delete(songId);
         songItem.remove();
@@ -337,27 +337,27 @@ function createSelectedSongItem(originalItem, songId) {
     return item;
 }
 
-function createGlobalSongItem(selectedItem, songId) {
+function createCatalogSongItem(selectedItem, songId) {
     const item = selectedItem.cloneNode(true);
-    item.className = 'song-item global-song';
+    item.className = 'song-item catalog-song';
     item.dataset.id = songId;
     
     // Update checkbox
     const checkbox = item.querySelector('.song-checkbox');
     checkbox.checked = false;
-    checkbox.name = 'global_song_ids[]';
+    checkbox.name = 'song_catalog_ids[]';
     checkbox.classList.add('song-checkbox');
     
     // Add event listeners back
     checkbox.addEventListener('change', function() {
-        handleGlobalSongSelection(this);
+        handleCatalogSongSelection(this);
     });
     
     item.addEventListener('click', function(e) {
         if (e.target.type !== 'checkbox') {
             const checkbox = this.querySelector('.song-checkbox');
             checkbox.checked = !checkbox.checked;
-            handleGlobalSongSelection(checkbox);
+            handleCatalogSongSelection(checkbox);
         }
     });
     
@@ -366,7 +366,7 @@ function createGlobalSongItem(selectedItem, songId) {
 
 function insertInAlphabeticalOrder(container, newItem) {
     const newTitle = newItem.querySelector('div[style*="font-weight: bold"]').textContent.trim().toLowerCase();
-    const existingItems = Array.from(container.querySelectorAll('.global-song'));
+    const existingItems = Array.from(container.querySelectorAll('.catalog-song'));
     
     // Find the correct position to insert
     let insertPosition = existingItems.length;
@@ -385,30 +385,30 @@ function insertInAlphabeticalOrder(container, newItem) {
     }
 }
 
-function selectAllGlobal() {
-    const visibleCheckboxes = document.querySelectorAll('.global-song:not([style*="display: none"]) .song-checkbox');
+function selectAllCatalog() {
+    const visibleCheckboxes = document.querySelectorAll('.catalog-song:not([style*="display: none"]) .song-checkbox');
     visibleCheckboxes.forEach(checkbox => {
         checkbox.checked = true;
-        handleGlobalSongSelection(checkbox);
+        handleCatalogSongSelection(checkbox);
     });
 }
 
-function clearGlobalSelection() {
-    document.querySelectorAll('.global-song .song-checkbox').forEach(checkbox => {
+function clearCatalogSelection() {
+    document.querySelectorAll('.catalog-song .song-checkbox').forEach(checkbox => {
         checkbox.checked = false;
-        handleGlobalSongSelection(checkbox);
+        handleCatalogSongSelection(checkbox);
     });
 }
 
 function clearSelectedSongs() {
-    const globalList = document.getElementById('global-songs-list');
+    const catalogList = document.getElementById('catalog-songs-list');
     const selectedItems = document.querySelectorAll('.selected-song-item');
     
-    // Move all selected songs back to global list
+    // Move all selected songs back to catalog list
     selectedItems.forEach(songItem => {
         const songId = songItem.dataset.id;
-        const globalItem = createGlobalSongItem(songItem, songId);
-        insertInAlphabeticalOrder(globalList, globalItem);
+        const catalogItem = createCatalogSongItem(songItem, songId);
+        insertInAlphabeticalOrder(catalogList, catalogItem);
     });
     
     selectedSongs.clear();
@@ -420,8 +420,8 @@ function clearSelectedSongs() {
 function updateCounts() {
     document.getElementById('selected-count').textContent = selectedSongs.size;
     
-    const visibleGlobalSongs = document.querySelectorAll('.global-song:not([style*="display: none"])').length;
-    document.getElementById('global-count').textContent = visibleGlobalSongs;
+    const visibleCatalogSongs = document.querySelectorAll('.catalog-song:not([style*="display: none"])').length;
+    document.getElementById('catalog-count').textContent = visibleCatalogSongs;
 }
 
 function updateCopyButton() {
@@ -430,29 +430,29 @@ function updateCopyButton() {
 }
 
 function initializeSearch() {
-    const searchInput = document.getElementById('global-search');
+    const searchInput = document.getElementById('catalog-search');
     let searchTimeout;
     
     searchInput.addEventListener('input', function() {
         clearTimeout(searchTimeout);
         searchTimeout = setTimeout(function() {
-            filterGlobalSongs();
+            filterCatalogSongs();
         }, 300);
     });
     
     searchInput.addEventListener('keypress', function(e) {
         if (e.key === 'Enter') {
             e.preventDefault();
-            filterGlobalSongs();
+            filterCatalogSongs();
         }
     });
 }
 
-function filterGlobalSongs() {
-    const searchTerm = document.getElementById('global-search').value.toLowerCase();
-    const globalSongs = document.querySelectorAll('.global-song');
+function filterCatalogSongs() {
+    const searchTerm = document.getElementById('catalog-search').value.toLowerCase();
+    const catalogSongs = document.querySelectorAll('.catalog-song');
     
-    globalSongs.forEach(song => {
+    catalogSongs.forEach(song => {
         const title = song.querySelector('div[style*="font-weight: bold"]').textContent.toLowerCase();
         
         if (title.includes(searchTerm)) {
@@ -463,7 +463,7 @@ function filterGlobalSongs() {
             const checkbox = song.querySelector('.song-checkbox');
             if (checkbox.checked) {
                 checkbox.checked = false;
-                handleGlobalSongSelection(checkbox);
+                handleCatalogSongSelection(checkbox);
             }
         }
     });
@@ -477,7 +477,7 @@ document.getElementById('copy-songs-form').addEventListener('submit', function(e
     selectedSongs.forEach(songId => {
         const hiddenInput = document.createElement('input');
         hiddenInput.type = 'hidden';
-        hiddenInput.name = 'global_song_ids[]';
+        hiddenInput.name = 'song_catalog_ids[]';
         hiddenInput.value = songId;
         this.appendChild(hiddenInput);
     });

@@ -230,38 +230,38 @@ class Routes::Bands < Sinatra::Base
     require_login
     @band = user_bands.find(params[:band_id])
     @search = params[:search]
-    @global_songs = GlobalSong.order('LOWER(title)')
-    
+    @song_catalogs = SongCatalog.order('LOWER(title)')
+
     # Apply search filter
     if @search.present?
-      @global_songs = @global_songs.search(@search)
+      @song_catalogs = @song_catalogs.search(@search)
     end
-    
-    # Exclude songs already copied to this band based on global_song_id
-    existing_global_song_ids = @band.songs.where.not(global_song_id: nil).pluck(:global_song_id)
-    @global_songs = @global_songs.where.not(id: existing_global_song_ids)
-    
+
+    # Exclude songs already copied to this band based on song_catalog_id
+    existing_song_catalog_ids = @band.songs.where.not(song_catalog_id: nil).pluck(:song_catalog_id)
+    @song_catalogs = @song_catalogs.where.not(id: existing_song_catalog_ids)
+
     erb :copy_songs_to_band
   end
 
   post '/bands/:band_id/copy_songs' do
     require_login
     @band = user_bands.find(params[:band_id])
-    global_song_ids = params[:global_song_ids] || []
-    
+    song_catalog_ids = params[:song_catalog_ids] || []
+
     copied_count = 0
-    global_song_ids.each do |global_song_id|
-      global_song = GlobalSong.find(global_song_id)
-      song = Song.create_from_global_song(global_song, [@band.id])
-      
+    song_catalog_ids.each do |song_catalog_id|
+      song_catalog = SongCatalog.find(song_catalog_id)
+      song = Song.create_from_global_song(song_catalog, [@band.id])
+
       if song.save
         copied_count += 1
       end
     end
-    
-    # If copying from a specific global song page, redirect back to that song
-    if params[:from_global_song]
-      redirect "/global_songs/#{params[:from_global_song]}?copied=#{copied_count}"
+
+    # If copying from a specific song catalog page, redirect back to that song
+    if params[:from_song_catalog]
+      redirect "/song_catalog/#{params[:from_song_catalog]}?copied=#{copied_count}"
     else
       # Otherwise redirect to the band page (bulk copy)
       redirect "/bands/#{@band.id}?copied=#{copied_count}"

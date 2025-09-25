@@ -1,0 +1,158 @@
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
+    <h2>✏️ Edit Song Catalog</h2>
+    <div class="actions">
+        <button type="submit" form="edit-song-catalog-form" class="btn btn-success" onclick="return confirmUpdate()">Update Song Catalog</button>
+        <a href="/song_catalogs/<%= @song_catalog.id %>" class="btn">Cancel</a>
+        <a href="/song_catalogs/<%= @song_catalog.id %>" class="btn">Back</a>
+    </div>
+</div>
+
+<% if defined?(@errors) && @errors.any? %>
+    <div class="errors">
+        <ul>
+            <% @errors.each do |error| %>
+                <li><%= error %></li>
+            <% end %>
+        </ul>
+    </div>
+<% end %>
+
+<div style="margin-bottom: 20px; padding: 15px; background: #fef5e7; border-radius: 8px; border-left: 4px solid #f59e0b;">
+    <p style="margin: 0; color: #92400e; font-weight: 500;">
+        ⚠️ Warning: You are editing a song catalog entry. Changes will be visible to ALL users and will affect new copies made from this song catalog entry.
+    </p>
+</div>
+
+<form method="POST" action="/song_catalogs/<%= @song_catalog.id %>" class="card" id="edit-song-catalog-form">
+    <input type="hidden" name="_method" value="PUT">
+    
+    <div class="form-group">
+        <label for="song_catalog_title">Title *</label>
+        <input type="text" id="song_catalog_title" name="song_catalog[title]" value="<%= @song_catalog.title %>" required autofocus>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+        <div class="form-group">
+            <label for="song_catalog_artist">Artist *</label>
+            <input type="text" id="song_catalog_artist" name="song_catalog[artist]" value="<%= @song_catalog.artist %>" required>
+        </div>
+
+        <div class="form-group">
+            <label for="song_catalog_album">Album</label>
+            <input type="text" id="song_catalog_album" name="song_catalog[album]" value="<%= @song_catalog.album %>" placeholder="Album name">
+        </div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 1fr; gap: 20px;">
+        <style>
+            @media (min-width: 768px) {
+                .form-grid {
+                    grid-template-columns: 1fr 1fr !important;
+                }
+            }
+        </style>
+        <div class="form-grid" style="display: grid; grid-template-columns: 1fr; gap: 20px;">
+            <div class="form-group">
+                <label for="song_catalog_key">Key *</label>
+                <select id="song_catalog_key" name="song_catalog[key]" required>
+                    <option value="">Select Key</option>
+                    <option value="C" <%= 'selected' if @song_catalog.key == 'C' %>>C</option>
+                    <option value="C#/Db" <%= 'selected' if @song_catalog.key == 'C#/Db' %>>C#/Db</option>
+                    <option value="D" <%= 'selected' if @song_catalog.key == 'D' %>>D</option>
+                    <option value="D#/Eb" <%= 'selected' if @song_catalog.key == 'D#/Eb' %>>D#/Eb</option>
+                    <option value="E" <%= 'selected' if @song_catalog.key == 'E' %>>E</option>
+                    <option value="F" <%= 'selected' if @song_catalog.key == 'F' %>>F</option>
+                    <option value="F#/Gb" <%= 'selected' if @song_catalog.key == 'F#/Gb' %>>F#/Gb</option>
+                    <option value="G" <%= 'selected' if @song_catalog.key == 'G' %>>G</option>
+                    <option value="G#/Ab" <%= 'selected' if @song_catalog.key == 'G#/Ab' %>>G#/Ab</option>
+                    <option value="A" <%= 'selected' if @song_catalog.key == 'A' %>>A</option>
+                    <option value="A#/Bb" <%= 'selected' if @song_catalog.key == 'A#/Bb' %>>A#/Bb</option>
+                    <option value="B" <%= 'selected' if @song_catalog.key == 'B' %>>B</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="song_catalog_original_key">Original Key</label>
+                <select id="song_catalog_original_key" name="song_catalog[original_key]">
+                    <option value="">Select Original Key</option>
+                    <option value="C" <%= 'selected' if @song_catalog.original_key == 'C' %>>C</option>
+                    <option value="C#/Db" <%= 'selected' if @song_catalog.original_key == 'C#/Db' %>>C#/Db</option>
+                    <option value="D" <%= 'selected' if @song_catalog.original_key == 'D' %>>D</option>
+                    <option value="D#/Eb" <%= 'selected' if @song_catalog.original_key == 'D#/Eb' %>>D#/Eb</option>
+                    <option value="E" <%= 'selected' if @song_catalog.original_key == 'E' %>>E</option>
+                    <option value="F" <%= 'selected' if @song_catalog.original_key == 'F' %>>F</option>
+                    <option value="F#/Gb" <%= 'selected' if @song_catalog.original_key == 'F#/Gb' %>>F#/Gb</option>
+                    <option value="G" <%= 'selected' if @song_catalog.original_key == 'G' %>>G</option>
+                    <option value="G#/Ab" <%= 'selected' if @song_catalog.original_key == 'G#/Ab' %>>G#/Ab</option>
+                    <option value="A" <%= 'selected' if @song_catalog.original_key == 'A' %>>A</option>
+                    <option value="A#/Bb" <%= 'selected' if @song_catalog.original_key == 'A#/Bb' %>>A#/Bb</option>
+                    <option value="B" <%= 'selected' if @song_catalog.original_key == 'B' %>>B</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 1fr; gap: 20px;">
+        <div class="form-grid" style="display: grid; grid-template-columns: 1fr; gap: 20px;">
+            <div class="form-group">
+                <label for="song_catalog_tempo">Tempo (BPM)</label>
+                <input type="number" id="song_catalog_tempo" name="song_catalog[tempo]" value="<%= @song_catalog.tempo %>" min="1" max="300">
+            </div>
+
+            <div class="form-group">
+                <label for="song_catalog_genre">Genre</label>
+                <input type="text" id="song_catalog_genre" name="song_catalog[genre]" value="<%= @song_catalog.genre %>" placeholder="e.g., Rock, Jazz, Pop">
+            </div>
+        </div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 1fr; gap: 20px;">
+        <div class="form-grid" style="display: grid; grid-template-columns: 1fr; gap: 20px;">
+            <div class="form-group">
+                <label for="song_catalog_duration">Duration</label>
+                <input type="text" id="song_catalog_duration" name="song_catalog[duration]" value="<%= @song_catalog.duration %>" placeholder="e.g., 3:45">
+            </div>
+
+            <div class="form-group">
+                <label for="song_catalog_year">Year</label>
+                <input type="number" id="song_catalog_year" name="song_catalog[year]" value="<%= @song_catalog.year %>" min="1900" max="2030" placeholder="e.g., 2020">
+            </div>
+        </div>
+    </div>
+
+
+
+    <div class="form-group">
+        <label for="song_catalog_url">Streaming URL</label>
+        <input type="url" id="song_catalog_url" name="song_catalog[url]" value="<%= @song_catalog.url %>" placeholder="https://www.youtube.com/watch?v=... or Spotify/Apple Music link">
+    </div>
+
+    <div class="form-group">
+        <label for="song_catalog_notes">Notes</label>
+        <textarea id="song_catalog_notes" name="song_catalog[notes]" rows="4" placeholder="Any additional notes about the song, chords, etc."><%= @song_catalog.notes %></textarea>
+    </div>
+
+    <div class="form-group">
+        <label for="song_catalog_lyrics">Lyrics</label>
+        <textarea id="song_catalog_lyrics" name="song_catalog[lyrics]" rows="8" placeholder="Song lyrics..."><%= @song_catalog.lyrics %></textarea>
+    </div>
+
+    <div class="actions">
+        <button type="submit" class="btn btn-success" onclick="return confirmUpdate()">Update Song Catalog</button>
+        <a href="/song_catalogs" class="btn">Cancel</a>
+    </div>
+</form>
+
+<div class="card" style="margin-top: 20px;">
+    <h3>Song Management</h3>
+    <form method="POST" action="/song_catalogs/<%= @song_catalog.id %>" style="margin-top: 15px;">
+        <input type="hidden" name="_method" value="DELETE">
+        <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure you want to delete this song catalog entry? This will permanently remove it from the song catalog.')">🗑️ Delete Song Catalog</button>
+    </form>
+</div>
+
+<script>
+function confirmUpdate() {
+    return confirm('⚠️ Warning: You are about to update a song catalog entry.\n\nThis will change the song information for ALL users who have access to the song catalog. Existing band-specific copies will not be affected, but new copies will use the updated information.\n\nAre you sure you want to continue?');
+}
+</script>

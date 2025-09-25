@@ -10,7 +10,7 @@ require 'rack/method_override'
 require_relative 'lib/models/user'
 require_relative 'lib/models/user_band'
 require_relative 'lib/models/band'
-require_relative 'lib/models/global_song'
+require_relative 'lib/models/song_catalog'
 require_relative 'lib/models/song'
 require_relative 'lib/models/venue'
 require_relative 'lib/models/gig'
@@ -158,7 +158,7 @@ post '/select_band' do
       '/calendar'
     when /^\/profile/
       '/profile'
-    when /^\/global_songs/
+    when /^\/song_catalog/
       '/songs'  # Redirect to regular songs list instead
     else
       '/gigs'  # Default fallback

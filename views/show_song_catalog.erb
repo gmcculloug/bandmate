@@ -7,10 +7,10 @@
 <% end %>
 
 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
-    <h2>🌍 <%= @global_song.title %></h2>
+    <h2>🌍 <%= @song_catalog.title %></h2>
     <div class="actions">
-        <a href="/global_songs/<%= @global_song.id %>/edit" class="btn">Edit</a>
-        <a href="/global_songs" class="btn">Back to Global Songs</a>
+        <a href="/song_catalogs/<%= @song_catalog.id %>/edit" class="btn">Edit</a>
+        <a href="/song_catalogs" class="btn">Back to Song Catalogs</a>
     </div>
 </div>
 
@@ -20,37 +20,37 @@
             <h3>Song Details</h3>
             <div class="song-details">
                 <div class="detail-item">
-                    <span class="detail-label">Artist:</span> <%= @global_song.artist %>
-                    <% if @global_song.album.present? %>
-                        <span style="color: #718096; margin-left: 10px;">• Album: <%= @global_song.album %></span>
+                    <span class="detail-label">Artist:</span> <%= @song_catalog.artist %>
+                    <% if @song_catalog.album.present? %>
+                        <span style="color: #718096; margin-left: 10px;">• Album: <%= @song_catalog.album %></span>
                     <% end %>
                 </div>
                 <div class="detail-item">
-                    <span class="detail-label">Key:</span> <%= @global_song.key %>
+                    <span class="detail-label">Key:</span> <%= @song_catalog.key %>
                 </div>
                 <div class="detail-item">
-                    <span class="detail-label">Original Key:</span> <%= @global_song.original_key || 'N/A' %>
+                    <span class="detail-label">Original Key:</span> <%= @song_catalog.original_key || 'N/A' %>
                 </div>
                 <div class="detail-item">
-                    <span class="detail-label">Tempo:</span> <%= @global_song.tempo ? "#{@global_song.tempo} BPM" : 'N/A' %>
+                    <span class="detail-label">Tempo:</span> <%= @song_catalog.tempo ? "#{@song_catalog.tempo} BPM" : 'N/A' %>
                 </div>
                 <div class="detail-item">
-                    <span class="detail-label">Genre:</span> <%= @global_song.genre || 'N/A' %>
+                    <span class="detail-label">Genre:</span> <%= @song_catalog.genre || 'N/A' %>
                 </div>
                 <div class="detail-item">
-                    <span class="detail-label">Duration:</span> <%= @global_song.duration || 'N/A' %>
+                    <span class="detail-label">Duration:</span> <%= @song_catalog.duration || 'N/A' %>
                 </div>
                 <div class="detail-item">
-                    <span class="detail-label">Year:</span> <%= @global_song.year || 'N/A' %>
+                    <span class="detail-label">Year:</span> <%= @song_catalog.year || 'N/A' %>
                 </div>
             </div>
         </div>
 
         <div>
             <h3>Actions</h3>
-            <% if @global_song.url.present? %>
+            <% if @song_catalog.url.present? %>
                 <div style="margin-bottom: 20px;">
-                    <a href="<%= @global_song.url %>" target="_blank" class="btn btn-success">🎵 Listen on Streaming Platform</a>
+                    <a href="<%= @song_catalog.url %>" target="_blank" class="btn btn-success">🎵 Listen on Streaming Platform</a>
                 </div>
             <% end %>
             
@@ -61,15 +61,15 @@
                         Select a band to copy this song to their repertoire:
                     </p>
                     <% @bands.each do |band| %>
-                        <% existing_copy = band.songs.find_by(global_song_id: @global_song.id) %>
+                        <% existing_copy = band.songs.find_by(song_catalog_id: @song_catalog.id) %>
                         <% if existing_copy %>
                             <div style="margin-bottom: 8px; padding: 8px; background: #f0f4f8; border-radius: 4px; color: #666;">
                                 ✓ Already copied to <%= band.name %>
                             </div>
                         <% else %>
                             <form method="POST" action="/bands/<%= band.id %>/copy_songs" style="margin-bottom: 8px;">
-                                <input type="hidden" name="global_song_ids[]" value="<%= @global_song.id %>">
-                                <input type="hidden" name="from_global_song" value="<%= @global_song.id %>">
+                                <input type="hidden" name="song_catalog_ids[]" value="<%= @song_catalog.id %>">
+                                <input type="hidden" name="from_song_catalog" value="<%= @song_catalog.id %>">
                                 <button type="submit" class="btn" style="width: 100%; text-align: left;">
                                     📋 Copy to <%= band.name %>
                                 </button>
@@ -86,7 +86,7 @@
 
             <div>
                 <h4>Usage Statistics</h4>
-                <% song_copies = @global_song.songs.includes(:bands) %>
+                <% song_copies = @song_catalog.songs.includes(:bands) %>
                 <div class="detail-item">
                     <span class="detail-label">Copied by:</span> 
                     <% if song_copies.any? %>
@@ -108,20 +108,20 @@
         </div>
     </div>
 
-    <% if @global_song.notes.present? %>
+    <% if @song_catalog.notes.present? %>
         <div style="margin-top: 30px;">
             <h3>Notes</h3>
             <div style="background: #f7fafc; padding: 20px; border-radius: 8px; white-space: pre-wrap;">
-                <%= @global_song.notes %>
+                <%= @song_catalog.notes %>
             </div>
         </div>
     <% end %>
 
-    <% if @global_song.lyrics.present? %>
+    <% if @song_catalog.lyrics.present? %>
         <div style="margin-top: 30px;">
             <h3>Lyrics</h3>
             <div style="background: #f7fafc; padding: 20px; border-radius: 8px; white-space: pre-wrap; font-family: monospace;">
-                <%= @global_song.lyrics %>
+                <%= @song_catalog.lyrics %>
             </div>
         </div>
     <% end %>

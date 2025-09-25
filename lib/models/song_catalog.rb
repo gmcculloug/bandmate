@@ -1,4 +1,4 @@
-class GlobalSong < ActiveRecord::Base
+class SongCatalog < ActiveRecord::Base
   has_many :songs
   
   validates :title, presence: true

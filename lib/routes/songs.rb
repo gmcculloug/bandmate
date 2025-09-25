@@ -104,115 +104,129 @@ class Routes::Songs < Sinatra::Base
   # COPY SONGS FROM GLOBAL LIST ROUTES
   # ============================================================================
 
-  get '/songs/copy_from_global' do
+  get '/songs/copy_from_catalog' do
     require_login
     return redirect '/gigs' unless current_band
-    
+
     @search = params[:search]
-    
-    # Get all global songs not already in current band
-    existing_global_song_ids = current_band.songs.where.not(global_song_id: nil).pluck(:global_song_id)
-    @global_songs = GlobalSong.where.not(id: existing_global_song_ids).order('LOWER(title)')
-    
+
+    # Get all song catalogs not already in current band
+    existing_song_catalog_ids = current_band.songs.where.not(song_catalog_id: nil).pluck(:song_catalog_id)
+    @song_catalogs = SongCatalog.where.not(id: existing_song_catalog_ids).order('LOWER(title)')
+
     # Apply search filter
     if @search.present?
-      @global_songs = @global_songs.search(@search)
+      @song_catalogs = @song_catalogs.search(@search)
     end
-    
+
     # Get current band songs for the right column
     @band_songs = current_band.songs.order('LOWER(title)')
-    
-    erb :copy_from_global_songs
+
+    erb :copy_from_song_catalogs
   end
 
-  post '/songs/copy_from_global' do
+  post '/songs/copy_from_catalog' do
     require_login
     return redirect '/gigs' unless current_band
-    
-    global_song_ids = params[:global_song_ids] || []
-    
+
+    song_catalog_ids = params[:song_catalog_ids] || []
+
     copied_count = 0
-    global_song_ids.each do |global_song_id|
-      global_song = GlobalSong.find(global_song_id)
-      
+    song_catalog_ids.each do |song_catalog_id|
+      song_catalog = SongCatalog.find(song_catalog_id)
+
       # Check if song is already in this band
-      existing_song = current_band.songs.find_by(global_song_id: global_song_id)
+      existing_song = current_band.songs.find_by(song_catalog_id: song_catalog_id)
       next if existing_song
-      
-      song = Song.create_from_global_song(global_song, [current_band.id])
-      
+
+      song = Song.create_from_global_song(song_catalog, [current_band.id])
+
       if song.save
         copied_count += 1
       end
     end
-    
+
     redirect "/songs?copied=#{copied_count}"
   end
 
   # ============================================================================
-  # GLOBAL SONG ROUTES
+  # SONG CATALOG ROUTES
   # ============================================================================
 
-  get '/global_songs' do
+  get '/song_catalogs' do
     require_login
-    
+
     @search = params[:search]
-    @global_songs = GlobalSong.order('LOWER(title)')
-    
+    @song_catalogs = SongCatalog.order('LOWER(title)')
+
     # Apply search filter
     if @search.present?
-      @global_songs = @global_songs.search(@search)
+      @song_catalogs = @song_catalogs.search(@search)
     end
-    
-    erb :global_songs
+
+    erb :song_catalogs
   end
 
-  get '/global_songs/new' do
+  get '/song_catalog' do
     require_login
-    erb :new_global_song
+
+    @search = params[:search]
+    @song_catalogs = SongCatalog.order('LOWER(title)')
+
+    # Apply search filter
+    if @search.present?
+      @song_catalogs = @song_catalogs.search(@search)
+    end
+
+    erb :song_catalog
   end
 
-  post '/global_songs' do
+  get '/song_catalog/new' do
     require_login
-    global_song = GlobalSong.new(params[:global_song])
-    
-    if global_song.save
-      redirect '/global_songs'
+    erb :new_song_catalog
+  end
+
+  post '/song_catalog' do
+    require_login
+    song_catalog = SongCatalog.new(params[:song_catalog])
+
+    if song_catalog.save
+      redirect '/song_catalog'
     else
-      @errors = global_song.errors.full_messages
-      erb :new_global_song
+      @errors = song_catalog.errors.full_messages
+      erb :new_song_catalog
     end
   end
 
-  get '/global_songs/:id' do
+  get '/song_catalog/:id' do
     require_login
-    @global_song = GlobalSong.find(params[:id])
+    @song_catalog = SongCatalog.find(params[:id])
     @bands = user_bands
-    erb :show_global_song
+    erb :show_song_catalog
   end
 
-  get '/global_songs/:id/edit' do
+  get '/song_catalog/:id/edit' do
     require_login
-    @global_song = GlobalSong.find(params[:id])
-    erb :edit_global_song
+    @song_catalog = SongCatalog.find(params[:id])
+    erb :edit_song_catalog
   end
 
-  put '/global_songs/:id' do
+  put '/song_catalog/:id' do
     require_login
-    @global_song = GlobalSong.find(params[:id])
-    
-    if @global_song.update(params[:global_song])
-      redirect "/global_songs/#{@global_song.id}"
+    @song_catalog = SongCatalog.find(params[:id])
+
+    if @song_catalog.update(params[:song_catalog])
+      redirect "/song_catalog/#{@song_catalog.id}"
     else
-      @errors = @global_song.errors.full_messages
-      erb :edit_global_song
+      @errors = @song_catalog.errors.full_messages
+      erb :edit_song_catalog
     end
   end
 
-  delete '/global_songs/:id' do
+  delete '/song_catalog/:id' do
     require_login
-    global_song = GlobalSong.find(params[:id])
-    global_song.destroy
-    redirect '/global_songs'
+    song_catalog = SongCatalog.find(params[:id])
+    song_catalog.destroy
+    redirect '/song_catalog'
   end
 end

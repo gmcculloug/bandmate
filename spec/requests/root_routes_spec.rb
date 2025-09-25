@@ -165,16 +165,16 @@ RSpec.describe 'Root Routes', type: :request do
         expect(last_response.location).to end_with('/profile')
       end
 
-      it 'redirects global songs to regular songs section' do
-        post '/select_band', band_id: band.id, current_path: '/global_songs'
-        
+      it 'redirects song catalog to regular songs section' do
+        post '/select_band', band_id: band.id, current_path: '/song_catalog'
+
         expect(last_response.status).to eq(302)
         expect(last_response.location).to end_with('/songs')
       end
 
-      it 'redirects global songs detailed view to regular songs section' do
-        post '/select_band', band_id: band.id, current_path: '/global_songs/123'
-        
+      it 'redirects song catalog detailed view to regular songs section' do
+        post '/select_band', band_id: band.id, current_path: '/song_catalog/123'
+
         expect(last_response.status).to eq(302)
         expect(last_response.location).to end_with('/songs')
       end

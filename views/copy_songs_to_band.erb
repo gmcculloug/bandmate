@@ -5,13 +5,13 @@
 
 <div style="margin-bottom: 20px; padding: 15px; background: #e6fffa; border-radius: 8px; border-left: 4px solid #38a169;">
     <p style="margin: 0; color: #2f855a; font-weight: 500;">
-        ℹ️ Select songs from the global library to copy to <%= @band.name %>'s repertoire. You can modify your copies without affecting the global versions.
+        ℹ️ Select songs from the song catalog to copy to <%= @band.name %>'s repertoire. You can modify your copies without affecting the catalog versions.
     </p>
 </div>
 
 <div style="margin-bottom: 20px;">
     <div style="position: relative; max-width: 400px;">
-        <input type="text" id="search-input" value="<%= @search %>" placeholder="Search global songs by title or artist..." style="width: 100%; padding: 10px 40px 10px 10px; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 16px;">
+        <input type="text" id="search-input" value="<%= @search %>" placeholder="Search song catalog by title or artist..." style="width: 100%; padding: 10px 40px 10px 10px; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 16px;">
         <% if @search.present? %>
             <a href="#" onclick="clearSearch(); return false;" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; color: #718096; font-size: 18px; cursor: pointer; text-decoration: none; display: flex; align-items: center; justify-content: center; width: 20px; height: 20px;">✕</a>
         <% end %>
@@ -59,14 +59,14 @@ function clearSearch() {
 }
 
 function selectAll() {
-    const checkboxes = document.querySelectorAll('input[name="global_song_ids[]"]');
+    const checkboxes = document.querySelectorAll('input[name="song_catalog_ids[]"]');
     const selectAllCheckbox = document.getElementById('select-all');
     checkboxes.forEach(cb => cb.checked = selectAllCheckbox.checked);
     updateSelectedCount();
 }
 
 function updateSelectedCount() {
-    const checkboxes = document.querySelectorAll('input[name="global_song_ids[]"]:checked');
+    const checkboxes = document.querySelectorAll('input[name="song_catalog_ids[]"]:checked');
     const count = checkboxes.length;
     const button = document.getElementById('copy-button');
     const countSpan = document.getElementById('selected-count');
@@ -96,7 +96,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Add event listeners to all checkboxes
-    const checkboxes = document.querySelectorAll('input[name="global_song_ids[]"]');
+    const checkboxes = document.querySelectorAll('input[name="song_catalog_ids[]"]');
     checkboxes.forEach(cb => {
         cb.addEventListener('change', updateSelectedCount);
     });
@@ -109,12 +109,12 @@ document.addEventListener('DOMContentLoaded', function() {
     <div style="margin-bottom: 20px; padding: 10px; background: #f7fafc; border-radius: 8px; border-left: 4px solid #667eea;">
         <p style="margin: 0; color: #4a5568;">
             Showing results for "<strong><%= @search %></strong>"
-            (<%= @global_songs.count %> song<%= @global_songs.count == 1 ? '' : 's' %>)
+            (<%= @song_catalogs.count %> song<%= @song_catalogs.count == 1 ? '' : 's' %>)
         </p>
     </div>
 <% end %>
 
-<% if @global_songs.any? %>
+<% if @song_catalogs.any? %>
     <form method="POST" action="/bands/<%= @band.id %>/copy_songs">
         <div style="margin-bottom: 20px; padding: 15px; background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
             <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
@@ -129,43 +129,43 @@ document.addEventListener('DOMContentLoaded', function() {
         </div>
 
         <div style="display: flex; flex-direction: column; gap: 8px;">
-            <% @global_songs.each do |global_song| %>
+            <% @song_catalogs.each do |song_catalog| %>
                 <div class="song-card" style="padding: 15px; margin-bottom: 0;">
                     <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
                         <div style="display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0;">
                             <label style="display: flex; align-items: center; cursor: pointer;">
-                                <input type="checkbox" name="global_song_ids[]" value="<%= global_song.id %>" style="transform: scale(1.2); min-width: 20px; min-height: 20px;">
+                                <input type="checkbox" name="song_catalog_ids[]" value="<%= song_catalog.id %>" style="transform: scale(1.2); min-width: 20px; min-height: 20px;">
                             </label>
                             <div style="flex: 1; min-width: 0;">
                                 <div style="font-weight: bold; color: #2d3748; margin-bottom: 5px; word-break: break-word;">
-                                    <%= global_song.title %>
-                                    <% if global_song.artist.present? %>
-                                        <span style="color: #718096; font-weight: normal; font-size: 0.9rem;"> • <%= global_song.artist %></span>
+                                    <%= song_catalog.title %>
+                                    <% if song_catalog.artist.present? %>
+                                        <span style="color: #718096; font-weight: normal; font-size: 0.9rem;"> • <%= song_catalog.artist %></span>
                                     <% end %>
                                 </div>
                                 <div style="font-size: 0.8rem; color: #a0aec0; display: flex; flex-wrap: wrap; gap: 5px;">
                                     <span style="background: #667eea; color: white; padding: 2px 6px; border-radius: 10px;">
-                                        <%= global_song.key %>
+                                        <%= song_catalog.key %>
                                     </span>
 
-                                    <% if global_song.tempo %>
+                                    <% if song_catalog.tempo %>
                                         <span style="background: #38a169; color: white; padding: 2px 6px; border-radius: 10px;">
-                                            <%= global_song.tempo %> BPM
+                                            <%= song_catalog.tempo %> BPM
                                         </span>
                                     <% end %>
-                                    <% if global_song.genre.present? %>
+                                    <% if song_catalog.genre.present? %>
                                         <span style="background: #ed8936; color: white; padding: 2px 6px; border-radius: 10px;">
-                                            <%= global_song.genre %>
+                                            <%= song_catalog.genre %>
                                         </span>
                                     <% end %>
                                 </div>
                             </div>
                         </div>
                         <div class="actions" style="margin-left: 15px; display: flex; gap: 5px; flex-shrink: 0;">
-                            <% if global_song.url.present? %>
-                                <a href="<%= global_song.url %>" target="_blank" class="btn" style="padding: 6px 12px; font-size: 0.8rem;">🎵</a>
+                            <% if song_catalog.url.present? %>
+                                <a href="<%= song_catalog.url %>" target="_blank" class="btn" style="padding: 6px 12px; font-size: 0.8rem;">🎵</a>
                             <% end %>
-                            <a href="/global_songs/<%= global_song.id %>" class="btn" style="padding: 6px 12px; font-size: 0.8rem;">View</a>
+                            <a href="/song_catalogs/<%= song_catalog.id %>" class="btn" style="padding: 6px 12px; font-size: 0.8rem;">View</a>
                         </div>
                     </div>
                 </div>
@@ -177,16 +177,16 @@ document.addEventListener('DOMContentLoaded', function() {
         <h3>No songs available to copy!</h3>
         <p>
             <% if @search.present? %>
-                No global songs match your search criteria. Try adjusting your search or clearing it to see all available songs.
+                No songs match your search criteria. Try adjusting your search or clearing it to see all available songs.
             <% else %>
-                All global songs have already been copied to <%= @band.name %>, or there are no global songs yet.
+                All songs have already been copied to <%= @band.name %>, or there are no songs in the catalog yet.
             <% end %>
         </p>
         <div class="actions">
             <% if @search.present? %>
                 <a href="/bands/<%= @band.id %>/copy_songs" class="btn">Clear Search</a>
             <% else %>
-                <a href="/global_songs/new" class="btn btn-success">Add Songs to Global Library</a>
+                <a href="/song_catalogs/new" class="btn btn-success">Add Songs to Song Catalog</a>
             <% end %>
             <a href="/bands/<%= @band.id %>" class="btn">Back to Band</a>
         </div>

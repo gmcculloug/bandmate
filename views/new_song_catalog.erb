@@ -1,4 +1,4 @@
-<h2>➕ Add New Global Song</h2>
+<h2>➕ Add New Song Catalog</h2>
 
 <% if defined?(@errors) && @errors.any? %>
     <div class="errors">
@@ -12,15 +12,15 @@
 
 <div style="margin-bottom: 20px; padding: 15px; background: #e6fffa; border-radius: 8px; border-left: 4px solid #38a169;">
     <p style="margin: 0; color: #2f855a; font-weight: 500;">
-        ℹ️ You're adding a song to the global library. This will make it available for all bands to copy and use in their repertoires.
+        ℹ️ You're adding a song to the song catalog. This will make it available for all bands to copy and use in their repertoires.
     </p>
 </div>
 
-<form method="POST" action="/global_songs" class="card">
+<form method="POST" action="/song_catalogs" class="card">
     <div class="form-group">
-        <label for="global_song_title">Title *</label>
+        <label for="song_catalog_title">Title *</label>
         <div style="display: flex; gap: 10px; align-items: end;">
-            <input type="text" id="global_song_title" name="global_song[title]" required autofocus style="flex: 1;">
+            <input type="text" id="song_catalog_title" name="song_catalog[title]" required autofocus style="flex: 1;">
             <button type="button" id="lookup-btn" class="btn" style="white-space: nowrap; padding: 15px 20px;" onclick="lookupSongData()">
                 🔍 Auto-fill from songbpm.com
             </button>
@@ -29,13 +29,13 @@
 
     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
         <div class="form-group">
-            <label for="global_song_artist">Artist *</label>
-            <input type="text" id="global_song_artist" name="global_song[artist]" required>
+            <label for="song_catalog_artist">Artist *</label>
+            <input type="text" id="song_catalog_artist" name="song_catalog[artist]" required>
         </div>
 
         <div class="form-group">
-            <label for="global_song_album">Album</label>
-            <input type="text" id="global_song_album" name="global_song[album]" placeholder="Album name">
+            <label for="song_catalog_album">Album</label>
+            <input type="text" id="song_catalog_album" name="song_catalog[album]" placeholder="Album name">
         </div>
     </div>
 
@@ -49,8 +49,8 @@
         </style>
         <div class="form-grid" style="display: grid; grid-template-columns: 1fr; gap: 20px;">
             <div class="form-group">
-                <label for="global_song_key">Key *</label>
-                <select id="global_song_key" name="global_song[key]" required>
+                <label for="song_catalog_key">Key *</label>
+                <select id="song_catalog_key" name="song_catalog[key]" required>
                     <option value="">Select Key</option>
                     <option value="C">C</option>
                     <option value="C#/Db">C#/Db</option>
@@ -68,8 +68,8 @@
             </div>
 
             <div class="form-group">
-                <label for="global_song_original_key">Original Key</label>
-                <select id="global_song_original_key" name="global_song[original_key]">
+                <label for="song_catalog_original_key">Original Key</label>
+                <select id="song_catalog_original_key" name="song_catalog[original_key]">
                     <option value="">Select Original Key</option>
                     <option value="C">C</option>
                     <option value="C#/Db">C#/Db</option>
@@ -91,13 +91,13 @@
     <div style="display: grid; grid-template-columns: 1fr; gap: 20px;">
         <div class="form-grid" style="display: grid; grid-template-columns: 1fr; gap: 20px;">
             <div class="form-group">
-                <label for="global_song_tempo">Tempo (BPM)</label>
-                <input type="number" id="global_song_tempo" name="global_song[tempo]" min="1" max="300">
+                <label for="song_catalog_tempo">Tempo (BPM)</label>
+                <input type="number" id="song_catalog_tempo" name="song_catalog[tempo]" min="1" max="300">
             </div>
 
             <div class="form-group">
-                <label for="global_song_genre">Genre</label>
-                <input type="text" id="global_song_genre" name="global_song[genre]" placeholder="e.g., Rock, Jazz, Pop">
+                <label for="song_catalog_genre">Genre</label>
+                <input type="text" id="song_catalog_genre" name="song_catalog[genre]" placeholder="e.g., Rock, Jazz, Pop">
             </div>
         </div>
     </div>
@@ -105,13 +105,13 @@
     <div style="display: grid; grid-template-columns: 1fr; gap: 20px;">
         <div class="form-grid" style="display: grid; grid-template-columns: 1fr; gap: 20px;">
             <div class="form-group">
-                <label for="global_song_duration">Duration</label>
-                <input type="text" id="global_song_duration" name="global_song[duration]" placeholder="e.g., 3:45">
+                <label for="song_catalog_duration">Duration</label>
+                <input type="text" id="song_catalog_duration" name="song_catalog[duration]" placeholder="e.g., 3:45">
             </div>
 
             <div class="form-group">
-                <label for="global_song_year">Year</label>
-                <input type="number" id="global_song_year" name="global_song[year]" min="1900" max="2030" placeholder="e.g., 2020">
+                <label for="song_catalog_year">Year</label>
+                <input type="number" id="song_catalog_year" name="song_catalog[year]" min="1900" max="2030" placeholder="e.g., 2020">
             </div>
         </div>
     </div>
@@ -119,30 +119,30 @@
 
 
     <div class="form-group">
-        <label for="global_song_url">Streaming URL</label>
-        <input type="url" id="global_song_url" name="global_song[url]" placeholder="https://www.youtube.com/watch?v=... or Spotify/Apple Music link">
+        <label for="song_catalog_url">Streaming URL</label>
+        <input type="url" id="song_catalog_url" name="song_catalog[url]" placeholder="https://www.youtube.com/watch?v=... or Spotify/Apple Music link">
     </div>
 
     <div class="form-group">
-        <label for="global_song_notes">Notes</label>
-        <textarea id="global_song_notes" name="global_song[notes]" rows="4" placeholder="Any additional notes about the song, chords, etc."></textarea>
+        <label for="song_catalog_notes">Notes</label>
+        <textarea id="song_catalog_notes" name="song_catalog[notes]" rows="4" placeholder="Any additional notes about the song, chords, etc."></textarea>
     </div>
 
     <div class="form-group">
-        <label for="global_song_lyrics">Lyrics</label>
-        <textarea id="global_song_lyrics" name="global_song[lyrics]" rows="8" placeholder="Song lyrics..."></textarea>
+        <label for="song_catalog_lyrics">Lyrics</label>
+        <textarea id="song_catalog_lyrics" name="song_catalog[lyrics]" rows="8" placeholder="Song lyrics..."></textarea>
     </div>
 
     <div class="actions">
-        <button type="submit" class="btn btn-success">Save Global Song</button>
-        <a href="/global_songs" class="btn">Cancel</a>
+        <button type="submit" class="btn btn-success">Save Song Catalog</button>
+        <a href="/song_catalogs" class="btn">Cancel</a>
     </div>
 </form>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const keySelect = document.getElementById('global_song_key');
-    const originalKeySelect = document.getElementById('global_song_original_key');
+    const keySelect = document.getElementById('song_catalog_key');
+    const originalKeySelect = document.getElementById('song_catalog_original_key');
     
     keySelect.addEventListener('change', function() {
         // Only set original key if it hasn't been set yet (is empty)
@@ -153,11 +153,11 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 async function lookupSongData() {
-    const titleInput = document.getElementById('global_song_title');
-    const artistInput = document.getElementById('global_song_artist');
-    const keySelect = document.getElementById('global_song_key');
-    const tempoInput = document.getElementById('global_song_tempo');
-    const durationInput = document.getElementById('global_song_duration');
+    const titleInput = document.getElementById('song_catalog_title');
+    const artistInput = document.getElementById('song_catalog_artist');
+    const keySelect = document.getElementById('song_catalog_key');
+    const tempoInput = document.getElementById('song_catalog_tempo');
+    const durationInput = document.getElementById('song_catalog_duration');
     const lookupBtn = document.getElementById('lookup-btn');
     
     const title = titleInput.value.trim();
@@ -207,7 +207,7 @@ async function lookupSongData() {
                     fieldsUpdated.push('key');
                     
                     // Also update original key if it's empty
-                    const originalKeySelect = document.getElementById('global_song_original_key');
+                    const originalKeySelect = document.getElementById('song_catalog_original_key');
                     if (!originalKeySelect.value) {
                         originalKeySelect.value = matchingOption.value;
                     }
