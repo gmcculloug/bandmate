@@ -42,18 +42,41 @@
                 <input type="date" id="gig_performance_date" name="performance_date" value="<%= @gig.performance_date&.strftime('%Y-%m-%d') %>" required>
             </div>
 
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-                <div class="form-group">
-                    <label for="gig_start_time">Start Time</label>
-                    <input type="time" id="gig_start_time" name="start_time" value="<%= @gig.start_time&.strftime('%H:%M') %>">
-                </div>
-
-                <div class="form-group">
-                    <label for="gig_end_time">End Time</label>
-                    <input type="time" id="gig_end_time" name="end_time" value="<%= @gig.end_time&.strftime('%H:%M') %>">
+            <div class="form-group">
+                <label for="gig_start_time">Start Time</label>
+                <div class="modern-time-control">
+                    <div class="preset-times">
+                        <button type="button" class="time-preset-btn" data-time="18:00">6:00 PM</button>
+                        <button type="button" class="time-preset-btn" data-time="19:00">7:00 PM</button>
+                        <button type="button" class="time-preset-btn" data-time="20:00">8:00 PM</button>
+                        <button type="button" class="time-preset-btn" data-time="21:00">9:00 PM</button>
+                    </div>
+                    <div class="time-input-row">
+                        <input type="text" id="gig_start_time" name="start_time" placeholder="Select start time..." readonly
+                               data-time="<%= @gig.start_time&.strftime('%H:%M') %>"
+                               value="<%= @gig.start_time&.strftime('%-l:%M %p') if @gig.start_time %>">
+                        <select id="gig_duration" name="duration" class="duration-selector">
+                            <option value="">Duration</option>
+                            <option value="60">1 hour</option>
+                            <option value="90">1.5 hours</option>
+                            <option value="120">2 hours</option>
+                            <option value="150">2.5 hours</option>
+                            <option value="180">3 hours</option>
+                            <option value="240">4 hours</option>
+                            <option value="custom">Custom...</option>
+                        </select>
+                    </div>
+                    <div class="duration-info" id="duration-info" style="display: none;"></div>
                 </div>
             </div>
         </div>
+    </div>
+
+    <div class="form-group" id="end-time-group" style="display: none;">
+        <label for="gig_end_time">End Time</label>
+        <input type="text" id="gig_end_time" name="end_time" placeholder="Select end time..." readonly
+               data-time="<%= @gig.end_time&.strftime('%H:%M') %>"
+               value="<%= @gig.end_time&.strftime('%-l:%M %p') if @gig.end_time %>">
     </div>
 
     <div class="form-group">
@@ -69,38 +92,249 @@
 
 
 <script>
-// Venue change detection for gig name auto-update
 document.addEventListener('DOMContentLoaded', function() {
     const venueSelect = document.getElementById('gig_venue_id');
     const gigNameInput = document.getElementById('gig_name');
+    const startTimeInput = document.getElementById('gig_start_time');
+    const endTimeInput = document.getElementById('gig_end_time');
+    const durationSelect = document.getElementById('gig_duration');
+    const durationInfo = document.getElementById('duration-info');
+    const endTimeGroup = document.getElementById('end-time-group');
+    const presetTimeBtns = document.querySelectorAll('.time-preset-btn');
     let previousVenueName = '';
-    
+    let startTimePicker, endTimePicker;
+
     // Initialize previousVenueName based on currently selected venue
     const initialSelectedOption = venueSelect.options[venueSelect.selectedIndex];
     if (initialSelectedOption && initialSelectedOption.dataset.venueName) {
         previousVenueName = initialSelectedOption.dataset.venueName;
     }
-    
+
+    // Initialize Flatpickr for time inputs
+    const startTime24 = startTimeInput.getAttribute('data-time');
+    startTimePicker = flatpickr(startTimeInput, {
+        enableTime: true,
+        noCalendar: true,
+        dateFormat: "h:i K",
+        time_24hr: false,
+        minuteIncrement: 15,
+        defaultDate: startTime24 ? convertTo12Hour(startTime24) : null,
+        onClose: function(selectedDates, dateStr) {
+            updatePresetButtons();
+            if (durationSelect.value && durationSelect.value !== 'custom') {
+                calculateEndTime();
+            }
+            // Store as 24-hour format for form submission
+            if (selectedDates.length > 0) {
+                const date = selectedDates[0];
+                const hours = date.getHours().toString().padStart(2, '0');
+                const minutes = date.getMinutes().toString().padStart(2, '0');
+                startTimeInput.setAttribute('data-time', `${hours}:${minutes}`);
+            }
+        }
+    });
+
+    const endTime24 = endTimeInput.getAttribute('data-time');
+    endTimePicker = flatpickr(endTimeInput, {
+        enableTime: true,
+        noCalendar: true,
+        dateFormat: "h:i K",
+        time_24hr: false,
+        minuteIncrement: 15,
+        defaultDate: endTime24 ? convertTo12Hour(endTime24) : null,
+        onClose: function(selectedDates, dateStr) {
+            // Store as 24-hour format for form submission
+            if (selectedDates.length > 0) {
+                const date = selectedDates[0];
+                const hours = date.getHours().toString().padStart(2, '0');
+                const minutes = date.getMinutes().toString().padStart(2, '0');
+                endTimeInput.setAttribute('data-time', `${hours}:${minutes}`);
+            }
+        }
+    });
+
+    // Initialize form state on load
+    initializeFormState();
+
+    // Venue change detection for gig name auto-update
     venueSelect.addEventListener('change', function() {
         const selectedOption = this.options[this.selectedIndex];
         const newVenueName = selectedOption.dataset.venueName || '';
-        
-        // Auto-populate if gig name is blank
+
         if (gigNameInput.value.trim() === '') {
             if (selectedOption.value && newVenueName) {
                 gigNameInput.value = newVenueName;
             }
         }
-        // Replace if current gig name matches the previous venue name
         else if (gigNameInput.value.trim() === previousVenueName && newVenueName) {
             gigNameInput.value = newVenueName;
         }
-        
-        // Update the previous venue name for next comparison
+
         previousVenueName = newVenueName;
     });
-});
 
+    // Preset time buttons
+    presetTimeBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            const time24 = this.dataset.time;
+            const [hours, minutes] = time24.split(':');
+
+            // Set time in Flatpickr
+            const date = new Date();
+            date.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+            startTimePicker.setDate(date);
+
+            // Store 24-hour format
+            startTimeInput.setAttribute('data-time', time24);
+
+            // Update button states
+            presetTimeBtns.forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+
+            // Calculate end time if duration is selected
+            if (durationSelect.value && durationSelect.value !== 'custom') {
+                calculateEndTime();
+            }
+        });
+    });
+
+    // Duration selection
+    durationSelect.addEventListener('change', function() {
+        if (this.value === 'custom') {
+            endTimeGroup.style.display = 'block';
+            durationInfo.style.display = 'none';
+        } else if (this.value === '') {
+            endTimeGroup.style.display = 'none';
+            durationInfo.style.display = 'none';
+            endTimePicker.clear();
+        } else {
+            endTimeGroup.style.display = 'none';
+            durationInfo.style.display = 'block';
+            calculateEndTime();
+        }
+    });
+
+    // Form submission - convert display values to 24-hour format
+    document.querySelector('form').addEventListener('submit', function() {
+        const startTime24 = startTimeInput.getAttribute('data-time');
+        const endTime24 = endTimeInput.getAttribute('data-time');
+
+        if (startTime24) {
+            startTimeInput.name = 'start_time';
+            startTimeInput.value = startTime24;
+        }
+
+        if (endTime24) {
+            endTimeInput.name = 'end_time';
+            endTimeInput.value = endTime24;
+        }
+    });
+
+    function convertTo12Hour(time24) {
+        if (!time24) return null;
+        const [hours, minutes] = time24.split(':');
+        const date = new Date();
+        date.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+        return date;
+    }
+
+    function initializeFormState() {
+        const startTime24 = startTimeInput.getAttribute('data-time');
+        const endTime24 = endTimeInput.getAttribute('data-time');
+
+        // Highlight active preset if start time matches
+        if (startTime24) {
+            presetTimeBtns.forEach(btn => {
+                if (btn.dataset.time === startTime24) {
+                    btn.classList.add('active');
+                }
+            });
+        }
+
+        // Calculate duration if both times are set
+        if (startTime24 && endTime24) {
+            const duration = calculateCurrentDuration(startTime24, endTime24);
+            const matchingOption = [...durationSelect.options].find(opt => opt.value == duration);
+
+            if (matchingOption) {
+                durationSelect.value = duration;
+                durationInfo.style.display = 'block';
+                endTimeGroup.style.display = 'none';
+                const endTime12h = formatTime12Hour(endTime24);
+                durationInfo.textContent = `Ends at ${endTime12h}`;
+            } else {
+                durationSelect.value = 'custom';
+                endTimeGroup.style.display = 'block';
+                durationInfo.style.display = 'none';
+            }
+        } else if (endTime24) {
+            durationSelect.value = 'custom';
+            endTimeGroup.style.display = 'block';
+            durationInfo.style.display = 'none';
+        }
+    }
+
+    function updatePresetButtons() {
+        const currentTime = startTimeInput.getAttribute('data-time');
+        presetTimeBtns.forEach(btn => {
+            if (btn.dataset.time === currentTime) {
+                btn.classList.add('active');
+            } else {
+                btn.classList.remove('active');
+            }
+        });
+    }
+
+    function calculateCurrentDuration(startTime24, endTime24) {
+        const [startHours, startMinutes] = startTime24.split(':');
+        const [endHours, endMinutes] = endTime24.split(':');
+
+        const startDate = new Date();
+        startDate.setHours(parseInt(startHours), parseInt(startMinutes), 0, 0);
+
+        const endDate = new Date();
+        endDate.setHours(parseInt(endHours), parseInt(endMinutes), 0, 0);
+
+        // Handle next day scenarios
+        if (endDate < startDate) {
+            endDate.setDate(endDate.getDate() + 1);
+        }
+
+        return Math.round((endDate - startDate) / (1000 * 60)); // Duration in minutes
+    }
+
+    function calculateEndTime() {
+        const startTime24 = startTimeInput.getAttribute('data-time');
+        const duration = parseInt(durationSelect.value);
+
+        if (startTime24 && duration) {
+            const [hours, minutes] = startTime24.split(':');
+            const startDate = new Date();
+            startDate.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+
+            const endDate = new Date(startDate.getTime() + duration * 60000);
+            const endHours = endDate.getHours().toString().padStart(2, '0');
+            const endMinutes = endDate.getMinutes().toString().padStart(2, '0');
+            const endTime24 = `${endHours}:${endMinutes}`;
+
+            // Set end time in Flatpickr and store 24-hour format
+            endTimePicker.setDate(endDate);
+            endTimeInput.setAttribute('data-time', endTime24);
+
+            // Update duration display
+            const endTime12h = formatTime12Hour(endTime24);
+            durationInfo.textContent = `Ends at ${endTime12h}`;
+        }
+    }
+
+    function formatTime12Hour(time24) {
+        const [hours, minutes] = time24.split(':');
+        const hour = parseInt(hours);
+        const ampm = hour >= 12 ? 'PM' : 'AM';
+        const hour12 = hour % 12 || 12;
+        return `${hour12}:${minutes} ${ampm}`;
+    }
+});
 </script>
 
 <div class="card" style="margin-top: 20px; background: #fed7d7; border: 1px solid #fc8181;">

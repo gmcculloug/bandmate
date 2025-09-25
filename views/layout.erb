@@ -4,6 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>🎶 Bandmate - Song Management</title>
+
+    <!-- Flatpickr CSS and JS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <style>
         * {
             margin: 0;
@@ -862,6 +866,126 @@
                 grid-template-columns: 1fr;
                 gap: 10px;
             }
+
+            .time-presets {
+                grid-template-columns: repeat(2, 1fr) !important;
+                gap: 8px !important;
+            }
+
+            .time-preset-btn {
+                padding: 8px 12px !important;
+                font-size: 13px !important;
+            }
+        }
+
+        /* Modern Time Controls Styling */
+        .modern-time-control {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .time-input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .time-input-row {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 15px;
+            align-items: end;
+        }
+
+        .flatpickr-input {
+            width: 100% !important;
+            padding: 15px !important;
+            border: 2px solid #e2e8f0 !important;
+            border-radius: 8px !important;
+            font-size: 16px !important;
+            transition: border-color 0.3s ease !important;
+            min-height: 44px !important;
+            background: white !important;
+        }
+
+        .flatpickr-input:focus {
+            outline: none !important;
+            border-color: #667eea !important;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1) !important;
+        }
+
+        .duration-selector {
+            min-width: 150px;
+        }
+
+        .duration-info {
+            color: #4a5568;
+            font-size: 14px;
+            padding: 8px 12px;
+            background: rgba(102, 126, 234, 0.1);
+            border-radius: 6px;
+            border: 1px solid rgba(102, 126, 234, 0.2);
+            margin-top: 5px;
+        }
+
+        .preset-times {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .time-preset-btn {
+            padding: 10px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            background: white;
+            color: #4a5568;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .time-preset-btn:hover {
+            border-color: #667eea;
+            background: rgba(102, 126, 234, 0.05);
+            color: #667eea;
+        }
+
+        .time-preset-btn.active {
+            border-color: #667eea;
+            background: #667eea;
+            color: white;
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+        }
+
+        /* Flatpickr customization */
+        .flatpickr-calendar {
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15) !important;
+            border: 1px solid #e2e8f0 !important;
+            border-radius: 12px !important;
+            overflow: hidden !important;
+        }
+
+        .flatpickr-time input {
+            font-size: 16px !important;
+            border-radius: 6px !important;
+        }
+
+        .flatpickr-time .flatpickr-am-pm {
+            background: #667eea !important;
+            color: white !important;
+            border-radius: 6px !important;
+        }
+
+        .flatpickr-hour, .flatpickr-minute {
+            font-weight: 600 !important;
         }
     </style>
 </head>

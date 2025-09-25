@@ -139,7 +139,7 @@ class Routes::Songs < Sinatra::Base
       existing_song = current_band.songs.find_by(song_catalog_id: song_catalog_id)
       next if existing_song
 
-      song = Song.create_from_global_song(song_catalog, [current_band.id])
+      song = Song.create_from_song_catalog(song_catalog, [current_band.id])
 
       if song.save
         copied_count += 1
@@ -186,12 +186,29 @@ class Routes::Songs < Sinatra::Base
     erb :new_song_catalog
   end
 
+  get '/song_catalogs/new' do
+    require_login
+    erb :new_song_catalog
+  end
+
   post '/song_catalog' do
     require_login
     song_catalog = SongCatalog.new(params[:song_catalog])
 
     if song_catalog.save
       redirect '/song_catalog'
+    else
+      @errors = song_catalog.errors.full_messages
+      erb :new_song_catalog
+    end
+  end
+
+  post '/song_catalogs' do
+    require_login
+    song_catalog = SongCatalog.new(params[:song_catalog])
+
+    if song_catalog.save
+      redirect '/song_catalogs'
     else
       @errors = song_catalog.errors.full_messages
       erb :new_song_catalog
@@ -205,7 +222,20 @@ class Routes::Songs < Sinatra::Base
     erb :show_song_catalog
   end
 
+  get '/song_catalogs/:id' do
+    require_login
+    @song_catalog = SongCatalog.find(params[:id])
+    @bands = user_bands
+    erb :show_song_catalog
+  end
+
   get '/song_catalog/:id/edit' do
+    require_login
+    @song_catalog = SongCatalog.find(params[:id])
+    erb :edit_song_catalog
+  end
+
+  get '/song_catalogs/:id/edit' do
     require_login
     @song_catalog = SongCatalog.find(params[:id])
     erb :edit_song_catalog
@@ -223,10 +253,29 @@ class Routes::Songs < Sinatra::Base
     end
   end
 
+  put '/song_catalogs/:id' do
+    require_login
+    @song_catalog = SongCatalog.find(params[:id])
+
+    if @song_catalog.update(params[:song_catalog])
+      redirect "/song_catalogs/#{@song_catalog.id}"
+    else
+      @errors = @song_catalog.errors.full_messages
+      erb :edit_song_catalog
+    end
+  end
+
   delete '/song_catalog/:id' do
     require_login
     song_catalog = SongCatalog.find(params[:id])
     song_catalog.destroy
     redirect '/song_catalog'
+  end
+
+  delete '/song_catalogs/:id' do
+    require_login
+    song_catalog = SongCatalog.find(params[:id])
+    song_catalog.destroy
+    redirect '/song_catalogs'
   end
 end

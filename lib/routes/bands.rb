@@ -252,7 +252,7 @@ class Routes::Bands < Sinatra::Base
     copied_count = 0
     song_catalog_ids.each do |song_catalog_id|
       song_catalog = SongCatalog.find(song_catalog_id)
-      song = Song.create_from_global_song(song_catalog, [@band.id])
+      song = Song.create_from_song_catalog(song_catalog, [@band.id])
 
       if song.save
         copied_count += 1
