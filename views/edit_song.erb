@@ -100,8 +100,8 @@
     <div style="display: grid; grid-template-columns: 1fr; gap: 20px;">
         <div class="form-grid" style="display: grid; grid-template-columns: 1fr; gap: 20px;">
             <div class="form-group">
-                <label for="song_duration">Duration</label>
-                <input type="text" id="song_duration" name="song[duration]" value="<%= @song.duration %>" placeholder="e.g., 3:45">
+                <label for="song_duration">Duration *</label>
+                <input type="text" id="song_duration" name="song[duration]" value="<%= @song.duration %>" placeholder="e.g., 3:45" required>
             </div>
 
             <div class="form-group">

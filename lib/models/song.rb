@@ -7,6 +7,7 @@ class Song < ActiveRecord::Base
   validates :title, presence: true
   validates :artist, presence: true
   validates :key, presence: true
+  validates :duration, presence: true
   validates :tempo, numericality: { greater_than: 0 }, allow_nil: true
   
   # Scopes

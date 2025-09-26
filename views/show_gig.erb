@@ -63,9 +63,9 @@
 
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
         <h3>Songs (<%= @gig.songs.count %>) • 
-            <span style="color: #4a5568; font-weight: normal;">Estimated Duration: 
-                <% 
-                  total_minutes = @gig.songs.sum do |s| 
+            <span style="color: #4a5568; font-weight: normal;">Estimated Duration:
+                <%
+                  total_minutes = @gig.songs.sum do |s|
                     if s.duration.present? && s.duration.match?(/^\d+:\d+$/)
                       parts = s.duration.split(':').map(&:to_i)
                       parts[0] + parts[1]/60.0
@@ -73,8 +73,21 @@
                       0
                     end
                   end
+
+                  if total_minutes > 0
+                    hours = (total_minutes / 60).to_i
+                    minutes = (total_minutes % 60).round
+
+                    if hours > 0
+                      formatted_total = "#{hours}h #{minutes}m"
+                    else
+                      formatted_total = "#{minutes}m"
+                    end
+                  else
+                    formatted_total = 'N/A'
+                  end
                 %>
-                <%= total_minutes > 0 ? "#{total_minutes.to_i}:#{((total_minutes % 1) * 60).round.to_s.rjust(2, '0')}" : 'N/A' %>
+                <%= formatted_total %>
             </span>
         </h3>
         <a href="/gigs/<%= @gig.id %>/manage_songs" class="btn">Manage Songs</a>

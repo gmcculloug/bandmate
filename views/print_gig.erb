@@ -7,59 +7,52 @@
     <style>
         @media print {
             @page {
-                margin: 1in;
+                margin: 0.5in 0.25in;
                 size: letter;
+            }
+
+            .print-button {
+                display: none !important;
             }
         }
         
         body {
             font-family: 'Times New Roman', serif;
-            line-height: 1.6;
+            line-height: 1.4;
             color: #000;
             background: white;
             margin: 0;
-            padding: 20px;
+            padding: 10px;
         }
         
-        .header {
-            text-align: center;
-            margin-bottom: 30px;
-            border-bottom: 3px solid #000;
-            padding-bottom: 20px;
-        }
-        
-        .header h1 {
-            font-size: 2.5rem;
-            margin: 0 0 10px 0;
-            font-weight: bold;
-            word-break: break-word;
-        }
-        
-        .header .date {
-            font-size: 1.2rem;
-            color: #666;
-        }
         
         .song-list {
-            margin-top: 30px;
+            margin-top: 0px;
+        }
+
+        .set-row {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+            page-break-inside: avoid;
+        }
+
+        .set-column {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .page-break {
+            page-break-before: always;
         }
         
         .song-item {
             display: flex;
             align-items: center;
-            margin-bottom: 10px;
+            margin-bottom: 2px;
             page-break-inside: avoid;
             flex-wrap: wrap;
             gap: 10px;
-        }
-        
-        .song-number {
-            font-size: 1.2rem;
-            font-weight: bold;
-            min-width: 30px;
-            text-align: center;
-            margin-right: 15px;
-            flex-shrink: 0;
         }
         
         .song-info {
@@ -72,7 +65,7 @@
         }
         
         .song-title {
-            font-size: 1.4rem;
+            font-size: 1.6rem;
             font-weight: bold;
             word-break: break-word;
         }
@@ -89,11 +82,12 @@
             font-weight: bold;
             flex-shrink: 0;
         }
+
         
         .summary {
-            margin-top: 40px;
-            padding-top: 20px;
-            border-top: 2px solid #000;
+            margin-top: 15px;
+            padding-top: 10px;
+            border-top: 1px solid #000;
         }
         
         .summary h3 {
@@ -161,41 +155,41 @@
             body {
                 padding: 15px;
             }
-            
+
             .header h1 {
                 font-size: 2rem;
             }
-            
+
+            .set-row {
+                flex-direction: column;
+                gap: 20px;
+            }
+
             .song-item {
                 flex-direction: column;
                 align-items: flex-start;
                 gap: 5px;
             }
-            
-            .song-number {
-                margin-right: 0;
-                margin-bottom: 5px;
-            }
-            
+
             .song-info {
                 flex-direction: column;
                 align-items: flex-start;
                 gap: 5px;
                 width: 100%;
             }
-            
+
             .song-title {
                 font-size: 1.2rem;
             }
-            
+
             .song-key {
                 font-size: 1rem;
             }
-            
+
             .summary-grid {
                 grid-template-columns: 1fr;
             }
-            
+
             .print-button {
                 top: 10px;
                 right: 10px;
@@ -230,25 +224,6 @@
 <body>
     <button class="print-button" onclick="window.print()">🖨️ Print</button>
     
-    <div class="header">
-        <h1>
-            <%= @gig.name %>
-            <% if @gig.performance_date || @gig.start_time || @gig.end_time %>
-                <% date_info = @gig.performance_date&.strftime('%b %d') %>
-                <% time_info = [] %>
-                <% time_info << @gig.start_time&.strftime('%l:%M %p')&.strip if @gig.start_time %>
-                <% time_info << @gig.end_time&.strftime('%l:%M %p')&.strip if @gig.end_time %>
-                <% time_display = time_info.any? ? time_info.join(' - ') : nil %>
-                
-                <% info_parts = [date_info, time_display].compact %>
-                <% if info_parts.any? %>
-                    <span style="font-size: 1rem; font-weight: normal; color: #666; margin-left: 15px;">
-                        <%= info_parts.join(' • ') %>
-                    </span>
-                <% end %>
-            <% end %>
-        </h1>
-    </div>
 
     <div class="song-list">
         <% if @gig.songs.any? %>
@@ -257,28 +232,73 @@
               max_set = gig_songs_by_set.keys.max || 1
             %>
             
-            <% (1..max_set).each do |set_number| %>
-              <% if gig_songs_by_set[set_number] %>
-                <div class="set-section" style="margin-bottom: 40px; page-break-inside: avoid;">
-                  <h2 style="font-size: 1.8rem; margin-bottom: 20px; border-bottom: 2px solid #333; padding-bottom: 10px;">
-                    Set <%= set_number %> 
-                    <span style="font-size: 1.2rem; color: #666; font-weight: normal;">
-                      (<%= gig_songs_by_set[set_number].count %> songs)
-                    </span>
-                  </h2>
-                  
-                  <% gig_songs_by_set[set_number].each_with_index do |gig_song, index| %>
-                    <div class="song-item">
-                      <div class="song-number"><%= index + 1 %></div>
-                      <div class="song-info">
-                        <div class="song-title">
-                          <%= gig_song.song.title %>
-                        </div>
-                        <div class="song-key">(<%= gig_song.song.key %>)</div>
+            <%
+              # Find the first set that actually exists
+              first_existing_set = (1..max_set).find { |s| gig_songs_by_set[s] }
+              sets_processed = 0
+            %>
+            <% (1..max_set).step(2).each do |set_number| %>
+              <% if gig_songs_by_set[set_number] || gig_songs_by_set[set_number + 1] %>
+                <% if sets_processed > 0 %>
+                  <div class="page-break"></div>
+                <% end %>
+                <% sets_processed += 1 %>
+
+              <div class="set-row">
+                <% [set_number, set_number + 1].each do |current_set| %>
+                  <% if current_set <= max_set && gig_songs_by_set[current_set] %>
+                    <div class="set-column">
+                      <div class="set-section" style="margin-bottom: 40px;">
+                        <h2 style="font-size: 1.4rem; margin-bottom: 20px; border-bottom: 2px solid #333; padding-bottom: 10px;">
+                          Set <%= current_set %>
+                          <span style="font-size: 1rem; color: #666; font-weight: normal;">
+                            <%
+                              set_songs = gig_songs_by_set[current_set]
+                              total_set_minutes = set_songs.sum do |gs|
+                                if gs.song.duration.present? && gs.song.duration.match?(/^\d+:\d+$/)
+                                  parts = gs.song.duration.split(':').map(&:to_i)
+                                  parts[0] + parts[1]/60.0
+                                else
+                                  0
+                                end
+                              end
+
+                              if total_set_minutes > 0
+                                hours = (total_set_minutes / 60).to_i
+                                minutes = (total_set_minutes % 60).round
+
+                                if hours > 0
+                                  set_time_display = " • #{hours}h #{minutes}m"
+                                else
+                                  set_time_display = " • #{minutes}m"
+                                end
+                              else
+                                set_time_display = ""
+                              end
+                            %>
+                            (<%= set_songs.count %> songs<%= set_time_display %>)
+                          </span>
+                        </h2>
+
+                        <% gig_songs_by_set[current_set].each_with_index do |gig_song, index| %>
+                          <div class="song-item">
+                            <div class="song-info">
+                              <div class="song-title">
+                                <%= gig_song.song.title %>
+                              </div>
+                              <div class="song-key">(<%= gig_song.song.key %>)</div>
+                            </div>
+                          </div>
+                        <% end %>
                       </div>
                     </div>
+                  <% elsif current_set <= max_set %>
+                    <div class="set-column">
+                      <!-- Empty column for sets that don't exist -->
+                    </div>
                   <% end %>
-                </div>
+                <% end %>
+              </div>
               <% end %>
             <% end %>
         <% else %>
@@ -294,8 +314,8 @@
                 </div>
                 <div class="summary-item">
                     <span class="summary-label">Estimated Duration:</span> 
-                    <% 
-                      total_minutes = @gig.songs.sum do |s| 
+                    <%
+                      total_minutes = @gig.songs.sum do |s|
                         if s.duration.present? && s.duration.match?(/^\d+:\d+$/)
                           parts = s.duration.split(':').map(&:to_i)
                           parts[0] + parts[1]/60.0
@@ -303,8 +323,21 @@
                           0
                         end
                       end
+
+                      if total_minutes > 0
+                        hours = (total_minutes / 60).to_i
+                        minutes = (total_minutes % 60).round
+
+                        if hours > 0
+                          formatted_total = "#{hours}h #{minutes}m"
+                        else
+                          formatted_total = "#{minutes}m"
+                        end
+                      else
+                        formatted_total = 'N/A'
+                      end
                     %>
-                    <%= total_minutes > 0 ? "#{total_minutes.to_i}:#{((total_minutes % 1) * 60).round.to_s.rjust(2, '0')}" : 'N/A' %>
+                    <%= formatted_total %>
                 </div>
 
             </div>
