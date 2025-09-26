@@ -1,0 +1,25 @@
+default: &default
+  adapter: postgresql
+  encoding: unicode
+  pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
+  host: <%= ENV['DATABASE_HOST'] || 'localhost' %>
+  port: <%= ENV['DATABASE_PORT'] || 5432 %>
+  username: <%= ENV['DATABASE_USERNAME'] || 'postgres' %>
+  password: <%= ENV['DATABASE_PASSWORD'] || '' %>
+
+development:
+  <<: *default
+  database: <%= ENV['DATABASE_NAME'] || 'bandmate_development' %>
+
+test:
+  <<: *default
+  database: <%= ENV['DATABASE_NAME'] || 'bandmate_test' %>
+
+production:
+  <<: *default
+  # Use DATABASE_URL if available (common on Heroku), otherwise use individual env vars
+  <% if ENV['DATABASE_URL'] %>
+  url: <%= ENV['DATABASE_URL'] %>
+  <% else %>
+  database: <%= ENV['DATABASE_NAME'] || 'bandmate_production' %>
+  <% end %>
