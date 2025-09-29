@@ -5,13 +5,41 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><%= @gig.name %> - Gig</title>
     <style>
+        :root {
+            --font-size-multiplier: 1;
+        }
+
+        body.font-small {
+            --font-size-multiplier: 0.8;
+        }
+
+        body.font-medium {
+            --font-size-multiplier: 1;
+        }
+
+        body.font-large {
+            --font-size-multiplier: 1.2;
+        }
+
+        body.layout-portrait {
+            --page-orientation: portrait;
+        }
+
+        body.layout-landscape {
+            --page-orientation: landscape;
+        }
+
         @media print {
             @page {
                 margin: 0.5in 0.25in;
-                size: letter;
+                size: letter portrait;
             }
 
-            .print-button {
+            body.layout-landscape @page {
+                size: letter landscape;
+            }
+
+            .controls {
                 display: none !important;
             }
         }
@@ -65,19 +93,19 @@
         }
         
         .song-title {
-            font-size: 1.6rem;
+            font-size: calc(1.2rem * var(--font-size-multiplier));
             font-weight: bold;
             word-break: break-word;
         }
         
         .song-artist {
-            font-size: 1rem;
+            font-size: calc(1rem * var(--font-size-multiplier));
             color: #666;
             word-break: break-word;
         }
         
         .song-key {
-            font-size: 1.2rem;
+            font-size: calc(1rem * var(--font-size-multiplier));
             color: #666;
             font-weight: bold;
             flex-shrink: 0;
@@ -91,18 +119,18 @@
         }
         
         .summary h3 {
-            font-size: 1.3rem;
+            font-size: calc(1.3rem * var(--font-size-multiplier));
             margin-bottom: 15px;
         }
-        
+
         .summary-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 15px;
         }
-        
+
         .summary-item {
-            font-size: 1rem;
+            font-size: calc(1rem * var(--font-size-multiplier));
         }
         
         .summary-label {
@@ -128,10 +156,17 @@
                 padding: 20px;
             }
             
-            .print-button {
+            .controls {
                 position: fixed;
                 top: 20px;
                 right: 20px;
+                display: flex;
+                flex-direction: column;
+                gap: 10px;
+                z-index: 1000;
+            }
+
+            .print-button {
                 background: #007bff;
                 color: white;
                 border: none;
@@ -141,12 +176,34 @@
                 font-size: 16px;
                 min-height: 44px;
                 min-width: 44px;
-                z-index: 1000;
                 box-shadow: 0 2px 10px rgba(0,0,0,0.2);
             }
-            
+
             .print-button:hover {
                 background: #0056b3;
+            }
+
+            .font-size-control {
+                background: white;
+                padding: 10px;
+                border-radius: 8px;
+                box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+                border: 1px solid #ddd;
+            }
+
+            .font-size-control label {
+                display: block;
+                margin-bottom: 5px;
+                font-size: 14px;
+                font-weight: bold;
+            }
+
+            .font-size-control select {
+                width: 100%;
+                padding: 5px;
+                border: 1px solid #ddd;
+                border-radius: 4px;
+                font-size: 14px;
             }
         }
         
@@ -220,9 +277,45 @@
             }
         }
     </style>
+    <script>
+        function changeFontSize(size) {
+            const body = document.body;
+            body.className = body.className.replace(/font-(small|medium|large)/g, '');
+            body.classList.add('font-' + size);
+        }
+
+        function changeLayout(layout) {
+            const body = document.body;
+            body.className = body.className.replace(/layout-(portrait|landscape)/g, '');
+            body.classList.add('layout-' + layout);
+        }
+
+        // Set initial settings
+        document.addEventListener('DOMContentLoaded', function() {
+            changeFontSize('large');
+            changeLayout('portrait');
+        });
+    </script>
 </head>
-<body>
-    <button class="print-button" onclick="window.print()">🖨️ Print</button>
+<body class="font-large layout-portrait">
+    <div class="controls">
+        <button class="print-button" onclick="window.print()">🖨️ Print</button>
+        <div class="font-size-control">
+            <label for="font-size-selector">Font Size:</label>
+            <select id="font-size-selector" onchange="changeFontSize(this.value)">
+                <option value="small">Small</option>
+                <option value="medium">Medium</option>
+                <option value="large" selected>Large</option>
+            </select>
+        </div>
+        <div class="font-size-control">
+            <label for="layout-selector">Layout:</label>
+            <select id="layout-selector" onchange="changeLayout(this.value)">
+                <option value="portrait" selected>Portrait</option>
+                <option value="landscape">Landscape</option>
+            </select>
+        </div>
+    </div>
     
 
     <div class="song-list">
@@ -249,9 +342,9 @@
                   <% if current_set <= max_set && gig_songs_by_set[current_set] %>
                     <div class="set-column">
                       <div class="set-section" style="margin-bottom: 40px;">
-                        <h2 style="font-size: 1.4rem; margin-bottom: 20px; border-bottom: 2px solid #333; padding-bottom: 10px;">
+                        <h2 style="font-size: calc(1.2rem * var(--font-size-multiplier)); margin-bottom: 15px; border-bottom: 2px solid #333; padding-bottom: 8px;">
                           Set <%= current_set %>
-                          <span style="font-size: 1rem; color: #666; font-weight: normal;">
+                          <span style="font-size: calc(0.9rem * var(--font-size-multiplier)); color: #666; font-weight: normal;">
                             <%
                               set_songs = gig_songs_by_set[current_set]
                               total_set_minutes = set_songs.sum do |gs|
