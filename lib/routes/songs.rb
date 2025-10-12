@@ -36,10 +36,56 @@ class Routes::Songs < Sinatra::Base
     erb :new_song
   end
 
+  # Copy from catalog routes - must come before /songs/:id
+  get '/songs/copy_from_catalog' do
+    require_login
+    return redirect '/gigs' unless current_band
+
+    @search = params[:search]
+
+    # Get all song catalogs not already in current band
+    existing_song_catalog_ids = current_band.songs.where.not(song_catalog_id: nil).pluck(:song_catalog_id)
+    @song_catalogs = SongCatalog.where.not(id: existing_song_catalog_ids).order('LOWER(title)')
+
+    # Apply search filter
+    if @search.present?
+      @song_catalogs = @song_catalogs.search(@search)
+    end
+
+    # Get current band songs for the right column
+    @band_songs = current_band.songs.order('LOWER(title)')
+
+    erb :copy_from_song_catalogs
+  end
+
+  post '/songs/copy_from_catalog' do
+    require_login
+    return redirect '/gigs' unless current_band
+
+    song_catalog_ids = params[:song_catalog_ids] || []
+
+    copied_count = 0
+    song_catalog_ids.each do |song_catalog_id|
+      song_catalog = SongCatalog.find(song_catalog_id)
+
+      # Check if song is already in this band
+      existing_song = current_band.songs.find_by(song_catalog_id: song_catalog_id)
+      next if existing_song
+
+      song = Song.create_from_song_catalog(song_catalog, [current_band.id])
+
+      if song.save
+        copied_count += 1
+      end
+    end
+
+    redirect "/songs?copied=#{copied_count}"
+  end
+
   post '/songs' do
     require_login
     return redirect '/gigs' unless current_band
-    
+
     song = Song.new(params[:song])
     # If band_ids provided, associate accordingly but ensure current_band is included by default
     provided_band_ids = params.dig(:song, :band_ids)
@@ -50,7 +96,7 @@ class Routes::Songs < Sinatra::Base
     else
       song.bands = [current_band]
     end
-    
+
     if song.save
       redirect '/songs'
     else
@@ -98,55 +144,6 @@ class Routes::Songs < Sinatra::Base
     song.destroy
     
     redirect '/songs'
-  end
-
-  # ============================================================================
-  # COPY SONGS FROM GLOBAL LIST ROUTES
-  # ============================================================================
-
-  get '/songs/copy_from_catalog' do
-    require_login
-    return redirect '/gigs' unless current_band
-
-    @search = params[:search]
-
-    # Get all song catalogs not already in current band
-    existing_song_catalog_ids = current_band.songs.where.not(song_catalog_id: nil).pluck(:song_catalog_id)
-    @song_catalogs = SongCatalog.where.not(id: existing_song_catalog_ids).order('LOWER(title)')
-
-    # Apply search filter
-    if @search.present?
-      @song_catalogs = @song_catalogs.search(@search)
-    end
-
-    # Get current band songs for the right column
-    @band_songs = current_band.songs.order('LOWER(title)')
-
-    erb :copy_from_song_catalogs
-  end
-
-  post '/songs/copy_from_catalog' do
-    require_login
-    return redirect '/gigs' unless current_band
-
-    song_catalog_ids = params[:song_catalog_ids] || []
-
-    copied_count = 0
-    song_catalog_ids.each do |song_catalog_id|
-      song_catalog = SongCatalog.find(song_catalog_id)
-
-      # Check if song is already in this band
-      existing_song = current_band.songs.find_by(song_catalog_id: song_catalog_id)
-      next if existing_song
-
-      song = Song.create_from_song_catalog(song_catalog, [current_band.id])
-
-      if song.save
-        copied_count += 1
-      end
-    end
-
-    redirect "/songs?copied=#{copied_count}"
   end
 
   # ============================================================================

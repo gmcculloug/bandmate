@@ -456,7 +456,13 @@ end
 # Create gigs for each band
 bands.each do |band|
   band_venues = venues.select { |v| v.band == band }
-  
+
+  # Check if this band already has gigs - if so, skip gig creation
+  if band.gigs.any?
+    puts "Band #{band.name} already has #{band.gigs.count} gigs, skipping gig creation"
+    next
+  end
+
   # Create 3-4 past gigs
   rand(3..4).times do |i|
     past_date = Date.current - rand(30..365).days

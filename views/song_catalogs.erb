@@ -1,7 +1,13 @@
 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
     <h2>🌍 Song Catalog</h2>
-    <a href="/song_catalogs/new" class="btn btn-success">➕ Add New Song</a>
+    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+        <% if current_band %>
+            <a href="/bands/<%= current_band.id %>/copy_songs" class="btn btn-primary">📋 Copy Songs to <%= current_band.name %></a>
+        <% end %>
+        <a href="/song_catalogs/new" class="btn btn-success">➕ Add New Song</a>
+    </div>
 </div>
+
 
 <div style="margin-bottom: 20px;">
     <div style="position: relative; max-width: 400px;">

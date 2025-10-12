@@ -19,12 +19,13 @@ services:
   bandmate:
     build: .
     ports:
-      - "0.0.0.0:4567:4567"  # HTTPS port
+      - "0.0.0.0:8443:4567"  # HTTPS port (map host 8443 to container 4567)
+      - "0.0.0.0:4567:4567"  # Direct access (optional)
     volumes:
       # Mount logs directory
       - ./logs:/app/logs
       # Optional: Mount SSL certificates if you have custom ones
-      - ./ssl:/app/ssl
+      - ./ssl:/app/ssl:Z
     environment:
       - RACK_ENV=production
       - PORT=4567
@@ -47,7 +48,19 @@ services:
       start_period: 40s
     command: >
       sh -c "
+        echo 'BANDMATE_ACCT_CREATION_SECRET: ${BANDMATE_ACCT_CREATION_SECRET}' &&
         echo 'Connecting to PostgreSQL at ${DATABASE_HOST}:${DATABASE_PORT}...' &&
+        echo 'Checking for SSL certificates...' &&
+        if [ ! -f /app/ssl/server.crt ] || [ ! -f /app/ssl/server.key ]; then
+          echo 'SSL certificates not found. Generating self-signed certificates...' &&
+          openssl req -x509 -newkey rsa:4096 -keyout /app/ssl/server.key -out /app/ssl/server.crt \
+            -days 365 -nodes \
+            -subj '/C=US/ST=State/L=City/O=Bandmate/OU=Development/CN=localhost' \
+            -addext "subjectAltName=IP:localhost"
+          echo 'SSL certificates generated successfully!'
+        else
+          echo 'SSL certificates found. Using existing certificates.'
+        fi &&
         (bundle exec rake db:migrate || echo 'Migration failed or already applied, continuing...') &&
         echo 'Starting Bandmate application with HTTPS...' &&
         ruby app.rb
