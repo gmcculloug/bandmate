@@ -173,11 +173,21 @@ namespace :db do
   task :setup => :environment do
     puts "Running migrations..."
     Rake::Task['db:migrate'].invoke
-    
+
     puts "Seeding database..."
     Rake::Task['db:seed'].invoke
-    
+
     puts "Database setup completed!"
+  end
+
+  desc "Seed only songs from the song catalog"
+  task :seed_songs => :environment do
+    puts "Seeding song catalog..."
+
+    # Load only the song catalog data from seeds.rb
+    load File.join(File.dirname(__FILE__), 'db', 'seed_songs.rb')
+
+    puts "Song catalog seeding completed!"
   end
 end
 
