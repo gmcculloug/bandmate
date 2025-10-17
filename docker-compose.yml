@@ -19,7 +19,7 @@ services:
   bandmate:
     build: .
     ports:
-      - "0.0.0.0:8443:4567"  # HTTPS port (map host 8443 to container 4567)
+      - "0.0.0.0:443:4567"  # HTTPS port (map host 8443 to container 4567)
       - "0.0.0.0:4567:4567"  # Direct access (optional)
     volumes:
       # Mount logs directory
@@ -62,6 +62,7 @@ services:
           echo 'SSL certificates found. Using existing certificates.'
         fi &&
         (bundle exec rake db:migrate || echo 'Migration failed or already applied, continuing...') &&
+        (bundle exec rake db:seed_songs || echo 'Seeding Songs failed, continuing...') &&
         echo 'Starting Bandmate application with HTTPS...' &&
         ruby app.rb
       "
