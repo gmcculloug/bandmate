@@ -384,6 +384,66 @@ function setupEventListeners() {
     });
     
     // Note: Drag events for available songs are set up in updateAvailableSongs() when songs are created
+
+    // Global keyboard event handler for search functionality
+    document.addEventListener('keydown', function(e) {
+        const activeElement = document.activeElement;
+        const isTypingInInput = activeElement.tagName === 'INPUT' ||
+                                activeElement.tagName === 'TEXTAREA' ||
+                                activeElement.isContentEditable;
+        const hasModifier = e.altKey || e.ctrlKey || e.metaKey;
+        const songFilter = document.getElementById('song-filter');
+
+        // Handle ESC key to clear search
+        if (e.key === 'Escape') {
+            if (songFilter && songFilter.value.trim() !== '') {
+                e.preventDefault();
+                clearSongFilter();
+                return;
+            }
+        }
+
+        // Global text input handling - direct text to search box
+        if (!isTypingInInput && !hasModifier && songFilter) {
+            // Check if it's a printable character or backspace/delete
+            const isPrintableChar = e.key.length === 1;
+            const isBackspace = e.key === 'Backspace';
+            const isDelete = e.key === 'Delete';
+
+            if (isPrintableChar) {
+                e.preventDefault();
+                songFilter.focus();
+
+                // Clear existing content and add the new character
+                songFilter.value = e.key;
+
+                // Move cursor to end
+                songFilter.setSelectionRange(songFilter.value.length, songFilter.value.length);
+
+                // Trigger input event to start search
+                const inputEvent = new Event('input');
+                songFilter.dispatchEvent(inputEvent);
+            } else if ((isBackspace || isDelete) && songFilter.value.trim() !== '') {
+                e.preventDefault();
+                songFilter.focus();
+
+                if (isBackspace) {
+                    // Remove last character
+                    songFilter.value = songFilter.value.slice(0, -1);
+                } else if (isDelete) {
+                    // Clear all content
+                    songFilter.value = '';
+                }
+
+                // Move cursor to end
+                songFilter.setSelectionRange(songFilter.value.length, songFilter.value.length);
+
+                // Trigger input event
+                const inputEvent = new Event('input');
+                songFilter.dispatchEvent(inputEvent);
+            }
+        }
+    });
 }
 
 // Setup song drag events
