@@ -131,7 +131,12 @@ function generateSets() {
         
         setDiv.innerHTML = `
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
-                <h3 style="margin: 0;">Set ${i} (<span class="set-count">0</span>)</h3>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <input type="radio" name="selected-set" value="${i}" id="set-radio-${i}" ${i === 1 ? 'checked' : ''} style="margin: 0;">
+                    <label for="set-radio-${i}" style="margin: 0; cursor: pointer;">
+                        <h3 style="margin: 0; display: inline;">Set ${i} (<span class="set-count">0</span>)</h3>
+                    </label>
+                </div>
                 <div style="padding: 4px 10px; background: #f7fafc; border-radius: 4px; border: 1px solid #e2e8f0; font-size: 0.85rem;">
                     <span style="font-weight: bold; color: #4a5568;">Time:</span>
                     <span class="set-time" style="color: #2d3748; margin-left: 6px;">0:00</span>
@@ -446,7 +451,66 @@ function setupEventListeners() {
     });
 }
 
-// Setup song drag events
+// Add song to the currently selected set
+function addSongToSelectedSet(songElement) {
+    const songId = songElement.dataset.songId;
+    const songData = allBandSongs.find(song => song.id === songId);
+
+    if (!songData) {
+        console.error('Song data not found for ID:', songId);
+        return;
+    }
+
+    // Get the selected set number
+    const selectedRadio = document.querySelector('input[name="selected-set"]:checked');
+    if (!selectedRadio) {
+        console.error('No set selected');
+        return;
+    }
+
+    const setNumber = selectedRadio.value;
+    const setContainer = document.querySelector(`[data-set="${setNumber}"]`);
+
+    if (!setContainer) {
+        console.error('Set container not found for set:', setNumber);
+        return;
+    }
+
+    // Check if song is already in this set
+    if (setsSongs[setNumber] && setsSongs[setNumber].find(song => song.id === songId)) {
+        // Song already exists in this set, do nothing
+        return;
+    }
+
+    // Initialize set if it doesn't exist
+    if (!setsSongs[setNumber]) {
+        setsSongs[setNumber] = [];
+    }
+
+    // Add song to the end of the set
+    setsSongs[setNumber].push(songData);
+
+    // Clear drop zone text if this is the first song
+    const dropZoneText = setContainer.querySelector('.drop-zone-text');
+    if (dropZoneText) {
+        dropZoneText.remove();
+    }
+
+    // Add the song to the DOM
+    addSongToSet(setContainer, songData);
+
+    // Scroll to show the newly added song
+    setTimeout(() => {
+        setContainer.scrollTop = setContainer.scrollHeight;
+    }, 100); // Small delay to ensure DOM is updated
+
+    // Update the available songs list and counts
+    updateAvailableSongs();
+    updateSetCount(setNumber);
+    updateTotalTime();
+}
+
+// Setup song drag events and double-click functionality
 function setupSongDragEvents(songElement) {
     songElement.addEventListener('dragstart', function(e) {
         draggedElement = this;
@@ -455,22 +519,30 @@ function setupSongDragEvents(songElement) {
         e.dataTransfer.effectAllowed = 'move';
         e.dataTransfer.setData('text/html', this.outerHTML);
     });
-    
+
     songElement.addEventListener('dragend', function() {
         this.style.opacity = '1';
         this.classList.remove('dragging');
-        
+
         // Clean up any remaining drop indicators
         document.querySelectorAll('.drop-indicator').forEach(indicator => indicator.remove());
-        
+
         // Reset all set container styles
         document.querySelectorAll('.set-songs').forEach(container => {
             container.style.borderColor = '#e2e8f0';
             container.style.backgroundColor = 'transparent';
         });
-        
+
         draggedElement = null;
     });
+
+    // Add double-click functionality for available songs only
+    if (songElement.classList.contains('available-song')) {
+        songElement.addEventListener('dblclick', function(e) {
+            e.preventDefault();
+            addSongToSelectedSet(this);
+        });
+    }
 }
 
 // Setup set drop zones with precise positioning
