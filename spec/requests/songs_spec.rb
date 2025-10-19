@@ -121,6 +121,7 @@ RSpec.describe 'Songs API', type: :request do
         artist: 'New Artist',
         key: 'C',
         tempo: '120',
+        duration: '3:45',
         notes: 'A great song',
         band_ids: [band.id]
       }
@@ -145,6 +146,7 @@ RSpec.describe 'Songs API', type: :request do
         title: 'Multi Band Song',
         artist: 'Multi Artist',
         key: 'G',
+        duration: '4:20',
         band_ids: [band1.id, band2.id]
       }
       

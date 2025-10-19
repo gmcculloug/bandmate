@@ -45,40 +45,22 @@
         <div class="form-grid" style="display: grid; grid-template-columns: 1fr; gap: 20px;">
             <div class="form-group">
                 <label for="song_catalog_key">Key *</label>
-                <select id="song_catalog_key" name="song_catalog[key]" required>
-                    <option value="">Select Key</option>
-                    <option value="C">C</option>
-                    <option value="C#/Db">C#/Db</option>
-                    <option value="D">D</option>
-                    <option value="D#/Eb">D#/Eb</option>
-                    <option value="E">E</option>
-                    <option value="F">F</option>
-                    <option value="F#/Gb">F#/Gb</option>
-                    <option value="G">G</option>
-                    <option value="G#/Ab">G#/Ab</option>
-                    <option value="A">A</option>
-                    <option value="A#/Bb">A#/Bb</option>
-                    <option value="B">B</option>
-                </select>
+                <input type="text" id="song_catalog_key" name="song_catalog[key]" list="catalog_key_options" required placeholder="Select or type key (e.g., C, Dm, F#)">
+                <datalist id="catalog_key_options">
+                    <% ['C', 'C#/Db', 'D', 'D#/Eb', 'E', 'F', 'F#/Gb', 'G', 'G#/Ab', 'A', 'A#/Bb', 'B', 'Cm', 'C#m/Dbm', 'Dm', 'D#m/Ebm', 'Em', 'Fm', 'F#m/Gbm', 'Gm', 'G#m/Abm', 'Am', 'A#m/Bbm', 'Bm'].each do |key| %>
+                        <option value="<%= key %>"><%= key %></option>
+                    <% end %>
+                </datalist>
             </div>
 
             <div class="form-group">
                 <label for="song_catalog_original_key">Original Key</label>
-                <select id="song_catalog_original_key" name="song_catalog[original_key]">
-                    <option value="">Select Original Key</option>
-                    <option value="C">C</option>
-                    <option value="C#/Db">C#/Db</option>
-                    <option value="D">D</option>
-                    <option value="D#/Eb">D#/Eb</option>
-                    <option value="E">E</option>
-                    <option value="F">F</option>
-                    <option value="F#/Gb">F#/Gb</option>
-                    <option value="G">G</option>
-                    <option value="G#/Ab">G#/Ab</option>
-                    <option value="A">A</option>
-                    <option value="A#/Bb">A#/Bb</option>
-                    <option value="B">B</option>
-                </select>
+                <input type="text" id="song_catalog_original_key" name="song_catalog[original_key]" list="catalog_original_key_options" placeholder="Select or type original key (e.g., C, Dm, F#)">
+                <datalist id="catalog_original_key_options">
+                    <% ['C', 'C#/Db', 'D', 'D#/Eb', 'E', 'F', 'F#/Gb', 'G', 'G#/Ab', 'A', 'A#/Bb', 'B', 'Cm', 'C#m/Dbm', 'Dm', 'D#m/Ebm', 'Em', 'Fm', 'F#m/Gbm', 'Gm', 'G#m/Abm', 'Am', 'A#m/Bbm', 'Bm'].each do |key| %>
+                        <option value="<%= key %>"><%= key %></option>
+                    <% end %>
+                </datalist>
             </div>
         </div>
     </div>
@@ -136,13 +118,22 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const keySelect = document.getElementById('song_catalog_key');
-    const originalKeySelect = document.getElementById('song_catalog_original_key');
-    
-    keySelect.addEventListener('change', function() {
+    const keyInput = document.getElementById('song_catalog_key');
+    const originalKeyInput = document.getElementById('song_catalog_original_key');
+
+    // Auto-populate original key when key is changed (if original key is empty)
+    keyInput.addEventListener('input', function() {
         // Only set original key if it hasn't been set yet (is empty)
-        if (originalKeySelect.value === '') {
-            originalKeySelect.value = this.value;
+        if (originalKeyInput.value === '') {
+            originalKeyInput.value = this.value;
+        }
+    });
+
+    // Also trigger on datalist selection (change event)
+    keyInput.addEventListener('change', function() {
+        // Only set original key if it hasn't been set yet (is empty)
+        if (originalKeyInput.value === '') {
+            originalKeyInput.value = this.value;
         }
     });
 });
@@ -150,7 +141,7 @@ document.addEventListener('DOMContentLoaded', function() {
 async function lookupSongData() {
     const titleInput = document.getElementById('song_catalog_title');
     const artistInput = document.getElementById('song_catalog_artist');
-    const keySelect = document.getElementById('song_catalog_key');
+    const keyInput = document.getElementById('song_catalog_key');
     const tempoInput = document.getElementById('song_catalog_tempo');
     const durationInput = document.getElementById('song_catalog_duration');
     const lookupBtn = document.getElementById('lookup-btn');
@@ -190,22 +181,14 @@ async function lookupSongData() {
             }
             
             // Update key if found and current field is empty
-            if (data.key && !keySelect.value) {
-                // Try to find matching option in select
-                const keyOptions = Array.from(keySelect.options);
-                const matchingOption = keyOptions.find(option => 
-                    option.value.toLowerCase() === data.key.toLowerCase() ||
-                    option.textContent.toLowerCase() === data.key.toLowerCase()
-                );
-                if (matchingOption) {
-                    keySelect.value = matchingOption.value;
-                    fieldsUpdated.push('key');
-                    
-                    // Also update original key if it's empty
-                    const originalKeySelect = document.getElementById('song_catalog_original_key');
-                    if (!originalKeySelect.value) {
-                        originalKeySelect.value = matchingOption.value;
-                    }
+            if (data.key && !keyInput.value) {
+                keyInput.value = data.key;
+                fieldsUpdated.push('key');
+
+                // Also update original key if it's empty
+                const originalKeyInput = document.getElementById('song_catalog_original_key');
+                if (!originalKeyInput.value) {
+                    originalKeyInput.value = data.key;
                 }
             }
             

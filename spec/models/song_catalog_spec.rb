@@ -6,7 +6,8 @@ RSpec.describe SongCatalog, type: :model do
       song_catalog = SongCatalog.new(
         title: 'Test Song',
         artist: 'Test Artist',
-        key: 'C'
+        key: 'C',
+        duration: '3:45'
       )
       expect(song_catalog).to be_valid
     end
@@ -54,6 +55,7 @@ RSpec.describe SongCatalog, type: :model do
         title: 'Test Song',
         artist: 'Test Artist',
         key: 'C',
+        duration: '3:45',
         tempo: nil
       )
       expect(song_catalog).to be_valid
@@ -64,6 +66,7 @@ RSpec.describe SongCatalog, type: :model do
         title: 'Test Song',
         artist: 'Test Artist',
         key: 'C',
+        duration: '3:45',
         tempo: 120
       )
       expect(song_catalog).to be_valid
@@ -75,13 +78,15 @@ RSpec.describe SongCatalog, type: :model do
       song_catalog = SongCatalog.create!(
         title: 'Test Song',
         artist: 'Test Artist',
-        key: 'C'
+        key: 'C',
+        duration: '3:45'
       )
 
       song1 = Song.create!(
         title: 'Test Song',
         artist: 'Test Artist',
         key: 'C',
+        duration: '3:45',
         song_catalog: song_catalog
       )
 
@@ -89,6 +94,7 @@ RSpec.describe SongCatalog, type: :model do
         title: 'Test Song',
         artist: 'Test Artist',
         key: 'C',
+        duration: '3:45',
         song_catalog: song_catalog
       )
 
@@ -102,7 +108,8 @@ RSpec.describe SongCatalog, type: :model do
       SongCatalog.create!(
         title: 'Hotel California',
         artist: 'Eagles',
-        key: 'Bm'
+        key: 'Bm',
+        duration: '6:30'
       )
     end
 
@@ -110,7 +117,8 @@ RSpec.describe SongCatalog, type: :model do
       SongCatalog.create!(
         title: 'Stairway to Heaven',
         artist: 'Led Zeppelin',
-        key: 'Am'
+        key: 'Am',
+        duration: '8:02'
       )
     end
 
@@ -118,7 +126,8 @@ RSpec.describe SongCatalog, type: :model do
       SongCatalog.create!(
         title: 'Wonderwall',
         artist: 'Oasis',
-        key: 'Em'
+        key: 'Em',
+        duration: '4:18'
       )
     end
 

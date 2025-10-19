@@ -21,6 +21,7 @@ FactoryBot.define do
     artist { Faker::Music.band }
     key { ['C', 'G', 'D', 'A', 'E', 'B', 'F#', 'C#', 'F', 'Bb', 'Eb', 'Ab'].sample }
     tempo { rand(60..180) }
+    duration { "#{rand(2..5)}:#{rand(10..59)}" }
     genre { ['Rock', 'Pop', 'Jazz', 'Blues', 'Country'].sample }
     notes { Faker::Lorem.paragraph }
   end
@@ -30,6 +31,7 @@ FactoryBot.define do
     artist { Faker::Music.band }
     key { ['C', 'G', 'D', 'A', 'E', 'B', 'F#', 'C#', 'F', 'Bb', 'Eb', 'Ab'].sample }
     tempo { rand(60..180) }
+    duration { "#{rand(2..5)}:#{rand(10..59)}" }
     notes { Faker::Lorem.paragraph }
   end
 

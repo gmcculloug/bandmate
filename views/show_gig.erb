@@ -115,9 +115,6 @@
                 <div class="song-card" style="margin-bottom: 4px; padding: 8px 12px; border: 1px solid #e2e8f0; border-radius: 4px; cursor: pointer;" onclick="window.location.href='/songs/<%= gig_song.song.id %>'">
                   <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px;">
                     <div style="flex: 1; min-width: 0; display: flex; align-items: center; gap: 10px;">
-                      <span style="background: #667eea; color: white; padding: 3px 8px; border-radius: 12px; font-weight: bold; min-width: 25px; text-align: center; font-size: 0.85rem; flex-shrink: 0;">
-                        <%= index + 1 %>
-                      </span>
                       <div style="font-weight: 600; font-size: 1rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; flex: 1;">
                         <%= gig_song.song.title %>
                         <% if gig_song.song.artist.present? %>

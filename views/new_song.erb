@@ -38,40 +38,22 @@
         <div class="form-grid" style="display: grid; grid-template-columns: 1fr; gap: 20px;">
             <div class="form-group">
                 <label for="song_key">Key *</label>
-                <select id="song_key" name="song[key]" required>
-                    <option value="">Select Key</option>
-                    <option value="C">C</option>
-                    <option value="C#/Db">C#/Db</option>
-                    <option value="D">D</option>
-                    <option value="D#/Eb">D#/Eb</option>
-                    <option value="E">E</option>
-                    <option value="F">F</option>
-                    <option value="F#/Gb">F#/Gb</option>
-                    <option value="G">G</option>
-                    <option value="G#/Ab">G#/Ab</option>
-                    <option value="A">A</option>
-                    <option value="A#/Bb">A#/Bb</option>
-                    <option value="B">B</option>
-                </select>
+                <input type="text" id="song_key" name="song[key]" list="key_options" required placeholder="Select or type key (e.g., C, Dm, F#)">
+                <datalist id="key_options">
+                    <% ['C', 'C#/Db', 'D', 'D#/Eb', 'E', 'F', 'F#/Gb', 'G', 'G#/Ab', 'A', 'A#/Bb', 'B', 'Cm', 'C#m/Dbm', 'Dm', 'D#m/Ebm', 'Em', 'Fm', 'F#m/Gbm', 'Gm', 'G#m/Abm', 'Am', 'A#m/Bbm', 'Bm'].each do |key| %>
+                        <option value="<%= key %>"><%= key %></option>
+                    <% end %>
+                </datalist>
             </div>
 
             <div class="form-group">
                 <label for="song_original_key">Original Key</label>
-                <select id="song_original_key" name="song[original_key]">
-                    <option value="">Select Original Key</option>
-                    <option value="C">C</option>
-                    <option value="C#/Db">C#/Db</option>
-                    <option value="D">D</option>
-                    <option value="D#/Eb">D#/Eb</option>
-                    <option value="E">E</option>
-                    <option value="F">F</option>
-                    <option value="F#/Gb">F#/Gb</option>
-                    <option value="G">G</option>
-                    <option value="G#/Ab">G#/Ab</option>
-                    <option value="A">A</option>
-                    <option value="A#/Bb">A#/Bb</option>
-                    <option value="B">B</option>
-                </select>
+                <input type="text" id="song_original_key" name="song[original_key]" list="original_key_options" placeholder="Select or type original key (e.g., C, Dm, F#)">
+                <datalist id="original_key_options">
+                    <% ['C', 'C#/Db', 'D', 'D#/Eb', 'E', 'F', 'F#/Gb', 'G', 'G#/Ab', 'A', 'A#/Bb', 'B', 'Cm', 'C#m/Dbm', 'Dm', 'D#m/Ebm', 'Em', 'Fm', 'F#m/Gbm', 'Gm', 'G#m/Abm', 'Am', 'A#m/Bbm', 'Bm'].each do |key| %>
+                        <option value="<%= key %>"><%= key %></option>
+                    <% end %>
+                </datalist>
             </div>
         </div>
     </div>
@@ -132,13 +114,22 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const keySelect = document.getElementById('song_key');
-    const originalKeySelect = document.getElementById('song_original_key');
-    
-    keySelect.addEventListener('change', function() {
+    const keyInput = document.getElementById('song_key');
+    const originalKeyInput = document.getElementById('song_original_key');
+
+    // Auto-populate original key when key is changed (if original key is empty)
+    keyInput.addEventListener('input', function() {
         // Only set original key if it hasn't been set yet (is empty)
-        if (originalKeySelect.value === '') {
-            originalKeySelect.value = this.value;
+        if (originalKeyInput.value === '') {
+            originalKeyInput.value = this.value;
+        }
+    });
+
+    // Also trigger on datalist selection (change event)
+    keyInput.addEventListener('change', function() {
+        // Only set original key if it hasn't been set yet (is empty)
+        if (originalKeyInput.value === '') {
+            originalKeyInput.value = this.value;
         }
     });
 });

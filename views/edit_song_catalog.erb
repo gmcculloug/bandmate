@@ -54,40 +54,22 @@
         <div class="form-grid" style="display: grid; grid-template-columns: 1fr; gap: 20px;">
             <div class="form-group">
                 <label for="song_catalog_key">Key *</label>
-                <select id="song_catalog_key" name="song_catalog[key]" required>
-                    <option value="">Select Key</option>
-                    <option value="C" <%= 'selected' if @song_catalog.key == 'C' %>>C</option>
-                    <option value="C#/Db" <%= 'selected' if @song_catalog.key == 'C#/Db' %>>C#/Db</option>
-                    <option value="D" <%= 'selected' if @song_catalog.key == 'D' %>>D</option>
-                    <option value="D#/Eb" <%= 'selected' if @song_catalog.key == 'D#/Eb' %>>D#/Eb</option>
-                    <option value="E" <%= 'selected' if @song_catalog.key == 'E' %>>E</option>
-                    <option value="F" <%= 'selected' if @song_catalog.key == 'F' %>>F</option>
-                    <option value="F#/Gb" <%= 'selected' if @song_catalog.key == 'F#/Gb' %>>F#/Gb</option>
-                    <option value="G" <%= 'selected' if @song_catalog.key == 'G' %>>G</option>
-                    <option value="G#/Ab" <%= 'selected' if @song_catalog.key == 'G#/Ab' %>>G#/Ab</option>
-                    <option value="A" <%= 'selected' if @song_catalog.key == 'A' %>>A</option>
-                    <option value="A#/Bb" <%= 'selected' if @song_catalog.key == 'A#/Bb' %>>A#/Bb</option>
-                    <option value="B" <%= 'selected' if @song_catalog.key == 'B' %>>B</option>
-                </select>
+                <input type="text" id="song_catalog_key" name="song_catalog[key]" value="<%= @song_catalog.key %>" list="edit_catalog_key_options" required placeholder="Select or type key (e.g., C, Dm, F#)">
+                <datalist id="edit_catalog_key_options">
+                    <% ['C', 'C#/Db', 'D', 'D#/Eb', 'E', 'F', 'F#/Gb', 'G', 'G#/Ab', 'A', 'A#/Bb', 'B', 'Cm', 'C#m/Dbm', 'Dm', 'D#m/Ebm', 'Em', 'Fm', 'F#m/Gbm', 'Gm', 'G#m/Abm', 'Am', 'A#m/Bbm', 'Bm'].each do |key| %>
+                        <option value="<%= key %>"><%= key %></option>
+                    <% end %>
+                </datalist>
             </div>
 
             <div class="form-group">
                 <label for="song_catalog_original_key">Original Key</label>
-                <select id="song_catalog_original_key" name="song_catalog[original_key]">
-                    <option value="">Select Original Key</option>
-                    <option value="C" <%= 'selected' if @song_catalog.original_key == 'C' %>>C</option>
-                    <option value="C#/Db" <%= 'selected' if @song_catalog.original_key == 'C#/Db' %>>C#/Db</option>
-                    <option value="D" <%= 'selected' if @song_catalog.original_key == 'D' %>>D</option>
-                    <option value="D#/Eb" <%= 'selected' if @song_catalog.original_key == 'D#/Eb' %>>D#/Eb</option>
-                    <option value="E" <%= 'selected' if @song_catalog.original_key == 'E' %>>E</option>
-                    <option value="F" <%= 'selected' if @song_catalog.original_key == 'F' %>>F</option>
-                    <option value="F#/Gb" <%= 'selected' if @song_catalog.original_key == 'F#/Gb' %>>F#/Gb</option>
-                    <option value="G" <%= 'selected' if @song_catalog.original_key == 'G' %>>G</option>
-                    <option value="G#/Ab" <%= 'selected' if @song_catalog.original_key == 'G#/Ab' %>>G#/Ab</option>
-                    <option value="A" <%= 'selected' if @song_catalog.original_key == 'A' %>>A</option>
-                    <option value="A#/Bb" <%= 'selected' if @song_catalog.original_key == 'A#/Bb' %>>A#/Bb</option>
-                    <option value="B" <%= 'selected' if @song_catalog.original_key == 'B' %>>B</option>
-                </select>
+                <input type="text" id="song_catalog_original_key" name="song_catalog[original_key]" value="<%= @song_catalog.original_key %>" list="edit_catalog_original_key_options" placeholder="Select or type original key (e.g., C, Dm, F#)">
+                <datalist id="edit_catalog_original_key_options">
+                    <% ['C', 'C#/Db', 'D', 'D#/Eb', 'E', 'F', 'F#/Gb', 'G', 'G#/Ab', 'A', 'A#/Bb', 'B', 'Cm', 'C#m/Dbm', 'Dm', 'D#m/Ebm', 'Em', 'Fm', 'F#m/Gbm', 'Gm', 'G#m/Abm', 'Am', 'A#m/Bbm', 'Bm'].each do |key| %>
+                        <option value="<%= key %>"><%= key %></option>
+                    <% end %>
+                </datalist>
             </div>
         </div>
     </div>
@@ -152,6 +134,27 @@
 </div>
 
 <script>
+document.addEventListener('DOMContentLoaded', function() {
+    const keyInput = document.getElementById('song_catalog_key');
+    const originalKeyInput = document.getElementById('song_catalog_original_key');
+
+    // Auto-populate original key when key is changed (if original key is empty)
+    keyInput.addEventListener('input', function() {
+        // Only set original key if it hasn't been set yet (is empty)
+        if (originalKeyInput.value === '') {
+            originalKeyInput.value = this.value;
+        }
+    });
+
+    // Also trigger on datalist selection (change event)
+    keyInput.addEventListener('change', function() {
+        // Only set original key if it hasn't been set yet (is empty)
+        if (originalKeyInput.value === '') {
+            originalKeyInput.value = this.value;
+        }
+    });
+});
+
 function confirmUpdate() {
     return confirm('⚠️ Warning: You are about to update a song catalog entry.\n\nThis will change the song information for ALL users who have access to the song catalog. Existing band-specific copies will not be affected, but new copies will use the updated information.\n\nAre you sure you want to continue?');
 }
