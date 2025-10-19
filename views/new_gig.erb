@@ -104,17 +104,34 @@ document.addEventListener('DOMContentLoaded', function() {
         dateFormat: "h:i K",
         time_24hr: false,
         minuteIncrement: 15,
-        onClose: function(selectedDates, dateStr) {
-            updatePresetButtons();
-            if (durationSelect.value && durationSelect.value !== 'custom') {
-                calculateEndTime();
+        onChange: function(selectedDates, dateStr) {
+            // Update data-time attribute in real-time
+            if (selectedDates.length > 0) {
+                const date = selectedDates[0];
+                const hours = date.getHours().toString().padStart(2, '0');
+                const minutes = date.getMinutes().toString().padStart(2, '0');
+                startTimeInput.setAttribute('data-time', `${hours}:${minutes}`);
+
+                // Recalculate end time immediately if duration is selected
+                if (durationSelect.value && durationSelect.value !== 'custom' && durationSelect.value !== '') {
+                    calculateEndTime();
+                }
             }
+        },
+        onClose: function(selectedDates, dateStr) {
             // Store as 24-hour format for form submission
             if (selectedDates.length > 0) {
                 const date = selectedDates[0];
                 const hours = date.getHours().toString().padStart(2, '0');
                 const minutes = date.getMinutes().toString().padStart(2, '0');
                 startTimeInput.setAttribute('data-time', `${hours}:${minutes}`);
+            }
+
+            updatePresetButtons();
+
+            // Always recalculate end time if duration is selected (not custom)
+            if (durationSelect.value && durationSelect.value !== 'custom' && durationSelect.value !== '') {
+                calculateEndTime();
             }
         }
     });
