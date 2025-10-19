@@ -24,27 +24,34 @@ class Routes::Calendar < Sinatra::Base
     # Ensure month is valid
     @month = [[1, @month].max, 12].min
     
-    # Get the first and last day of the month
+    # Get the full calendar range including padding days from previous/next month
     start_date = Date.new(@year, @month, 1)
     next_month = @month == 12 ? Date.new(@year + 1, 1, 1) : Date.new(@year, @month + 1, 1)
     end_date = next_month - 1
+
+    # Calculate actual calendar display range (includes padding days)
+    days_back_to_sunday = start_date.wday
+    calendar_start = start_date - days_back_to_sunday
+
+    days_forward_to_saturday = 6 - end_date.wday
+    calendar_end = end_date + days_forward_to_saturday
     
     # Get all user's bands
     user_band_ids = current_user.bands.pluck(:id)
     
-    # Get current band gigs for this month
+    # Get current band gigs for the full calendar range
     @current_band_gigs = if current_band
-      current_band.gigs.where(performance_date: start_date..end_date)
+      current_band.gigs.where(performance_date: calendar_start..calendar_end)
                         .includes(:venue)
                         .order(:performance_date)
     else
       []
     end
     
-    # Get user's gigs from other bands
+    # Get user's gigs from other bands for the full calendar range
     @other_band_gigs = Gig.joins(:band)
                           .where(bands: { id: user_band_ids })
-                          .where(performance_date: start_date..end_date)
+                          .where(performance_date: calendar_start..calendar_end)
                           .where.not(band_id: current_band&.id)
                           .includes(:band, :venue)
                           .order(:performance_date)
@@ -59,11 +66,11 @@ class Routes::Calendar < Sinatra::Base
                                  .where.not(band_id: current_band.id)
                                  .pluck(:band_id)
       
-      # Get gigs from those bands - simplified query
+      # Get gigs from those bands for the full calendar range - simplified query
       if bandmate_band_ids.any?
         Gig.joins(:band)
            .where(bands: { id: bandmate_band_ids })
-           .where(performance_date: start_date..end_date)
+           .where(performance_date: calendar_start..calendar_end)
            .includes(:band)
            .order(:performance_date)
       else
@@ -73,15 +80,15 @@ class Routes::Calendar < Sinatra::Base
       []
     end
     
-    # Get blackout dates for all users in current band (if there is one)
+    # Get blackout dates for all users in current band for the full calendar range (if there is one)
     if current_band
       bandmate_ids = current_band.users.pluck(:id)
       @blackout_dates = BlackoutDate.where(user_id: bandmate_ids)
-                                    .where(blackout_date: start_date..end_date)
+                                    .where(blackout_date: calendar_start..calendar_end)
                                     .includes(:user)
     else
       @blackout_dates = current_user.blackout_dates
-                                    .where(blackout_date: start_date..end_date)
+                                    .where(blackout_date: calendar_start..calendar_end)
     end
     
     erb :calendar
