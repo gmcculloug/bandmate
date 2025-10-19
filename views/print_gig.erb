@@ -92,6 +92,14 @@
             min-width: 0;
         }
         
+        .song-title-and-notes {
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+            flex: 1;
+            min-width: 0;
+        }
+
         .song-title {
             font-size: calc(1.2rem * var(--font-size-multiplier));
             font-weight: bold;
@@ -109,6 +117,17 @@
             color: #666;
             font-weight: bold;
             flex-shrink: 0;
+        }
+
+        .song-notes {
+            font-size: calc(0.9rem * var(--font-size-multiplier));
+            color: #555;
+            font-style: italic;
+            margin-top: 0;
+            margin-bottom: 0;
+            padding: 0;
+            line-height: 1.0 !important;
+            word-break: break-word;
         }
 
         
@@ -376,8 +395,15 @@
                         <% gig_songs_by_set[current_set].each_with_index do |gig_song, index| %>
                           <div class="song-item">
                             <div class="song-info">
-                              <div class="song-title">
-                                <%= gig_song.song.title %>
+                              <div class="song-title-and-notes">
+                                <div class="song-title">
+                                  <%= gig_song.song.title %>
+                                </div>
+                                <% if gig_song.song.notes.present? %>
+                                  <div class="song-notes">
+                                    <%= gig_song.song.notes %>
+                                  </div>
+                                <% end %>
                               </div>
                               <div class="song-key">(<%= gig_song.song.key %>)</div>
                             </div>

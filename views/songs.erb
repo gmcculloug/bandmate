@@ -151,7 +151,7 @@ document.addEventListener('DOMContentLoaded', function() {
 <% if @songs.any? %>
     <div style="display: flex; flex-direction: column; gap: 2px;">
         <% @songs.each do |song| %>
-            <div class="song-card" style="padding: 8px 12px; margin-bottom: 0; cursor: pointer; border-radius: 4px;" onclick="window.location.href='/songs/<%= song.id %>'">
+            <div class="song-card" style="padding: 8px 12px; margin-bottom: 0; cursor: pointer; border-radius: 4px;" onclick="window.location.href='/songs/<%= song.id %>/edit'">
                 <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px;">
                     <div style="flex: 1; min-width: 0; display: flex; align-items: center; gap: 10px;">
                         <div style="font-weight: bold; color: #2d3748; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; flex: 1;">
