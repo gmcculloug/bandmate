@@ -177,7 +177,7 @@ function addSongToSet(setContainer, song) {
     
     songDiv.innerHTML = `
         <div style="font-weight: bold; color: #2d3748; font-size: 0.9rem;">${song.title}${keyHtml}</div>
-        <button type="button" onclick="removeSongFromSet(this)" style="position: absolute; top: 5px; right: 5px; background: #e53e3e; color: white; border: none; border-radius: 50%; width: 20px; height: 20px; font-size: 12px; cursor: pointer;">×</button>
+        <button type="button" onclick="removeSongFromSet(this)" style="position: absolute; top: 5px; right: 5px; background: #f56565; color: white; border: none; border-radius: 50%; width: 20px; height: 20px; font-size: 12px; cursor: pointer;">×</button>
     `;
     songDiv.style.position = 'relative';
     
@@ -536,11 +536,23 @@ function setupSongDragEvents(songElement) {
         draggedElement = null;
     });
 
-    // Add double-click functionality for available songs only
+    // Add double-click functionality for available songs (to add to sets)
     if (songElement.classList.contains('available-song')) {
         songElement.addEventListener('dblclick', function(e) {
             e.preventDefault();
             addSongToSelectedSet(this);
+        });
+    }
+
+    // Add double-click functionality for set songs (to remove from sets)
+    if (songElement.classList.contains('set-song')) {
+        songElement.addEventListener('dblclick', function(e) {
+            e.preventDefault();
+            // Find the remove button and trigger its click event
+            const removeButton = this.querySelector('button[onclick*="removeSongFromSet"]');
+            if (removeButton) {
+                removeSongFromSet(removeButton);
+            }
         });
     }
 }
