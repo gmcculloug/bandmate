@@ -90,7 +90,12 @@
                 <%= formatted_total %>
             </span>
         </h3>
-        <a href="/gigs/<%= @gig.id %>/manage_songs" class="btn">Manage Songs</a>
+        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+            <a href="/gigs/<%= @gig.id %>/manage_songs" class="btn">Manage Songs</a>
+            <% if @gig.songs.any? %>
+                <button type="button" class="btn" id="copy-to-gig-btn" onclick="showCopyToGigModal()">Copy to another Gig</button>
+            <% end %>
+        </div>
     </div>
 
     <% if @gig.songs.any? %>
@@ -146,4 +151,218 @@
     <% end %>
 </div>
 
- 
+<!-- Copy to Gig Modal -->
+<div id="copy-to-gig-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.5); z-index: 1000; padding: 20px; box-sizing: border-box;">
+    <div style="background: white; border-radius: 10px; max-width: 600px; margin: 50px auto; padding: 30px; max-height: 80vh; overflow-y: auto;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h3 style="margin: 0;">Copy Songs to Another Gig</h3>
+            <button type="button" onclick="closeCopyToGigModal()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #718096;">&times;</button>
+        </div>
+
+        <p style="color: #4a5568; margin-bottom: 20px;">Select a gig with no songs to copy this gig's songs to:</p>
+
+        <div id="empty-gigs-list" style="max-height: 400px; overflow-y: auto;">
+            <!-- Will be populated by JavaScript -->
+        </div>
+
+        <div style="margin-top: 20px; text-align: right; display: flex; gap: 10px; justify-content: flex-end;">
+            <button type="button" class="btn" onclick="closeCopyToGigModal()">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<!-- Confirmation Modal -->
+<div id="copy-confirmation-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.5); z-index: 1001; padding: 20px; box-sizing: border-box;">
+    <div style="background: white; border-radius: 10px; max-width: 500px; margin: 100px auto; padding: 30px;">
+        <h3 style="margin: 0 0 15px 0;">Confirm Copy</h3>
+        <p id="confirmation-text" style="margin-bottom: 20px;"></p>
+
+        <div style="display: flex; gap: 10px; justify-content: flex-end;">
+            <button type="button" class="btn" onclick="closeConfirmationModal()">Cancel</button>
+            <button type="button" class="btn btn-success" onclick="confirmCopy()">Copy Songs</button>
+        </div>
+    </div>
+</div>
+
+<script>
+let selectedTargetGigId = null;
+let selectedTargetGigName = null;
+
+function showCopyToGigModal() {
+    // Only show if current gig has songs
+    <% if @gig.songs.any? %>
+        fetchEmptyGigs();
+        document.getElementById('copy-to-gig-modal').style.display = 'block';
+    <% else %>
+        alert('This gig has no songs to copy. Add some songs first!');
+    <% end %>
+}
+
+function closeCopyToGigModal() {
+    console.log('DEBUG: closeCopyToGigModal called, current values - selectedTargetGigId:', selectedTargetGigId, 'selectedTargetGigName:', selectedTargetGigName);
+    document.getElementById('copy-to-gig-modal').style.display = 'none';
+    // DON'T reset the variables when closing the modal - we need them for the confirmation modal
+    // selectedTargetGigId = null;
+    // selectedTargetGigName = null;
+    console.log('DEBUG: Modal closed, keeping variables intact');
+}
+
+function closeConfirmationModal() {
+    document.getElementById('copy-confirmation-modal').style.display = 'none';
+    // Reset variables when confirmation modal is closed
+    selectedTargetGigId = null;
+    selectedTargetGigName = null;
+    console.log('DEBUG: Confirmation modal closed, variables reset');
+}
+
+
+function fetchEmptyGigs() {
+    const listContainer = document.getElementById('empty-gigs-list');
+    listContainer.innerHTML = '<div style="text-align: center; padding: 20px;">Loading...</div>';
+
+    fetch('/gigs/<%= @gig.id %>/empty_gigs', {
+            credentials: 'same-origin'
+        })
+        .then(response => {
+            return response.json();
+        })
+        .then(data => {
+            if (data.error) {
+                listContainer.innerHTML = `<div style="text-align: center; padding: 20px; color: #e53e3e;">Error: ${data.error}</div>`;
+                return;
+            }
+
+            if (data.gigs && data.gigs.length > 0) {
+                try {
+                    const gigHtml = data.gigs.map((gig, index) => {
+                        const escapedName = (gig.name || '').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+                        const gigDate = gig.performance_date || 'No date set';
+                        const safeName = (gig.name || '').replace(/'/g, "\\'").replace(/"/g, '\\"');
+                        return `
+                            <div class="gig-option gig-option-${index}"
+                                 data-gig-id="${gig.id}"
+                                 data-gig-name="${escapedName}"
+                                 data-gig-date="${gigDate}"
+                                 style="border: 1px solid #e2e8f0; border-radius: 8px; padding: 15px; margin-bottom: 10px; cursor: pointer; transition: all 0.2s;"
+                                 onclick="selectedTargetGigId = ${gig.id}; selectedTargetGigName = '${safeName}'; selectTargetGig(${gig.id}, '${safeName}', '${gigDate}');"
+                                 onmouseover="this.style.borderColor='#667eea'; this.style.backgroundColor='#f7fafc';"
+                                 onmouseout="this.style.borderColor='#e2e8f0'; this.style.backgroundColor='white';">
+                                <div style="font-weight: 600; color: #2d3748; margin-bottom: 5px;">${gig.name}</div>
+                                <div style="color: #718096; font-size: 0.9rem;">
+                                    ${gig.performance_date ? new Date(gig.performance_date).toLocaleDateString('en-US', { weekday: 'short', year: 'numeric', month: 'long', day: 'numeric' }) : 'No date set'}
+                                    ${gig.venue_name ? ' • ' + gig.venue_name : ''}
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+                    listContainer.innerHTML = gigHtml;
+
+                    // Add event listeners to gig options
+                    const gigOptions = listContainer.querySelectorAll('.gig-option');
+                    gigOptions.forEach(option => {
+                        option.addEventListener('click', function() {
+                            const gigId = this.getAttribute('data-gig-id');
+                            const gigName = this.getAttribute('data-gig-name').replace(/&quot;/g, '"').replace(/&#39;/g, "'");
+                            const gigDate = this.getAttribute('data-gig-date');
+                            selectTargetGig(parseInt(gigId), gigName, gigDate);
+                        });
+                    });
+                } catch (error) {
+                    listContainer.innerHTML = '<div style="text-align: center; padding: 20px; color: #e53e3e;">Error displaying gigs. Please try again.</div>';
+                }
+            } else {
+                listContainer.innerHTML = '<div style="text-align: center; padding: 40px; color: #718096;">No empty gigs found. All other gigs already have songs assigned.</div>';
+            }
+        })
+        .catch(error => {
+            listContainer.innerHTML = '<div style="text-align: center; padding: 20px; color: #e53e3e;">Error loading gigs. Please try again.</div>';
+        });
+}
+
+function selectTargetGig(gigId, gigName, gigDate) {
+    console.log('DEBUG: selectTargetGig called with:', gigId, gigName, gigDate);
+    selectedTargetGigId = gigId;
+    selectedTargetGigName = gigName;
+    console.log('DEBUG: Set global variables - selectedTargetGigId:', selectedTargetGigId, 'selectedTargetGigName:', selectedTargetGigName);
+
+    // Show confirmation modal
+    const confirmationText = `Are you sure you want to copy all songs from "<strong><%= @gig.name %></strong>" to "<strong>${gigName}</strong>"?<br><br>` +
+        `This will copy <strong><%= @gig.songs.count %> song<%= @gig.songs.count == 1 ? '' : 's' %></strong> to the target gig.`;
+
+    document.getElementById('confirmation-text').innerHTML = confirmationText;
+
+    closeCopyToGigModal();
+    document.getElementById('copy-confirmation-modal').style.display = 'block';
+    console.log('DEBUG: Confirmation modal should now be visible');
+}
+
+function confirmCopy() {
+    console.log('DEBUG: confirmCopy called, selectedTargetGigId:', selectedTargetGigId, 'selectedTargetGigName:', selectedTargetGigName);
+
+    if (!selectedTargetGigId) {
+        console.log('DEBUG: selectedTargetGigId is null/undefined');
+        alert('Please select a gig first');
+        return;
+    }
+
+    // Show loading state
+    const confirmBtn = document.querySelector('#copy-confirmation-modal .btn-success');
+    confirmBtn.textContent = 'Copying...';
+    confirmBtn.disabled = true;
+
+    console.log('DEBUG: Sending copy request with target_gig_id:', selectedTargetGigId);
+
+    fetch('/gigs/<%= @gig.id %>/copy_to_gig', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: `target_gig_id=${selectedTargetGigId}`
+    })
+    .then(response => {
+        console.log('DEBUG: Response received:', response.status);
+        return response.json();
+    })
+    .then(data => {
+        console.log('DEBUG: Response data:', data);
+        if (data.success) {
+            closeConfirmationModal();
+            // No popup - just close the modal silently
+        } else {
+            alert(`Error: ${data.error || 'Failed to copy songs. Please try again.'}`);
+            confirmBtn.textContent = 'Copy Songs';
+            confirmBtn.disabled = false;
+        }
+    })
+    .catch(error => {
+        console.error('DEBUG: Error:', error);
+        alert('Error copying songs. Please try again.');
+        confirmBtn.textContent = 'Copy Songs';
+        confirmBtn.disabled = false;
+    });
+}
+
+// Close modals when clicking outside
+document.addEventListener('click', function(event) {
+    const copyModal = document.getElementById('copy-to-gig-modal');
+    const confirmModal = document.getElementById('copy-confirmation-modal');
+
+    if (event.target === copyModal) {
+        closeCopyToGigModal();
+    }
+
+    if (event.target === confirmModal) {
+        closeConfirmationModal();
+    }
+});
+
+// Close modals with Escape key
+document.addEventListener('keydown', function(event) {
+    if (event.key === 'Escape') {
+        closeCopyToGigModal();
+        closeConfirmationModal();
+    }
+});
+</script>
+

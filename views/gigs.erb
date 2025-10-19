@@ -22,7 +22,7 @@
                             <h3>
                                 <% if set_list.performance_date.present? %>
                                     <span style="font-weight: normal; color: #718096; font-size: 0.9em;">
-                                        <%= set_list.performance_date.strftime('%a, %b %d') %> - 
+                                        <%= set_list.performance_date.strftime('%a, %b %d') %> -
                                     </span>
                                 <% end %>
                                 <%= set_list.name %>
@@ -39,9 +39,11 @@
                                 <p style="font-style: italic; color: #718096;"><%= set_list.notes %></p>
                             <% end %>
                         </div>
-                        <div class="actions" onclick="event.stopPropagation();" style="flex-shrink: 0;">
-                            <a href="/gigs/<%= set_list.id %>/print" class="btn" target="_blank">Print Set List</a>
-                        </div>
+                        <% if set_list.songs.any? %>
+                            <div class="actions" onclick="event.stopPropagation();" style="flex-shrink: 0;">
+                                <a href="/gigs/<%= set_list.id %>/print" class="btn" target="_blank">Print Set List</a>
+                            </div>
+                        <% end %>
                     </div>
                 </div>
             <% end %>
@@ -59,7 +61,7 @@
                             <h3>
                                 <% if set_list.performance_date.present? %>
                                     <span style="font-weight: normal; color: #718096; font-size: 0.9em;">
-                                        <%= set_list.performance_date.strftime('%a, %b %d') %> - 
+                                        <%= set_list.performance_date.strftime('%a, %b %d') %> -
                                     </span>
                                 <% end %>
                                 <%= set_list.name %>
@@ -75,9 +77,6 @@
                             <% if set_list.notes.present? %>
                                 <p style="font-style: italic; color: #718096;"><%= set_list.notes %></p>
                             <% end %>
-                        </div>
-                        <div class="actions" onclick="event.stopPropagation();" style="flex-shrink: 0;">
-                            <a href="/gigs/<%= set_list.id %>/print" class="btn" target="_blank">Print Set List</a>
                         </div>
                     </div>
                 </div>

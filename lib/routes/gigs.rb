@@ -270,7 +270,7 @@ class Routes::Gigs < Sinatra::Base
     require_login
     begin
       original_gig = filter_by_current_band(Gig).find(params[:id])
-      
+
       # Create new set list with copied name and notes
       new_name = "Copy - #{original_gig.name}"
       new_gig = Gig.create!(
@@ -279,7 +279,7 @@ class Routes::Gigs < Sinatra::Base
         band: original_gig.band,
         performance_date: original_gig.performance_date || Date.current
       )
-      
+
       # Copy all songs with their positions
       original_gig.gig_songs.includes(:song).order(:set_number, :position).each do |gig_song|
         GigSong.create!(
@@ -289,11 +289,82 @@ class Routes::Gigs < Sinatra::Base
           set_number: gig_song.set_number
         )
       end
-      
+
       redirect "/gigs/#{new_gig.id}"
     rescue => e
       # If something goes wrong, redirect back with an error
       redirect "/gigs/#{params[:id]}?error=copy_failed"
+    end
+  end
+
+  get '/gigs/:id/empty_gigs' do
+    content_type :json
+
+    unless logged_in?
+      return { error: 'Authentication required' }.to_json
+    end
+
+    begin
+      source_gig = filter_by_current_band(Gig).find(params[:id])
+
+      # Find gigs in the current band that have 0 songs and are not the source gig
+      empty_gigs = filter_by_current_band(Gig)
+                    .left_joins(:gig_songs)
+                    .where(gig_songs: { id: nil })
+                    .where.not(id: source_gig.id)
+                    .includes(:venue)
+                    .order(performance_date: :desc, name: :asc)
+
+      gigs_data = empty_gigs.map do |gig|
+        {
+          id: gig.id,
+          name: gig.name,
+          performance_date: gig.performance_date&.iso8601,
+          venue_name: gig.venue&.name
+        }
+      end
+
+      { gigs: gigs_data }.to_json
+    rescue => e
+      { error: 'Failed to fetch empty gigs' }.to_json
+    end
+  end
+
+  post '/gigs/:id/copy_to_gig' do
+    content_type :json
+
+    unless logged_in?
+      return { error: 'Authentication required' }.to_json
+    end
+
+    begin
+      source_gig = filter_by_current_band(Gig).find(params[:id])
+      target_gig_id = params[:target_gig_id]
+
+      return { error: 'Target gig ID is required' }.to_json unless target_gig_id
+
+      target_gig = filter_by_current_band(Gig).find(target_gig_id)
+
+      # Verify target gig has no songs
+      if target_gig.gig_songs.any?
+        return { error: 'Target gig already has songs assigned' }.to_json
+      end
+
+      # Copy all songs with their positions and sets
+      source_gig.gig_songs.includes(:song).order(:set_number, :position).each do |source_gig_song|
+        GigSong.create!(
+          gig_id: target_gig.id,
+          song_id: source_gig_song.song_id,
+          position: source_gig_song.position,
+          set_number: source_gig_song.set_number
+        )
+      end
+
+      { success: true }.to_json
+    rescue ActiveRecord::RecordNotFound => e
+      { error: 'Gig not found' }.to_json
+    rescue => e
+      { error: 'Failed to copy songs to target gig' }.to_json
     end
   end
 end
