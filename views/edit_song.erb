@@ -122,8 +122,8 @@
     </div>
 
     <div class="form-group">
-        <label for="song_notes">Notes</label>
-        <textarea id="song_notes" name="song[notes]" rows="4" placeholder="Any additional notes about the song, chords, etc."><%= @song.notes %></textarea>
+        <label for="song_notes">Set List Notes <span style="color: #718096; font-weight: normal; font-size: 0.9rem;">(visible on gig screen and printed set list)</span></label>
+        <textarea id="song_notes" name="song[notes]" rows="4" placeholder="Notes that will appear on the gig screen and printed set list (e.g., intro notes, special instructions, etc.)"><%= @song.notes %></textarea>
     </div>
 
     <div class="form-group">

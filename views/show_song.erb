@@ -56,19 +56,15 @@
 
     <% if @song.notes.present? %>
         <div style="margin-top: 30px;">
-            <h3>Notes</h3>
-            <div style="background: #f7fafc; padding: 20px; border-radius: 8px; white-space: pre-wrap;">
-                <%= @song.notes %>
-            </div>
+            <h3>Set List Notes <span style="color: #718096; font-weight: normal; font-size: 0.9rem;">(visible on gig screen and printed set list)</span></h3>
+            <div style="background: #f7fafc; padding: 20px; border-radius: 8px; white-space: pre-wrap;"><%= @song.notes %></div>
         </div>
     <% end %>
 
     <% if @song.lyrics.present? %>
         <div style="margin-top: 30px;">
             <h3>Lyrics</h3>
-            <div style="background: #f7fafc; padding: 20px; border-radius: 8px; white-space: pre-wrap; font-family: monospace;">
-                <%= @song.lyrics %>
-            </div>
+            <div style="background: #f7fafc; padding: 20px; border-radius: 8px; white-space: pre-wrap; font-family: monospace;"><%= @song.lyrics %></div>
         </div>
     <% end %>
 </div>
