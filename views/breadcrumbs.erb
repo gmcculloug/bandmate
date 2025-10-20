@@ -1,0 +1,20 @@
+<% if defined?(@breadcrumbs) && @breadcrumbs && @breadcrumbs.any? %>
+  <nav class="breadcrumbs" aria-label="Breadcrumb navigation">
+    <% @breadcrumbs.each_with_index do |crumb, index| %>
+      <% if index > 0 %>
+        <span class="breadcrumb-separator">›</span>
+      <% end %>
+      <% if crumb[:url] %>
+        <a href="<%= crumb[:url] %>" class="breadcrumb-link">
+          <%= crumb[:icon] %>
+          <%= crumb[:label] %>
+        </a>
+      <% else %>
+        <span class="breadcrumb-current">
+          <%= crumb[:icon] %>
+          <%= crumb[:label] %>
+        </span>
+      <% end %>
+    <% end %>
+  </nav>
+<% end %>

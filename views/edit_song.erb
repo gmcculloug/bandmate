@@ -2,8 +2,7 @@
     <h2>✏️ Edit Song: <%= @song.title %></h2>
     <div class="actions">
         <button type="submit" form="edit-song-form" class="btn btn-success">Update Song</button>
-        <a href="/songs/<%= @song.id %>" class="btn">Cancel</a>
-        <a href="/songs/<%= @song.id %>" class="btn">Back</a>
+        <a href="/songs" class="btn">Cancel</a>
     </div>
 </div>
 
@@ -133,7 +132,7 @@
 
     <div class="actions">
         <button type="submit" class="btn btn-success">Update Song</button>
-        <a href="/songs/<%= @song.id %>" class="btn">Cancel</a>
+        <a href="/songs" class="btn">Cancel</a>
     </div>
 </form>
 

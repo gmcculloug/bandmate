@@ -49,7 +49,7 @@
                 <button type="button" id="clear-filter" onclick="clearSongFilter()" style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: none; border: none; color: #9ca3af; cursor: pointer; font-size: 16px; padding: 0; width: 20px; height: 20px; display: none; align-items: center; justify-content: center;">×</button>
             </div>
             
-            <div id="available-songs" style="max-height: 500px; overflow-y: auto;">
+            <div id="available-songs" style="max-height: 500px; overflow-y: scroll; border: 1px solid #e2e8f0; border-radius: 6px; padding: 10px;">
             <% @available_songs.each do |song| %>
                 <div class="song-item available-song" data-song-id="<%= song.id %>" draggable="true" style="margin-bottom: 8px; padding: 10px; background: #f7fafc; border: 1px solid #e2e8f0; border-radius: 6px; cursor: grab; transition: all 0.2s ease;">
                     <div style="font-weight: bold; color: #2d3748; font-size: 0.9rem;">
@@ -142,7 +142,7 @@ function generateSets() {
                     <span class="set-time" style="color: #2d3748; margin-left: 6px;">0:00</span>
                 </div>
             </div>
-            <div class="set-songs" data-set="${i}" style="min-height: 400px; max-height: 500px; overflow-y: auto; border: 2px dashed #e2e8f0; border-radius: 6px; padding: 10px;">
+            <div class="set-songs" data-set="${i}" style="min-height: 400px; max-height: 500px; overflow-y: scroll; border: 1px solid #e2e8f0; border-radius: 6px; padding: 10px;">
                 <div class="drop-zone-text" style="text-align: center; color: #a0aec0; padding: 20px; font-style: italic;">Drop songs here</div>
             </div>
         `;
@@ -930,5 +930,36 @@ function toggleClearButton(filterValue) {
         transform: translateX(-100%);
         opacity: 0;
     }
+}
+
+/* Force scroll bars to always be visible */
+#available-songs,
+.set-songs {
+    scrollbar-width: thin; /* Firefox */
+    -ms-overflow-style: scrollbar; /* IE/Edge */
+}
+
+/* Webkit browsers (Chrome, Safari) */
+#available-songs::-webkit-scrollbar,
+.set-songs::-webkit-scrollbar {
+    width: 12px;
+    appearance: auto;
+}
+
+#available-songs::-webkit-scrollbar-track,
+.set-songs::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 6px;
+}
+
+#available-songs::-webkit-scrollbar-thumb,
+.set-songs::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 6px;
+}
+
+#available-songs::-webkit-scrollbar-thumb:hover,
+.set-songs::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
 }
 </style>

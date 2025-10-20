@@ -131,4 +131,43 @@ module ApplicationHelpers
       "/calendar?year=#{year}&month=#{month + 1}"
     end
   end
+
+  # Breadcrumb helper methods
+  def set_breadcrumbs(*crumbs)
+    @breadcrumbs = []
+
+    # Always start with Home
+    @breadcrumbs << { label: 'Home', icon: '🏠', url: '/gigs' }
+
+    # Add provided breadcrumbs
+    crumbs.each do |crumb|
+      @breadcrumbs << crumb
+    end
+  end
+
+  def add_breadcrumb(label, url = nil, icon = nil)
+    @breadcrumbs ||= []
+    @breadcrumbs << { label: label, url: url, icon: icon }
+  end
+
+  def breadcrumb_for_section(section)
+    case section.to_s.downcase
+    when 'gigs'
+      { label: 'Gigs', icon: '📋', url: '/gigs' }
+    when 'songs'
+      { label: 'Songs', icon: '🎵', url: '/songs' }
+    when 'venues'
+      { label: 'Venues', icon: '🏢', url: '/venues' }
+    when 'calendar'
+      { label: 'Calendar', icon: '📅', url: '/calendar' }
+    when 'bands'
+      { label: 'Bands', icon: '🎸', url: '/bands' }
+    when 'profile'
+      { label: 'Profile', icon: '⚙️', url: '/profile' }
+    when 'song_catalogs'
+      { label: 'Song Catalog', icon: '🌍', url: '/song_catalogs' }
+    else
+      { label: section.to_s.capitalize, icon: '', url: nil }
+    end
+  end
 end

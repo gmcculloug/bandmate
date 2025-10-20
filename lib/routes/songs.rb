@@ -17,22 +17,32 @@ class Routes::Songs < Sinatra::Base
   get '/songs' do
     require_login
     return redirect '/gigs' unless current_band
-    
+
+    # Set breadcrumbs
+    set_breadcrumbs(breadcrumb_for_section('songs'))
+
     @search = params[:search]
-    
+
     @songs = filter_by_current_band(Song).order('LOWER(title)')
-    
+
     # Apply search filter
     if @search.present?
       @songs = @songs.where('LOWER(title) LIKE ? OR LOWER(artist) LIKE ?', "%#{@search.downcase}%", "%#{@search.downcase}%")
     end
-    
+
     erb :songs
   end
 
   get '/songs/new' do
     require_login
     return redirect '/gigs' unless current_band
+
+    # Set breadcrumbs
+    set_breadcrumbs(
+      breadcrumb_for_section('songs'),
+      { label: 'New', icon: '➕', url: nil }
+    )
+
     erb :new_song
   end
 
@@ -108,14 +118,27 @@ class Routes::Songs < Sinatra::Base
   get '/songs/:id' do
     require_login
     @song = current_band.songs.find(params[:id])
-    
+
+    # Set breadcrumbs
+    set_breadcrumbs(
+      breadcrumb_for_section('songs'),
+      { label: @song.title, icon: '🎵', url: nil }
+    )
+
     erb :show_song
   end
 
   get '/songs/:id/edit' do
     require_login
     @song = current_band.songs.find(params[:id])
-    
+
+    # Set breadcrumbs
+    set_breadcrumbs(
+      breadcrumb_for_section('songs'),
+      { label: @song.title, icon: '🎵', url: "/songs/#{@song.id}" },
+      { label: 'Edit', icon: '✏️', url: nil }
+    )
+
     erb :edit_song
   end
 
@@ -235,6 +258,14 @@ class Routes::Songs < Sinatra::Base
   get '/song_catalogs/:id/edit' do
     require_login
     @song_catalog = SongCatalog.find(params[:id])
+
+    # Set breadcrumbs
+    set_breadcrumbs(
+      breadcrumb_for_section('song_catalogs'),
+      { label: @song_catalog.title, icon: '🎵', url: "/song_catalogs/#{@song_catalog.id}" },
+      { label: 'Edit', icon: '✏️', url: nil }
+    )
+
     erb :edit_song_catalog
   end
 

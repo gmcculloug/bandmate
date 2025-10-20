@@ -8,51 +8,73 @@
     <div class="errors" style="margin-bottom: 20px;">
         <p>Set list not found.</p>
     </div>
-    <a href="/gigs" class="btn">Back to Gigs</a>
     <% return %>
 <% end %>
 
-<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; flex-wrap: wrap; gap: 10px;">
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 10px;">
     <h2>📋 <%= @gig.name %></h2>
-    <div class="actions">
-        <a href="/gigs/<%= @gig.id %>/edit" class="btn">Edit</a>
-        <a href="/gigs/<%= @gig.id %>/print" class="btn" target="_blank" title="Print">🖨️</a>
-        <form method="POST" action="/gigs/<%= @gig.id %>/copy" style="display: inline;">
-            <button type="submit" class="btn" onclick="return confirm('Copy this gig?')">Copy</button>
-        </form>
-        <a href="/gigs" class="btn">Back to Gigs</a>
+    <div class="burger-menu">
+        <button type="button" class="burger-button" onclick="toggleGigMenu()">
+            ☰
+        </button>
+        <div class="burger-menu-dropdown" id="gig-menu">
+            <a href="/gigs/<%= @gig.id %>/edit" class="burger-menu-item">
+                <span class="icon">✏️</span>Edit
+            </a>
+            <a href="/gigs/<%= @gig.id %>/print" class="burger-menu-item" target="_blank">
+                <span class="icon">🖨️</span>Print
+            </a>
+            <button type="button" class="burger-menu-item" onclick="confirmCopyGig()">
+                <span class="icon">📋</span>Copy
+            </button>
+            <% if @gig.songs.any? %>
+                <button type="button" class="burger-menu-item" onclick="showCopyToGigModal(); closeGigMenu();">
+                    <span class="icon">🎵</span>Copy Songs to Gig
+                </button>
+            <% end %>
+        </div>
     </div>
 </div>
 
-<div class="card">
-    <% if @gig && ((@gig.venue && @gig.venue.present?) || @gig.performance_date.present? || @gig.start_time.present?) %>
-        <div style="margin-bottom: 20px; padding: 15px; background: #f7fafc; border-radius: 8px;">
-            <h4>Performance Details</h4>
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-top: 10px;">
-                <% if @gig.venue && @gig.venue.present? %>
-                    <div class="detail-item">
-                        <span class="detail-label">Venue:</span> 
-                        <a href="/venues/<%= @gig.venue.id %>" style="color: #667eea; text-decoration: none;"><%= @gig.venue.name %></a>
-                    </div>
-                <% end %>
-                <% if @gig.performance_date.present? %>
-                    <div class="detail-item">
-                        <span class="detail-label">Date:</span> <%= @gig.performance_date.strftime('%B %d, %Y') %>
-                    </div>
-                <% end %>
-                <% if @gig.start_time.present? %>
-                    <div class="detail-item">
-                        <span class="detail-label">Start Time:</span> <%= @gig.start_time.strftime('%I:%M %p') %>
-                    </div>
-                <% end %>
-                <% if @gig.end_time.present? %>
-                    <div class="detail-item">
-                        <span class="detail-label">End Time:</span> <%= @gig.end_time.strftime('%I:%M %p') %>
-                    </div>
-                <% end %>
-            </div>
+<!-- Backdrop for closing menu -->
+<div class="burger-menu-backdrop" id="gig-menu-backdrop" onclick="closeGigMenu()"></div>
+
+<% if @gig && ((@gig.venue && @gig.venue.present?) || @gig.performance_date.present? || @gig.start_time.present?) %>
+    <div style="margin-bottom: -10px; padding: 15px; background: #f7fafc; border-radius: 8px;">
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+            <% if @gig.venue && @gig.venue.present? %>
+                <div class="detail-item">
+                    <span class="detail-label">Venue:</span>
+                    <%
+                    venue_tooltip_parts = []
+                    venue_tooltip_parts << "Location: #{@gig.venue.location}" if @gig.venue.location.present?
+                    venue_tooltip_parts << "Contact: #{@gig.venue.contact_name}" if @gig.venue.contact_name.present?
+                    venue_tooltip_parts << "Phone: #{@gig.venue.phone_number}" if @gig.venue.phone_number.present?
+                    venue_tooltip = venue_tooltip_parts.join("&#10;")
+                    %>
+                    <a href="/venues/<%= @gig.venue.id %>" class="venue-link" style="color: #667eea; text-decoration: none;" <% if venue_tooltip.present? %>data-venue-tooltip="<%= venue_tooltip %>"<% end %>><%= @gig.venue.name %></a>
+                </div>
+            <% end %>
+            <% if @gig.performance_date.present? %>
+                <div class="detail-item">
+                    <span class="detail-label">Date:</span> <%= @gig.performance_date.strftime('%B %d, %Y') %>
+                </div>
+            <% end %>
+            <% if @gig.start_time.present? %>
+                <div class="detail-item">
+                    <span class="detail-label">Start Time:</span> <%= @gig.start_time.strftime('%I:%M %p') %>
+                </div>
+            <% end %>
+            <% if @gig.end_time.present? %>
+                <div class="detail-item">
+                    <span class="detail-label">End Time:</span> <%= @gig.end_time.strftime('%I:%M %p') %>
+                </div>
+            <% end %>
         </div>
-    <% end %>
+    </div>
+<% end %>
+
+<div class="card">
 
     <% if @gig.notes.present? %>
         <div style="margin-bottom: 20px; padding: 15px; background: #f7fafc; border-radius: 8px;">
@@ -90,12 +112,11 @@
                 <%= formatted_total %>
             </span>
         </h3>
-        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-            <a href="/gigs/<%= @gig.id %>/manage_songs" class="btn">Manage Songs</a>
-            <% if @gig.songs.any? %>
-                <button type="button" class="btn" id="copy-to-gig-btn" onclick="showCopyToGigModal()">Copy to another Gig</button>
-            <% end %>
-        </div>
+        <% if @gig.songs.any? %>
+            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                <a href="/gigs/<%= @gig.id %>/manage_songs" class="btn">Manage Songs</a>
+            </div>
+        <% end %>
     </div>
 
     <% if @gig.songs.any? %>
@@ -193,6 +214,39 @@
 <script>
 let selectedTargetGigId = null;
 let selectedTargetGigName = null;
+
+// Burger Menu Functions
+function toggleGigMenu() {
+    const menu = document.getElementById('gig-menu');
+    const backdrop = document.getElementById('gig-menu-backdrop');
+
+    if (menu.classList.contains('show')) {
+        closeGigMenu();
+    } else {
+        menu.classList.add('show');
+        backdrop.classList.add('show');
+    }
+}
+
+function closeGigMenu() {
+    const menu = document.getElementById('gig-menu');
+    const backdrop = document.getElementById('gig-menu-backdrop');
+
+    menu.classList.remove('show');
+    backdrop.classList.remove('show');
+}
+
+function confirmCopyGig() {
+    if (confirm('Copy this gig?')) {
+        // Create and submit the form
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '/gigs/<%= @gig.id %>/copy';
+        document.body.appendChild(form);
+        form.submit();
+    }
+    closeGigMenu();
+}
 
 function showCopyToGigModal() {
     // Only show if current gig has songs
@@ -368,6 +422,18 @@ document.addEventListener('keydown', function(event) {
     if (event.key === 'Escape') {
         closeCopyToGigModal();
         closeConfirmationModal();
+        closeGigMenu(); // Also close burger menu on escape
+    }
+});
+
+// Close burger menu when clicking outside
+document.addEventListener('click', function(event) {
+    const gigMenu = document.getElementById('gig-menu');
+    const gigButton = document.querySelector('.burger-button');
+
+    // Don't close if clicking on the burger button or menu items
+    if (!gigButton.contains(event.target) && !gigMenu.contains(event.target)) {
+        closeGigMenu();
     }
 });
 </script>
@@ -419,6 +485,59 @@ document.addEventListener('keydown', function(event) {
 /* Only show tooltip if there's content */
 .song-card[data-tooltip=""]:hover::after,
 .song-card[data-tooltip=""]:hover::before {
+    display: none;
+}
+
+/* Large venue tooltip styling */
+.venue-link {
+    position: relative;
+}
+
+.venue-link[data-venue-tooltip]:hover::after {
+    content: attr(data-venue-tooltip);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #2d3748;
+    color: white;
+    padding: 20px 24px;
+    border-radius: 12px;
+    font-size: 16px;
+    white-space: pre-line;
+    z-index: 1000;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+    margin-bottom: 12px;
+    min-width: 250px;
+    max-width: 400px;
+    text-align: left;
+    line-height: 1.6;
+    font-weight: 500;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    animation: showTooltip 0.3s ease forwards 0.8s;
+}
+
+.venue-link[data-venue-tooltip]:hover::before {
+    content: '';
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%) translateY(100%);
+    border: 8px solid transparent;
+    border-top-color: #2d3748;
+    z-index: 1000;
+    margin-bottom: 4px;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    animation: showTooltip 0.3s ease forwards 0.8s;
+}
+
+/* Don't show tooltip if there's no content */
+.venue-link:not([data-venue-tooltip]):hover::after,
+.venue-link:not([data-venue-tooltip]):hover::before,
+.venue-link[data-venue-tooltip=""]:hover::after,
+.venue-link[data-venue-tooltip=""]:hover::before {
     display: none;
 }
 

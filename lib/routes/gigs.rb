@@ -16,17 +16,20 @@ class Routes::Gigs < Sinatra::Base
 
   get '/gigs' do
     require_login
-    
+
     # If user has no bands, redirect to create or join a band
     if user_bands.empty?
       redirect '/bands/new?first_band=true'
     end
-    
+
     # If no band is selected, redirect to band selection
     unless current_band
       redirect '/bands'
     end
-    
+
+    # Set breadcrumbs
+    set_breadcrumbs(breadcrumb_for_section('gigs'))
+
     all_gigs = filter_by_current_band(Gig).includes(:venue)
     today = Date.current
     @upcoming_gigs = all_gigs.where('performance_date >= ?', today).order(:performance_date) || []
@@ -37,7 +40,13 @@ class Routes::Gigs < Sinatra::Base
   get '/gigs/new' do
     require_login
     return redirect '/gigs' unless current_band
-    
+
+    # Set breadcrumbs
+    set_breadcrumbs(
+      breadcrumb_for_section('gigs'),
+      { label: 'New', icon: '➕', url: nil }
+    )
+
     @venues = filter_by_current_band(Venue).order(:name)
     @songs = filter_by_current_band(Song).order(:title)
     erb :new_gig
@@ -72,7 +81,13 @@ class Routes::Gigs < Sinatra::Base
   get '/gigs/:id' do
     require_login
     @gig = filter_by_current_band(Gig).includes(:venue).find(params[:id])
-    
+
+    # Set breadcrumbs
+    set_breadcrumbs(
+      breadcrumb_for_section('gigs'),
+      { label: @gig.name, icon: '📋', url: nil }
+    )
+
     @available_songs = filter_by_current_band(Song).where.not(id: @gig.song_ids).order(:title)
     erb :show_gig
   end
@@ -80,7 +95,14 @@ class Routes::Gigs < Sinatra::Base
   get '/gigs/:id/edit' do
     require_login
     @gig = filter_by_current_band(Gig).find(params[:id])
-    
+
+    # Set breadcrumbs
+    set_breadcrumbs(
+      breadcrumb_for_section('gigs'),
+      { label: @gig.name, icon: '📋', url: "/gigs/#{@gig.id}" },
+      { label: 'Edit', icon: '✏️', url: nil }
+    )
+
     @venues = filter_by_current_band(Venue).order(:name)
     erb :edit_gig
   end
@@ -88,18 +110,25 @@ class Routes::Gigs < Sinatra::Base
   get '/gigs/:id/manage_songs' do
     require_login
     @gig = filter_by_current_band(Gig).find(params[:id])
-    
+
+    # Set breadcrumbs
+    set_breadcrumbs(
+      breadcrumb_for_section('gigs'),
+      { label: @gig.name, icon: '📋', url: "/gigs/#{@gig.id}" },
+      { label: 'Manage Songs', icon: '🎵', url: nil }
+    )
+
     # Get all songs for the current band
     @all_band_songs = filter_by_current_band(Song).order(:title)
-    
+
     # Get songs currently available (not in this gig)
     @available_songs = @all_band_songs.where.not(id: @gig.song_ids)
-    
+
     # Get songs already in this gig, organized by set number
     @gig_songs_by_set = @gig.gig_songs.includes(:song).order(:set_number, :position).group_by(&:set_number) || {}
-    
+
     # Prepare JSON data for JavaScript
-    @all_band_songs_json = @all_band_songs.map { |song| 
+    @all_band_songs_json = @all_band_songs.map { |song|
       {
         id: song.id.to_s,
         title: song.title,
@@ -108,7 +137,7 @@ class Routes::Gigs < Sinatra::Base
         duration: song.duration || ""
       }
     }.to_json
-    
+
     @sets_songs_json = @gig_songs_by_set.transform_values { |gig_songs|
       gig_songs.map { |gig_song|
         {
@@ -120,7 +149,7 @@ class Routes::Gigs < Sinatra::Base
         }
       }
     }.to_json
-    
+
     erb :manage_gig_songs
   end
 

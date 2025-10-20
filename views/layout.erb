@@ -311,7 +311,7 @@
             background: #f7fafc;
             padding: 10px 12px;
             border-radius: 6px;
-            font-size: 0.9rem;
+            font-size: 1.2rem;
         }
         
         .detail-label {
@@ -1144,6 +1144,214 @@
         .flatpickr-hour, .flatpickr-minute {
             font-weight: 600 !important;
         }
+
+        /* Breadcrumb Navigation Styling */
+        .breadcrumbs {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 20px;
+            padding: 12px 16px;
+            background: rgba(102, 126, 234, 0.05);
+            border-radius: 8px;
+            border: 1px solid rgba(102, 126, 234, 0.1);
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .breadcrumb-link {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 8px;
+            border-radius: 4px;
+            min-height: 32px;
+        }
+
+        .breadcrumb-link:hover {
+            color: #5a67d8;
+            background: rgba(102, 126, 234, 0.1);
+            text-decoration: none;
+        }
+
+        .breadcrumb-current {
+            color: #4a5568;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 8px;
+        }
+
+        .breadcrumb-separator {
+            color: #a0aec0;
+            font-weight: normal;
+            user-select: none;
+            margin: 0 2px;
+        }
+
+        /* Mobile breadcrumb adjustments */
+        @media (max-width: 768px) {
+            .breadcrumbs {
+                padding: 10px 12px;
+                font-size: 13px;
+                gap: 6px;
+            }
+
+            .breadcrumb-link,
+            .breadcrumb-current {
+                padding: 3px 6px;
+                min-height: 28px;
+                gap: 3px;
+            }
+
+            .breadcrumb-separator {
+                margin: 0 1px;
+            }
+        }
+
+        /* Touch-friendly improvements for mobile */
+        @media (hover: none) and (pointer: coarse) {
+            .breadcrumb-link {
+                min-height: 44px;
+                padding: 8px 12px;
+            }
+        }
+
+        /* Burger Menu Styling */
+        .burger-menu {
+            position: relative;
+            display: inline-block;
+        }
+
+        .burger-button {
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 12px;
+            cursor: pointer;
+            font-size: 18px;
+            min-height: 44px;
+            min-width: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .burger-button:hover {
+            background: #5a67d8;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        .burger-button:active {
+            transform: translateY(0);
+        }
+
+        .burger-menu-dropdown {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+            border: 1px solid #e2e8f0;
+            min-width: 200px;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px);
+            transition: all 0.3s ease;
+            margin-top: 5px;
+        }
+
+        .burger-menu-dropdown.show {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        .burger-menu-item {
+            display: block;
+            padding: 12px 16px;
+            color: #4a5568;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            border: none;
+            background: none;
+            width: 100%;
+            text-align: left;
+            cursor: pointer;
+            font-size: 14px;
+            border-radius: 0;
+        }
+
+        .burger-menu-item:first-child {
+            border-top-left-radius: 8px;
+            border-top-right-radius: 8px;
+        }
+
+        .burger-menu-item:last-child {
+            border-bottom-left-radius: 8px;
+            border-bottom-right-radius: 8px;
+        }
+
+        .burger-menu-item:hover {
+            background: #f7fafc;
+            color: #2d3748;
+            text-decoration: none;
+        }
+
+        .burger-menu-item:not(:last-child) {
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .burger-menu-item i,
+        .burger-menu-item .icon {
+            margin-right: 8px;
+            width: 16px;
+            display: inline-block;
+        }
+
+        /* Mobile burger menu adjustments */
+        @media (max-width: 768px) {
+            .burger-menu-dropdown {
+                min-width: 180px;
+                right: -10px;
+            }
+
+            .burger-menu-item {
+                padding: 14px 16px;
+                font-size: 16px;
+                min-height: 44px;
+                display: flex;
+                align-items: center;
+            }
+        }
+
+        /* Ensure burger menu doesn't conflict with other dropdowns */
+        .burger-menu-backdrop {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: transparent;
+            z-index: 999;
+            display: none;
+        }
+
+        .burger-menu-backdrop.show {
+            display: block;
+        }
     </style>
 </head>
 <body>
@@ -1188,8 +1396,9 @@
                 <% end %>
             </nav>
         </div>
-        
+
         <div class="main-content">
+            <%= erb :breadcrumbs %>
             <%= yield %>
         </div>
     </div>

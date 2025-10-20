@@ -17,7 +17,10 @@ class Routes::Venues < Sinatra::Base
   get '/venues' do
     require_login
     return redirect '/gigs' unless current_band
-    
+
+    # Set breadcrumbs
+    set_breadcrumbs(breadcrumb_for_section('venues'))
+
     @venues = filter_by_current_band(Venue).order(:name)
     erb :venues
   end
@@ -25,6 +28,13 @@ class Routes::Venues < Sinatra::Base
   get '/venues/new' do
     require_login
     return redirect '/gigs' unless current_band
+
+    # Set breadcrumbs
+    set_breadcrumbs(
+      breadcrumb_for_section('venues'),
+      { label: 'New', icon: '➕', url: nil }
+    )
+
     erb :new_venue
   end
 
