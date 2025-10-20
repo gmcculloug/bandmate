@@ -10,6 +10,22 @@
     <h2 style="margin: 0;">Manage Songs: <%= @gig.name %></h2>
 </div>
 
+<div class="card" style="margin-bottom: 20px; background: #f8f9fa; border: 1px solid #dee2e6;">
+    <div style="padding: 12px 16px;">
+        <div style="font-size: 0.9rem; color: #495057; line-height: 1.4;">
+            <div style="margin-bottom: 6px;">
+                <span style="color: #2c5aa0; font-weight: 600;">💡 Quick Actions:</span>
+            </div>
+            <div style="margin-bottom: 4px;">
+                • <strong>Double-click</strong> a song in Available Songs to add it to the selected set
+            </div>
+            <div>
+                • <strong>Double-click</strong> a song in any set to move it back to Available Songs
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="card" style="margin-bottom: 20px;">
     <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
         <div style="display: flex; align-items: center; gap: 20px; flex-wrap: wrap;">
@@ -41,6 +57,9 @@
     <div class="card" id="available-songs-column">
         <div style="margin-bottom: 15px;">
             <h3 style="margin: 0;">Available Songs (<span id="available-count"><%= @available_songs.count %></span>)</h3>
+            <div id="selected-set-indicator" style="margin-top: 8px; padding: 6px 10px; background: #e3f2fd; border: 1px solid #90caf9; border-radius: 4px; font-size: 0.85rem; color: #1565c0;">
+                <strong>Adding to:</strong> <span id="selected-set-name">Set 1</span>
+            </div>
         </div>
         
         <div id="available-songs-content">
@@ -80,6 +99,7 @@ let currentSets = 2;
 let allBandSongs = [];
 let setsSongs = {};
 let availableSongsCollapsed = false;
+let selectedSet = 1; // Track which set is selected for adding songs
 
 // Initialize the page
 document.addEventListener('DOMContentLoaded', function() {
@@ -131,11 +151,8 @@ function generateSets() {
         
         setDiv.innerHTML = `
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
-                <div style="display: flex; align-items: center; gap: 8px;">
-                    <input type="radio" name="selected-set" value="${i}" id="set-radio-${i}" ${i === 1 ? 'checked' : ''} style="margin: 0;">
-                    <label for="set-radio-${i}" style="margin: 0; cursor: pointer;">
-                        <h3 style="margin: 0; display: inline;">Set ${i} (<span class="set-count">0</span>)</h3>
-                    </label>
+                <div class="set-header" data-set-number="${i}" style="cursor: pointer; padding: 8px 12px; border-radius: 6px; transition: background-color 0.2s ease;" onclick="selectSet(${i})">
+                    <h3 style="margin: 0;">Set ${i} (<span class="set-count">0</span>)</h3>
                 </div>
                 <div style="padding: 4px 10px; background: #f7fafc; border-radius: 4px; border: 1px solid #e2e8f0; font-size: 0.85rem;">
                     <span style="font-weight: bold; color: #4a5568;">Time:</span>
@@ -163,6 +180,7 @@ function generateSets() {
     });
     
     setupSetDropZones();
+    setupSetSelectionListeners();
 }
 
 // Add song to set
@@ -374,12 +392,19 @@ function setupEventListeners() {
                 }
             }
         }
-        
+
         currentSets = newSetCount;
+
+        // Reset selected set if it's now invalid
+        if (selectedSet > currentSets) {
+            selectedSet = 1;
+        }
+
         generateSets();
         updateAvailableSongs();
         updateAllSetTimes();
         updateTotalTime();
+        setupSetSelectionListeners();
     });
     
     // Song filter
@@ -462,13 +487,7 @@ function addSongToSelectedSet(songElement) {
     }
 
     // Get the selected set number
-    const selectedRadio = document.querySelector('input[name="selected-set"]:checked');
-    if (!selectedRadio) {
-        console.error('No set selected');
-        return;
-    }
-
-    const setNumber = selectedRadio.value;
+    const setNumber = selectedSet;
     const setContainer = document.querySelector(`[data-set="${setNumber}"]`);
 
     if (!setContainer) {
@@ -554,6 +573,42 @@ function setupSongDragEvents(songElement) {
                 removeSongFromSet(removeButton);
             }
         });
+    }
+}
+
+// Setup set selection listeners
+function setupSetSelectionListeners() {
+    // Initialize indicator with the default selected set
+    updateSelectedSetIndicator(selectedSet);
+    updateSetHeaderStyles();
+}
+
+// Handle set selection when clicking on set headers
+function selectSet(setNumber) {
+    selectedSet = setNumber;
+    updateSelectedSetIndicator(selectedSet);
+    updateSetHeaderStyles();
+}
+
+// Update visual styling of set headers to show which is selected
+function updateSetHeaderStyles() {
+    document.querySelectorAll('.set-header').forEach(header => {
+        const setNumber = parseInt(header.dataset.setNumber);
+        if (setNumber === selectedSet) {
+            header.style.backgroundColor = '#e3f2fd';
+            header.style.border = '2px solid #1976d2';
+        } else {
+            header.style.backgroundColor = 'transparent';
+            header.style.border = '2px solid transparent';
+        }
+    });
+}
+
+// Update the selected set indicator text
+function updateSelectedSetIndicator(setNumber) {
+    const indicator = document.getElementById('selected-set-name');
+    if (indicator) {
+        indicator.textContent = `Set ${setNumber}`;
     }
 }
 
@@ -891,6 +946,11 @@ function toggleClearButton(filterValue) {
     background-color: #f3f4f6;
     color: #374151;
     transform: translateY(-50%) scale(1.1);
+}
+
+/* Set header styling for clickable selection */
+.set-header:hover {
+    background-color: #f0f9ff !important;
 }
 
 /* Contain animations within the white border */
