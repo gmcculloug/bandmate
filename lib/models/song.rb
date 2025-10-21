@@ -18,6 +18,8 @@ class Song < ActiveRecord::Base
   scope :with_lyrics, -> { where.not(lyrics: [nil, '']) }
   scope :by_key, ->(key) { where(key: key) }
   scope :by_tempo_range, ->(min, max) { where(tempo: min..max) }
+  scope :active, -> { where(archived: false) }
+  scope :archived, -> { where(archived: true) }
 
   # Create a band-specific copy from song catalog
   def self.create_from_song_catalog(song_catalog, band_ids = [])
@@ -38,5 +40,22 @@ class Song < ActiveRecord::Base
     )
     song.band_ids = band_ids
     song
+  end
+
+  # Instance methods for archiving
+  def archive!
+    update!(archived: true, archived_at: Time.current)
+  end
+
+  def unarchive!
+    update!(archived: false, archived_at: nil)
+  end
+
+  def archived?
+    archived
+  end
+
+  def active?
+    !archived
   end
 end

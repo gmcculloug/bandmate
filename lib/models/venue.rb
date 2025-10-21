@@ -13,11 +13,11 @@ class Venue < ActiveRecord::Base
 
   # Instance methods for archiving
   def archive!
-    update!(archived: true)
+    update!(archived: true, archived_at: Time.current)
   end
 
   def unarchive!
-    update!(archived: false)
+    update!(archived: false, archived_at: nil)
   end
 
   def archived?

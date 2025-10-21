@@ -12,6 +12,11 @@
                 <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
                     <div style="flex: 1; min-width: 0;">
                         <div style="font-weight: 600; font-size: 1.1rem; word-break: break-word; color: #718096;"><%= venue.name %> <span style="color: #e53e3e; font-size: 0.8rem; font-weight: normal;">(Archived)</span></div>
+                        <% if venue.archived_at.present? %>
+                            <div style="margin-top: 2px; font-size: 0.75rem; color: #a0aec0;">
+                                📦 Archived on <%= venue.archived_at.strftime('%B %d, %Y at %I:%M %p') %>
+                            </div>
+                        <% end %>
                         <div style="margin-top: 4px; display: flex; gap: 15px; font-size: 0.85rem; color: #4a5568; flex-wrap: wrap;">
                             <span><strong>Contact:</strong> <%= venue.contact_name %></span>
                             <span><strong>Phone:</strong> <%= venue.phone_number %></span>

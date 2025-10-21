@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_10_21_152220) do
+ActiveRecord::Schema[8.0].define(version: 2025_10_21_173940) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -127,6 +127,10 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_21_152220) do
     t.datetime "updated_at", null: false
     t.bigint "song_catalog_id"
     t.text "lyrics"
+    t.boolean "archived", default: false, null: false
+    t.datetime "archived_at", precision: nil
+    t.index ["archived"], name: "index_songs_on_archived"
+    t.index ["archived_at"], name: "index_songs_on_archived_at"
     t.index ["artist"], name: "index_songs_on_artist"
     t.index ["song_catalog_id"], name: "index_songs_on_song_catalog_id"
     t.index ["title"], name: "index_songs_on_title"
@@ -173,7 +177,9 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_21_152220) do
     t.bigint "band_id"
     t.text "notes"
     t.boolean "archived", default: false, null: false
+    t.datetime "archived_at", precision: nil
     t.index ["archived"], name: "index_venues_on_archived"
+    t.index ["archived_at"], name: "index_venues_on_archived_at"
     t.index ["band_id"], name: "index_venues_on_band_id"
     t.index ["name"], name: "index_venues_on_name"
   end

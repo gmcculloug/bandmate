@@ -23,7 +23,7 @@ class Routes::Songs < Sinatra::Base
 
     @search = params[:search]
 
-    @songs = filter_by_current_band(Song).order('LOWER(title)')
+    @songs = filter_by_current_band(Song).active.order('LOWER(title)')
 
     # Apply search filter
     if @search.present?
@@ -115,6 +115,44 @@ class Routes::Songs < Sinatra::Base
     end
   end
 
+  # ============================================================================
+  # SONG ARCHIVING ROUTES (must come before :id routes)
+  # ============================================================================
+
+  get '/songs/archived' do
+    require_login
+    return redirect '/gigs' unless current_band
+
+    # Set breadcrumbs
+    set_breadcrumbs(
+      breadcrumb_for_section('songs'),
+      { label: 'Archived', icon: '📦', url: nil }
+    )
+
+    @songs = filter_by_current_band(Song).archived.order('LOWER(title)')
+    erb :archived_songs
+  end
+
+  post '/songs/:id/archive' do
+    require_login
+    return redirect '/gigs' unless current_band
+
+    song = current_band.songs.find(params[:id])
+    song.archive!
+
+    redirect '/songs'
+  end
+
+  post '/songs/:id/unarchive' do
+    require_login
+    return redirect '/gigs' unless current_band
+
+    song = current_band.songs.find(params[:id])
+    song.unarchive!
+
+    redirect '/songs'
+  end
+
   get '/songs/:id' do
     require_login
     @song = current_band.songs.find(params[:id])
@@ -157,15 +195,15 @@ class Routes::Songs < Sinatra::Base
   delete '/songs/:id' do
     require_login
     song = current_band.songs.find(params[:id])
-    
+
     # Clean up associations before deleting the song
     song.gig_songs.destroy_all
-    
+
     # Remove the song from all bands (many-to-many relationship)
     song.band_ids = []
-    
+
     song.destroy
-    
+
     redirect '/songs'
   end
 

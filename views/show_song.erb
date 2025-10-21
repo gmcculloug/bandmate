@@ -1,5 +1,12 @@
 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
-    <h2>🎵 <%= @song.title %></h2>
+    <div>
+        <h2>🎵 <%= @song.title %><% if @song.archived? %> <span style="color: #e53e3e; font-size: 0.7rem; font-weight: normal;">(Archived)</span><% end %></h2>
+        <% if @song.archived? && @song.archived_at.present? %>
+            <div style="margin-top: 5px; font-size: 0.85rem; color: #a0aec0;">
+                📦 Archived on <%= @song.archived_at.strftime('%B %d, %Y at %I:%M %p') %>
+            </div>
+        <% end %>
+    </div>
     <div class="actions">
         <a href="/songs/<%= @song.id %>/edit" class="btn">Edit</a>
         <a href="/songs" class="btn">Back to Songs</a>
@@ -71,8 +78,19 @@
 
 <div class="card" style="margin-top: 20px;">
     <h3>Song Management</h3>
-    <form method="POST" action="/songs/<%= @song.id %>" style="margin-top: 15px;">
-        <input type="hidden" name="_method" value="DELETE">
-        <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure you want to delete this song? This will remove it from all gigs and bands.')">🗑️ Delete Song</button>
-    </form>
+    <div style="margin-top: 15px; display: flex; gap: 10px; flex-wrap: wrap;">
+        <% if @song.archived? %>
+            <form method="POST" action="/songs/<%= @song.id %>/unarchive" style="display: inline;">
+                <button type="submit" class="btn btn-success" onclick="return confirm('Unarchive this song? It will appear in the active songs list and be available for gigs.')">📂 Unarchive Song</button>
+            </form>
+        <% else %>
+            <form method="POST" action="/songs/<%= @song.id %>/archive" style="display: inline;">
+                <button type="submit" class="btn btn-warning" onclick="return confirm('Archive this song? It will be hidden from the songs list and unavailable for new gigs.')">📦 Archive Song</button>
+            </form>
+        <% end %>
+        <form method="POST" action="/songs/<%= @song.id %>" style="display: inline;">
+            <input type="hidden" name="_method" value="DELETE">
+            <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure you want to delete this song? This will remove it from all gigs and bands.')">🗑️ Delete Song</button>
+        </form>
+    </div>
 </div> 

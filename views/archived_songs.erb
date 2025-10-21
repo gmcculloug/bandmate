@@ -1,0 +1,54 @@
+<div class="page-header">
+    <h2 class="page-title">📦 Archived Songs</h2>
+    <div class="page-actions">
+        <a href="/songs" class="btn">← Back to Active Songs</a>
+    </div>
+</div>
+
+<% if @songs.any? %>
+    <div style="display: flex; flex-direction: column; gap: 8px;">
+        <% @songs.each do |song| %>
+            <div class="song-card" style="padding: 12px; border: 1px solid #fbb6ce; border-radius: 6px; background: #fef7f7;">
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                    <div style="flex: 1; min-width: 0;">
+                        <div style="font-weight: 600; font-size: 1.1rem; word-break: break-word; color: #718096;"><%= song.title %> <span style="color: #e53e3e; font-size: 0.8rem; font-weight: normal;">(Archived)</span></div>
+                        <% if song.archived_at.present? %>
+                            <div style="margin-top: 2px; font-size: 0.75rem; color: #a0aec0;">
+                                📦 Archived on <%= song.archived_at.strftime('%B %d, %Y at %I:%M %p') %>
+                            </div>
+                        <% end %>
+                        <div style="margin-top: 4px; display: flex; gap: 15px; font-size: 0.85rem; color: #4a5568; flex-wrap: wrap;">
+                            <span><strong>Artist:</strong> <%= song.artist %></span>
+                            <span><strong>Key:</strong> <%= song.key %></span>
+                            <% if song.tempo %>
+                                <span><strong>Tempo:</strong> <%= song.tempo %> BPM</span>
+                            <% end %>
+                        </div>
+                        <% if song.genre.present? %>
+                            <div style="margin-top: 4px; font-size: 0.85rem; color: #718096;">
+                                <strong>🎸 Genre:</strong> <%= song.genre %>
+                            </div>
+                        <% end %>
+                        <% if song.notes.present? %>
+                            <div style="margin-top: 4px; font-size: 0.85rem; color: #718096;">
+                                <strong>📝 Notes:</strong> <%= song.notes.length > 100 ? song.notes[0..100] + '...' : song.notes %>
+                            </div>
+                        <% end %>
+                    </div>
+                    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                        <a href="/songs/<%= song.id %>" class="btn btn-small" style="font-size: 0.8rem;">View</a>
+                        <form method="POST" action="/songs/<%= song.id %>/unarchive" style="display: inline;" onsubmit="return confirm('Are you sure you want to unarchive this song?');">
+                            <button type="submit" class="btn btn-success btn-small" style="font-size: 0.8rem;">📂 Unarchive</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        <% end %>
+    </div>
+<% else %>
+    <div style="text-align: center; padding: 40px;">
+        <h3>No archived songs</h3>
+        <p>You haven't archived any songs yet.</p>
+        <a href="/songs" class="btn">← Back to Active Songs</a>
+    </div>
+<% end %>

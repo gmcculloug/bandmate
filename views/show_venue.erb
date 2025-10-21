@@ -7,7 +7,14 @@
 <% end %>
 
 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; flex-wrap: wrap; gap: 10px;">
-    <h2>🏢 <%= @venue.name %><% if @venue.archived? %> <span style="color: #e53e3e; font-size: 0.7rem; font-weight: normal;">(Archived)</span><% end %></h2>
+    <div>
+        <h2>🏢 <%= @venue.name %><% if @venue.archived? %> <span style="color: #e53e3e; font-size: 0.7rem; font-weight: normal;">(Archived)</span><% end %></h2>
+        <% if @venue.archived? && @venue.archived_at.present? %>
+            <div style="margin-top: 5px; font-size: 0.85rem; color: #a0aec0;">
+                📦 Archived on <%= @venue.archived_at.strftime('%B %d, %Y at %I:%M %p') %>
+            </div>
+        <% end %>
+    </div>
     <div class="actions">
         <a href="/venues/<%= @venue.id %>/edit" class="btn">Edit</a>
     </div>
