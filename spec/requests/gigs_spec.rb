@@ -510,4 +510,92 @@ RSpec.describe 'Gigs API', type: :request do
       end
     end
   end
+
+  describe 'GET /gigs/:id/empty_gigs' do
+    it 'returns empty gigs with properly formatted dates' do
+      login_as(user, band)
+      source_gig = create(:gig, name: 'Source Gig', band: band, performance_date: Date.parse('2024-11-18'))
+
+      # Create an empty gig (no songs)
+      empty_gig = create(:gig, name: 'Empty Gig', band: band, performance_date: Date.parse('2024-11-18'))
+
+      # Create a gig with songs (should not appear in empty gigs)
+      gig_with_songs = create(:gig, name: 'Gig with Songs', band: band, performance_date: Date.parse('2024-11-19'))
+      song = create(:song, bands: [band])
+      create(:gig_song, gig: gig_with_songs, song: song)
+
+      get "/gigs/#{source_gig.id}/empty_gigs"
+
+      expect(last_response).to be_ok
+      expect(last_response.content_type).to include('application/json')
+
+      response_data = JSON.parse(last_response.body)
+      expect(response_data['gigs']).to be_an(Array)
+      expect(response_data['gigs'].length).to eq(1)
+
+      empty_gig_data = response_data['gigs'].first
+      expect(empty_gig_data['name']).to eq('Empty Gig')
+      expect(empty_gig_data['performance_date']).to eq('2024-11-18') # Should be YYYY-MM-DD format, not ISO8601 with timezone
+      expect(empty_gig_data['id']).to eq(empty_gig.id)
+    end
+
+    it 'excludes the source gig from empty gigs list' do
+      login_as(user, band)
+      source_gig = create(:gig, name: 'Source Gig', band: band)
+      empty_gig = create(:gig, name: 'Empty Gig', band: band)
+
+      get "/gigs/#{source_gig.id}/empty_gigs"
+
+      response_data = JSON.parse(last_response.body)
+      gig_names = response_data['gigs'].map { |g| g['name'] }
+
+      expect(gig_names).to include('Empty Gig')
+      expect(gig_names).not_to include('Source Gig')
+    end
+  end
+
+  describe 'POST /gigs/:id/copy_to_gig' do
+    it 'copies songs from source gig to target empty gig' do
+      login_as(user, band)
+      source_gig = create(:gig, name: 'Source Gig', band: band)
+      target_gig = create(:gig, name: 'Target Gig', band: band)
+
+      song1 = create(:song, bands: [band])
+      song2 = create(:song, bands: [band])
+
+      create(:gig_song, gig: source_gig, song: song1, position: 1, set_number: 1)
+      create(:gig_song, gig: source_gig, song: song2, position: 2, set_number: 1)
+
+      expect {
+        post "/gigs/#{source_gig.id}/copy_to_gig", target_gig_id: target_gig.id
+      }.to change { target_gig.reload.gig_songs.count }.from(0).to(2)
+
+      expect(last_response).to be_ok
+      expect(last_response.content_type).to include('application/json')
+
+      response_data = JSON.parse(last_response.body)
+      expect(response_data['success']).to be true
+
+      target_gig.reload
+      expect(target_gig.songs).to include(song1, song2)
+      expect(target_gig.gig_songs.find_by(song: song1).position).to eq(1)
+      expect(target_gig.gig_songs.find_by(song: song2).position).to eq(2)
+    end
+
+    it 'returns error when target gig already has songs' do
+      login_as(user, band)
+      source_gig = create(:gig, name: 'Source Gig', band: band)
+      target_gig = create(:gig, name: 'Target Gig', band: band)
+
+      # Add a song to target gig
+      song = create(:song, bands: [band])
+      create(:gig_song, gig: target_gig, song: song)
+
+      post "/gigs/#{source_gig.id}/copy_to_gig", target_gig_id: target_gig.id
+
+      expect(last_response).to be_ok
+      response_data = JSON.parse(last_response.body)
+      expect(response_data['error']).to eq('Target gig already has songs assigned')
+    end
+  end
 end 

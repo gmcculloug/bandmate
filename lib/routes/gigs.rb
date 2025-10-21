@@ -348,7 +348,7 @@ class Routes::Gigs < Sinatra::Base
         {
           id: gig.id,
           name: gig.name,
-          performance_date: gig.performance_date&.iso8601,
+          performance_date: gig.performance_date&.strftime('%Y-%m-%d'),
           venue_name: gig.venue&.name
         }
       end

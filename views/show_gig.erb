@@ -346,7 +346,11 @@ function fetchEmptyGigs() {
                                  onmouseout="this.style.borderColor='#e2e8f0'; this.style.backgroundColor='white';">
                                 <div style="font-weight: 600; color: #2d3748; margin-bottom: 5px;">${gig.name}</div>
                                 <div style="color: #718096; font-size: 0.9rem;">
-                                    ${gig.performance_date ? new Date(gig.performance_date).toLocaleDateString('en-US', { weekday: 'short', year: 'numeric', month: 'long', day: 'numeric' }) : 'No date set'}
+                                    ${gig.performance_date ? (() => {
+                                        const parts = gig.performance_date.split('-');
+                                        const localDate = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+                                        return localDate.toLocaleDateString('en-US', { weekday: 'short', year: 'numeric', month: 'long', day: 'numeric' });
+                                    })() : 'No date set'}
                                     ${gig.venue_name ? ' • ' + gig.venue_name : ''}
                                 </div>
                             </div>

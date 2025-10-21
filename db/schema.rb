@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_09_24_122737) do
+ActiveRecord::Schema[8.0].define(version: 2025_10_20_154706) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -80,6 +80,15 @@ ActiveRecord::Schema[8.0].define(version: 2025_09_24_122737) do
     t.index ["gig_id"], name: "index_google_calendar_events_on_gig_id"
     t.index ["google_event_id"], name: "index_google_calendar_events_on_google_event_id"
     t.index ["last_synced_at"], name: "index_google_calendar_events_on_last_synced_at"
+  end
+
+  create_table "sessions", force: :cascade do |t|
+    t.string "session_id", null: false
+    t.text "data"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["session_id"], name: "index_sessions_on_session_id", unique: true
+    t.index ["updated_at"], name: "index_sessions_on_updated_at"
   end
 
   create_table "song_catalogs", force: :cascade do |t|
