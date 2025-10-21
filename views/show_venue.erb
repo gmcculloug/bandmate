@@ -7,7 +7,7 @@
 <% end %>
 
 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; flex-wrap: wrap; gap: 10px;">
-    <h2>🏢 <%= @venue.name %></h2>
+    <h2>🏢 <%= @venue.name %><% if @venue.archived? %> <span style="color: #e53e3e; font-size: 0.7rem; font-weight: normal;">(Archived)</span><% end %></h2>
     <div class="actions">
         <a href="/venues/<%= @venue.id %>/edit" class="btn">Edit</a>
     </div>
@@ -106,8 +106,19 @@
 
 <div class="card" style="margin-top: 20px;">
     <h3>Venue Management</h3>
-    <form method="POST" action="/venues/<%= @venue.id %>" style="margin-top: 15px;">
-        <input type="hidden" name="_method" value="DELETE">
-        <button type="submit" class="btn btn-danger" onclick="return confirm('Delete this venue? This will also remove it from any associated gigs.')">🗑️ Delete Venue</button>
-    </form>
+    <div style="margin-top: 15px; display: flex; gap: 10px; flex-wrap: wrap;">
+        <% if @venue.archived? %>
+            <form method="POST" action="/venues/<%= @venue.id %>/unarchive" style="display: inline;">
+                <button type="submit" class="btn btn-success" onclick="return confirm('Unarchive this venue? It will appear in the active venues list and be available for new gigs.')">📂 Unarchive Venue</button>
+            </form>
+        <% else %>
+            <form method="POST" action="/venues/<%= @venue.id %>/archive" style="display: inline;">
+                <button type="submit" class="btn btn-warning" onclick="return confirm('Archive this venue? It will be hidden from the venues list and unavailable for new gigs.')">📦 Archive Venue</button>
+            </form>
+        <% end %>
+        <form method="POST" action="/venues/<%= @venue.id %>" style="display: inline;">
+            <input type="hidden" name="_method" value="DELETE">
+            <button type="submit" class="btn btn-danger" onclick="return confirm('Delete this venue? This will also remove it from any associated gigs.')">🗑️ Delete Venue</button>
+        </form>
+    </div>
 </div> 

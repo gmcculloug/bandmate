@@ -433,4 +433,142 @@ RSpec.describe 'Venues API', type: :request do
       end
     end
   end
+
+  describe 'Venue Archiving' do
+    describe 'GET /venues shows only active venues' do
+      it 'filters out archived venues from the main listing' do
+        login_as(user, band)
+        active_venue = create(:venue, name: 'Active Venue', band: band, archived: false)
+        archived_venue = create(:venue, name: 'Archived Venue', band: band, archived: true)
+
+        get '/venues'
+
+        expect(last_response).to be_ok
+        expect(last_response.body).to include('Active Venue')
+        expect(last_response.body).not_to include('Archived Venue')
+      end
+    end
+
+    describe 'POST /venues/:id/archive' do
+      it 'requires authentication' do
+        venue = create(:venue, band: band)
+
+        post "/venues/#{venue.id}/archive"
+
+        expect(last_response).to be_redirect
+        expect(last_response.location).to end_with('/login')
+        expect(venue.reload.archived).to be false
+      end
+
+      it 'archives a venue for current band' do
+        login_as(user, band)
+        venue = create(:venue, name: 'Archive Me', band: band)
+
+        expect {
+          post "/venues/#{venue.id}/archive"
+        }.to change { venue.reload.archived }.from(false).to(true)
+
+        expect(last_response).to be_redirect
+        expect(last_response.location).to end_with('/venues')
+      end
+
+      it 'cannot archive venue from another band' do
+        login_as(user, band)
+        other_venue = create(:venue, name: 'Other Band Venue', band: other_band)
+
+        expect { post "/venues/#{other_venue.id}/archive" }.to raise_error(ActiveRecord::RecordNotFound)
+      end
+    end
+
+    describe 'POST /venues/:id/unarchive' do
+      it 'requires authentication' do
+        venue = create(:venue, band: band, archived: true)
+
+        post "/venues/#{venue.id}/unarchive"
+
+        expect(last_response).to be_redirect
+        expect(last_response.location).to end_with('/login')
+        expect(venue.reload.archived).to be true
+      end
+
+      it 'unarchives a venue for current band' do
+        login_as(user, band)
+        venue = create(:venue, name: 'Unarchive Me', band: band, archived: true)
+
+        expect {
+          post "/venues/#{venue.id}/unarchive"
+        }.to change { venue.reload.archived }.from(true).to(false)
+
+        expect(last_response).to be_redirect
+        expect(last_response.location).to end_with('/venues')
+      end
+
+      it 'cannot unarchive venue from another band' do
+        login_as(user, band)
+        other_venue = create(:venue, name: 'Other Band Venue', band: other_band, archived: true)
+
+        expect { post "/venues/#{other_venue.id}/unarchive" }.to raise_error(ActiveRecord::RecordNotFound)
+      end
+    end
+
+    describe 'GET /venues/archived' do
+      it 'requires authentication' do
+        get '/venues/archived'
+
+        expect(last_response).to be_redirect
+        expect(last_response.location).to end_with('/login')
+      end
+
+      it 'shows only archived venues for current band' do
+        login_as(user, band)
+        active_venue = create(:venue, name: 'Active Venue', band: band, archived: false)
+        archived_venue = create(:venue, name: 'Archived Venue', band: band, archived: true)
+        other_band_archived = create(:venue, name: 'Other Band Archived', band: other_band, archived: true)
+
+        get '/venues/archived'
+
+        expect(last_response).to be_ok
+        expect(last_response.body).to include('Archived Venue')
+        expect(last_response.body).not_to include('Active Venue')
+        expect(last_response.body).not_to include('Other Band Archived')
+      end
+
+      it 'shows message when no archived venues exist' do
+        login_as(user, band)
+        create(:venue, name: 'Active Venue', band: band, archived: false)
+
+        get '/venues/archived'
+
+        expect(last_response).to be_ok
+        expect(last_response.body).to include('No archived venues')
+      end
+    end
+
+    describe 'Gig forms exclude archived venues' do
+      it 'excludes archived venues from gig creation form' do
+        login_as(user, band)
+        active_venue = create(:venue, name: 'Active Venue', band: band, archived: false)
+        archived_venue = create(:venue, name: 'Archived Venue', band: band, archived: true)
+
+        get '/gigs/new'
+
+        expect(last_response).to be_ok
+        expect(last_response.body).to include('Active Venue')
+        expect(last_response.body).not_to include('Archived Venue')
+      end
+
+      it 'excludes archived venues from gig edit form' do
+        login_as(user, band)
+        active_venue = create(:venue, name: 'Active Venue', band: band, archived: false)
+        archived_venue = create(:venue, name: 'Archived Venue', band: band, archived: true)
+        gig = create(:gig, band: band, venue: active_venue)
+
+        get "/gigs/#{gig.id}/edit"
+
+        expect(last_response).to be_ok
+        expect(last_response.body).to include('Active Venue')
+        expect(last_response.body).not_to include('Archived Venue')
+      end
+    end
+  end
 end 

@@ -47,7 +47,7 @@ class Routes::Gigs < Sinatra::Base
       { label: 'New', icon: '➕', url: nil }
     )
 
-    @venues = filter_by_current_band(Venue).order(:name)
+    @venues = filter_by_current_band(Venue).active.order(:name)
     @songs = filter_by_current_band(Song).order(:title)
     erb :new_gig
   end
@@ -72,7 +72,7 @@ class Routes::Gigs < Sinatra::Base
       redirect "/gigs/#{gig.id}"
     else
       @errors = gig.errors.full_messages
-      @venues = filter_by_current_band(Venue).order(:name)
+      @venues = filter_by_current_band(Venue).active.order(:name)
       @songs = filter_by_current_band(Song).order(:title)
       erb :new_gig
     end
@@ -103,7 +103,7 @@ class Routes::Gigs < Sinatra::Base
       { label: 'Edit', icon: '✏️', url: nil }
     )
 
-    @venues = filter_by_current_band(Venue).order(:name)
+    @venues = filter_by_current_band(Venue).active.order(:name)
     erb :edit_gig
   end
 
@@ -173,7 +173,7 @@ class Routes::Gigs < Sinatra::Base
       redirect "/gigs/#{@gig.id}"
     else
       @errors = @gig.errors.full_messages
-      @venues = filter_by_current_band(Venue).order(:name)
+      @venues = filter_by_current_band(Venue).active.order(:name)
       erb :edit_gig
     end
   end

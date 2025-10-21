@@ -21,7 +21,7 @@ class Routes::Venues < Sinatra::Base
     # Set breadcrumbs
     set_breadcrumbs(breadcrumb_for_section('venues'))
 
-    @venues = filter_by_current_band(Venue).order(:name)
+    @venues = filter_by_current_band(Venue).active.order(:name)
     erb :venues
   end
 
@@ -58,6 +58,20 @@ class Routes::Venues < Sinatra::Base
 
       erb :new_venue
     end
+  end
+
+  get '/venues/archived' do
+    require_login
+    return redirect '/gigs' unless current_band
+
+    # Set breadcrumbs
+    set_breadcrumbs(
+      breadcrumb_for_section('venues'),
+      { label: 'Archived', icon: '📦', url: nil }
+    )
+
+    @venues = filter_by_current_band(Venue).archived.order(:name)
+    erb :archived_venues
   end
 
   get '/venues/:id' do
@@ -117,11 +131,35 @@ class Routes::Venues < Sinatra::Base
   delete '/venues/:id' do
     require_login
     return redirect '/gigs' unless current_band
-    
+
     venue = filter_by_current_band(Venue).find(params[:id])
-    
+
     venue.destroy
-    
+
+    redirect '/venues'
+  end
+
+  # ============================================================================
+  # VENUE ARCHIVING ROUTES
+  # ============================================================================
+
+  post '/venues/:id/archive' do
+    require_login
+    return redirect '/gigs' unless current_band
+
+    venue = filter_by_current_band(Venue).find(params[:id])
+    venue.archive!
+
+    redirect '/venues'
+  end
+
+  post '/venues/:id/unarchive' do
+    require_login
+    return redirect '/gigs' unless current_band
+
+    venue = filter_by_current_band(Venue).find(params[:id])
+    venue.unarchive!
+
     redirect '/venues'
   end
 
