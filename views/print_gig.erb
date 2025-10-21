@@ -29,6 +29,10 @@
             --page-orientation: landscape;
         }
 
+        body.hide-song-keys .song-key {
+            display: none;
+        }
+
         @media print {
             @page {
                 margin: 0.5in 0.25in;
@@ -61,7 +65,7 @@
         .set-row {
             display: flex;
             gap: 20px;
-            margin-bottom: 20px;
+            margin-bottom: 10px;
             page-break-inside: avoid;
         }
 
@@ -132,20 +136,20 @@
 
         
         .summary {
-            margin-top: 15px;
-            padding-top: 10px;
+            margin-top: 5px;
+            padding-top: 8px;
             border-top: 1px solid #000;
         }
         
         .summary h3 {
             font-size: calc(1.3rem * var(--font-size-multiplier));
-            margin-bottom: 15px;
+            margin-bottom: 8px;
         }
 
         .summary-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
+            gap: 10px;
         }
 
         .summary-item {
@@ -157,15 +161,15 @@
         }
         
         .notes {
-            margin-top: 30px;
-            padding: 15px;
+            margin-top: 15px;
+            padding: 10px;
             border: 1px solid #ccc;
             background: #f9f9f9;
         }
         
         .notes h4 {
             margin-top: 0;
-            margin-bottom: 10px;
+            margin-bottom: 5px;
         }
         
         @media screen {
@@ -309,16 +313,33 @@
             body.classList.add('layout-' + layout);
         }
 
+        function toggleSongKeys(show) {
+            const body = document.body;
+            if (show === 'show') {
+                body.classList.remove('hide-song-keys');
+            } else {
+                body.classList.add('hide-song-keys');
+            }
+        }
+
         // Set initial settings
         document.addEventListener('DOMContentLoaded', function() {
             changeFontSize('large');
             changeLayout('portrait');
+            toggleSongKeys('show');
         });
     </script>
 </head>
 <body class="font-large layout-portrait">
     <div class="controls">
-        <button class="print-button" onclick="window.print()">🖨️ Print</button>
+        <button class="print-button" onclick="window.print()">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 8px;">
+                <polyline points="6,9 6,2 18,2 18,9"></polyline>
+                <path d="M6,18H4a2,2 0,0,1-2-2V11a2,2 0,0,1,2-2H20a2,2 0,0,1,2,2v5a2,2 0,0,1-2,2H18"></path>
+                <polyline points="6,14 18,14 18,20 6,20 6,14"></polyline>
+            </svg>
+            Print
+        </button>
         <div class="font-size-control">
             <label for="font-size-selector">Font Size:</label>
             <select id="font-size-selector" onchange="changeFontSize(this.value)">
@@ -332,6 +353,13 @@
             <select id="layout-selector" onchange="changeLayout(this.value)">
                 <option value="portrait" selected>Portrait</option>
                 <option value="landscape">Landscape</option>
+            </select>
+        </div>
+        <div class="font-size-control">
+            <label for="song-keys-selector">Song Keys:</label>
+            <select id="song-keys-selector" onchange="toggleSongKeys(this.value)">
+                <option value="show" selected>Show</option>
+                <option value="hide">Hide</option>
             </select>
         </div>
     </div>
@@ -360,8 +388,8 @@
                 <% [set_number, set_number + 1].each do |current_set| %>
                   <% if current_set <= max_set && gig_songs_by_set[current_set] %>
                     <div class="set-column">
-                      <div class="set-section" style="margin-bottom: 40px;">
-                        <h2 style="font-size: calc(1.2rem * var(--font-size-multiplier)); margin-bottom: 15px; border-bottom: 2px solid #333; padding-bottom: 8px;">
+                      <div class="set-section" style="margin-bottom: 20px;">
+                        <h2 style="font-size: calc(1.2rem * var(--font-size-multiplier)); margin-bottom: 8px; border-bottom: 2px solid #333; padding-bottom: 6px;">
                           Set <%= current_set %>
                           <span style="font-size: calc(0.9rem * var(--font-size-multiplier)); color: #666; font-weight: normal;">
                             <%

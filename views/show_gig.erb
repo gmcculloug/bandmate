@@ -13,16 +13,21 @@
 
 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 10px;">
     <h2>📋 <%= @gig.name %></h2>
-    <div class="burger-menu">
+    <div style="display: flex; align-items: center; gap: 8px;">
+        <a href="/gigs/<%= @gig.id %>/print" target="_blank" class="print-icon-button" style="display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; background: #f7fafc; border: 1px solid #e2e8f0; border-radius: 8px; text-decoration: none; color: #4a5568; transition: all 0.2s;" onmouseover="this.style.backgroundColor='#edf2f7'; this.style.borderColor='#cbd5e0';" onmouseout="this.style.backgroundColor='#f7fafc'; this.style.borderColor='#e2e8f0';" title="Print Gig">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="6,9 6,2 18,2 18,9"></polyline>
+                <path d="M6,18H4a2,2 0,0,1-2-2V11a2,2 0,0,1,2-2H20a2,2 0,0,1,2,2v5a2,2 0,0,1-2,2H18"></path>
+                <polyline points="6,14 18,14 18,20 6,20 6,14"></polyline>
+            </svg>
+        </a>
+        <div class="burger-menu">
         <button type="button" class="burger-button" onclick="toggleGigMenu()">
             ☰
         </button>
         <div class="burger-menu-dropdown" id="gig-menu">
             <a href="/gigs/<%= @gig.id %>/edit" class="burger-menu-item">
                 <span class="icon">✏️</span>Edit
-            </a>
-            <a href="/gigs/<%= @gig.id %>/print" class="burger-menu-item" target="_blank">
-                <span class="icon">🖨️</span>Print
             </a>
             <button type="button" class="burger-menu-item" onclick="confirmCopyGig()">
                 <span class="icon">📋</span>Copy
@@ -32,6 +37,7 @@
                     <span class="icon">🎵</span>Copy Songs to Gig
                 </button>
             <% end %>
+        </div>
         </div>
     </div>
 </div>
@@ -84,7 +90,7 @@
     <% end %>
 
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
-        <h3>Songs (<%= @gig.songs.count %>) • 
+        <h3><a href="/gigs/<%= @gig.id %>/manage_songs" class="songs-link" style="color: #667eea; text-decoration: none; cursor: pointer;" onmouseover="this.style.textDecoration='underline'; this.style.color='#4c51bf';" onmouseout="this.style.textDecoration='none'; this.style.color='#667eea';" data-tooltip="Manage Songs">Songs</a> (<%= @gig.songs.count %>) •
             <span style="color: #4a5568; font-weight: normal;">Estimated Duration:
                 <%
                   total_minutes = @gig.songs.sum do |s|
@@ -112,11 +118,6 @@
                 <%= formatted_total %>
             </span>
         </h3>
-        <% if @gig.songs.any? %>
-            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                <a href="/gigs/<%= @gig.id %>/manage_songs" class="btn">Manage Songs</a>
-            </div>
-        <% end %>
     </div>
 
     <% if @gig.songs.any? %>
@@ -553,6 +554,47 @@ document.addEventListener('click', function(event) {
     to {
         opacity: 1;
     }
+}
+
+/* Custom large tooltip for Songs link */
+.songs-link {
+    position: relative;
+}
+
+.songs-link[data-tooltip]:hover::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #2d3748;
+    color: white;
+    padding: 16px 20px;
+    border-radius: 8px;
+    font-size: 18px;
+    font-weight: 600;
+    white-space: nowrap;
+    z-index: 1000;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+    margin-bottom: 10px;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    animation: showTooltip 0.3s ease forwards 0.5s;
+}
+
+.songs-link[data-tooltip]:hover::before {
+    content: '';
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%) translateY(100%);
+    border: 8px solid transparent;
+    border-top-color: #2d3748;
+    z-index: 1000;
+    margin-bottom: 2px;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    animation: showTooltip 0.3s ease forwards 0.5s;
 }
 </style>
 
