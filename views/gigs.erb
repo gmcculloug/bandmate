@@ -30,9 +30,9 @@
             <h3 style="margin-bottom: 20px; color: #2d3748;">Upcoming Gigs</h3>
             <% @upcoming_gigs.each do |set_list| %>
                 <div class="set-list-item" style="cursor: pointer;" onclick="window.location.href='/gigs/<%= set_list.id %>'">
-                    <div style="display: flex; justify-content: space-between; align-items: flex-start; width: 100%;">
-                        <div class="set-list-info" style="flex: 1; min-width: 0;">
-                            <h3>
+                    <div class="set-list-info">
+                        <h3 style="display: flex; align-items: center; gap: 10px;">
+                            <span style="flex: 1;">
                                 <% if set_list.performance_date.present? %>
                                     <span style="font-weight: normal; color: #718096; font-size: 0.9em;">
                                         <%= set_list.performance_date.strftime('%a, %b %d') %> -
@@ -47,21 +47,19 @@
                                         <% end %>
                                     </span>
                                 <% end %>
-                            </h3>
-                            <% if set_list.notes.present? %>
-                                <p style="font-style: italic; color: #718096;"><%= set_list.notes %></p>
-                            <% end %>
-                        </div>
-                        <% if set_list.songs.any? %>
-                            <div class="actions" onclick="event.stopPropagation();" style="flex-shrink: 0;">
-                                <a href="/gigs/<%= set_list.id %>/print" target="_blank" class="print-icon-button" style="display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; background: #f7fafc; border: 1px solid #e2e8f0; border-radius: 8px; text-decoration: none; color: #4a5568; transition: all 0.2s;" onmouseover="this.style.backgroundColor='#edf2f7'; this.style.borderColor='#cbd5e0';" onmouseout="this.style.backgroundColor='#f7fafc'; this.style.borderColor='#e2e8f0';" title="Print Gig">
-                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            </span>
+                            <% if set_list.songs.any? %>
+                                <a href="/gigs/<%= set_list.id %>/print" target="_blank" class="print-icon-button" onclick="event.stopPropagation();" style="display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; background: #f7fafc; border: 1px solid #e2e8f0; border-radius: 6px; text-decoration: none; color: #4a5568; transition: all 0.2s; flex-shrink: 0;" onmouseover="this.style.backgroundColor='#edf2f7'; this.style.borderColor='#cbd5e0';" onmouseout="this.style.backgroundColor='#f7fafc'; this.style.borderColor='#e2e8f0';" title="Print Gig">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                         <polyline points="6,9 6,2 18,2 18,9"></polyline>
-                                        <path d="M6,18H4a2,2 0,0,1-2-2V11a2,2 0,0,1,2-2H20a2,2 0,0,1,2,2v5a2,2 0,0,1-2,2H18"></path>
+                                        <path d="M6,18H4a2,2 0,0,1-2-2V11a2,2 0,0,1,2,2H20a2,2 0,0,1,2,2v5a2,2 0,0,1-2,2H18"></path>
                                         <polyline points="6,14 18,14 18,20 6,20 6,14"></polyline>
                                     </svg>
                                 </a>
-                            </div>
+                            <% end %>
+                        </h3>
+                        <% if set_list.notes.present? %>
+                            <p style="font-style: italic; color: #718096;"><%= set_list.notes %></p>
                         <% end %>
                     </div>
                 </div>
@@ -75,9 +73,9 @@
             <h3 style="margin-bottom: 20px; color: #718096;">Past Gigs</h3>
             <% @past_gigs.each do |set_list| %>
                 <div class="set-list-item" style="cursor: pointer; opacity: 0.7;" onclick="window.location.href='/gigs/<%= set_list.id %>'">
-                    <div style="display: flex; justify-content: space-between; align-items: flex-start; width: 100%;">
-                        <div class="set-list-info" style="flex: 1; min-width: 0;">
-                            <h3>
+                    <div class="set-list-info">
+                        <h3 style="display: flex; align-items: center; gap: 10px;">
+                            <span style="flex: 1;">
                                 <% if set_list.performance_date.present? %>
                                     <span style="font-weight: normal; color: #718096; font-size: 0.9em;">
                                         <%= set_list.performance_date.strftime('%a, %b %d') %> -
@@ -92,11 +90,20 @@
                                         <% end %>
                                     </span>
                                 <% end %>
-                            </h3>
-                            <% if set_list.notes.present? %>
-                                <p style="font-style: italic; color: #718096;"><%= set_list.notes %></p>
+                            </span>
+                            <% if set_list.songs.any? %>
+                                <a href="/gigs/<%= set_list.id %>/print" target="_blank" class="print-icon-button" onclick="event.stopPropagation();" style="display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; background: #f7fafc; border: 1px solid #e2e8f0; border-radius: 6px; text-decoration: none; color: #4a5568; transition: all 0.2s; flex-shrink: 0; opacity: 0.7;" onmouseover="this.style.backgroundColor='#edf2f7'; this.style.borderColor='#cbd5e0'; this.style.opacity='1';" onmouseout="this.style.backgroundColor='#f7fafc'; this.style.borderColor='#e2e8f0'; this.style.opacity='0.7';" title="Print Gig">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <polyline points="6,9 6,2 18,2 18,9"></polyline>
+                                        <path d="M6,18H4a2,2 0,0,1-2-2V11a2,2 0,0,1,2,2H20a2,2 0,0,1,2,2v5a2,2 0,0,1-2,2H18"></path>
+                                        <polyline points="6,14 18,14 18,20 6,20 6,14"></polyline>
+                                    </svg>
+                                </a>
                             <% end %>
-                        </div>
+                        </h3>
+                        <% if set_list.notes.present? %>
+                            <p style="font-style: italic; color: #718096;"><%= set_list.notes %></p>
+                        <% end %>
                     </div>
                 </div>
             <% end %>
