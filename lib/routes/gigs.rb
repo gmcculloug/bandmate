@@ -342,7 +342,7 @@ class Routes::Gigs < Sinatra::Base
                     .where(gig_songs: { id: nil })
                     .where.not(id: source_gig.id)
                     .includes(:venue)
-                    .order(performance_date: :desc, name: :asc)
+                    .order(performance_date: :asc, name: :asc)
 
       gigs_data = empty_gigs.map do |gig|
         {
