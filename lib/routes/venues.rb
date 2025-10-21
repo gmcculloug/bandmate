@@ -41,14 +41,21 @@ class Routes::Venues < Sinatra::Base
   post '/venues' do
     require_login
     return redirect '/gigs' unless current_band
-    
+
     venue = Venue.new(params[:venue])
     venue.band = current_band
-    
+
     if venue.save
       redirect '/venues'
     else
       @errors = venue.errors.full_messages
+
+      # Set breadcrumbs for error case
+      set_breadcrumbs(
+        breadcrumb_for_section('venues'),
+        { label: 'New', icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 6px;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg>', url: nil }
+      )
+
       erb :new_venue
     end
   end
@@ -56,9 +63,15 @@ class Routes::Venues < Sinatra::Base
   get '/venues/:id' do
     require_login
     return redirect '/gigs' unless current_band
-    
+
     @venue = filter_by_current_band(Venue).find(params[:id])
-    
+
+    # Set breadcrumbs
+    set_breadcrumbs(
+      breadcrumb_for_section('venues'),
+      { label: @venue.name, icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 6px;"><path d="M3 21h18"></path><path d="M5 21V7l8-4v18"></path><path d="M19 21V11l-6-4"></path></svg>', url: nil }
+    )
+
     @bands = user_bands
     erb :show_venue
   end
@@ -66,22 +79,37 @@ class Routes::Venues < Sinatra::Base
   get '/venues/:id/edit' do
     require_login
     return redirect '/gigs' unless current_band
-    
+
     @venue = filter_by_current_band(Venue).find(params[:id])
-    
+
+    # Set breadcrumbs
+    set_breadcrumbs(
+      breadcrumb_for_section('venues'),
+      { label: @venue.name, icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 6px;"><path d="M3 21h18"></path><path d="M5 21V7l8-4v18"></path><path d="M19 21V11l-6-4"></path></svg>', url: "/venues/#{@venue.id}" },
+      { label: 'Edit', icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 6px;"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>', url: nil }
+    )
+
     erb :edit_venue
   end
 
   put '/venues/:id' do
     require_login
     return redirect '/gigs' unless current_band
-    
+
     @venue = filter_by_current_band(Venue).find(params[:id])
-    
+
     if @venue.update(params[:venue])
       redirect "/venues/#{@venue.id}"
     else
       @errors = @venue.errors.full_messages
+
+      # Set breadcrumbs for error case
+      set_breadcrumbs(
+        breadcrumb_for_section('venues'),
+        { label: @venue.name, icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 6px;"><path d="M3 21h18"></path><path d="M5 21V7l8-4v18"></path><path d="M19 21V11l-6-4"></path></svg>', url: "/venues/#{@venue.id}" },
+        { label: 'Edit', icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 6px;"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>', url: nil }
+      )
+
       erb :edit_venue
     end
   end

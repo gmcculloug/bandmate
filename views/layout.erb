@@ -96,14 +96,14 @@
         }
         
         .logout-link {
-            color: #e53e3e;
+            color: #000000;
             text-decoration: none;
             font-weight: 500;
             transition: color 0.3s ease;
         }
-        
+
         .logout-link:hover {
-            color: #c53030;
+            color: #333333;
             text-decoration: underline;
         }
         
@@ -131,10 +131,10 @@
         
         .nav a {
             text-decoration: none;
-            color: #667eea;
+            color: #000000;
             padding: 12px 16px;
             border-radius: 25px;
-            background: rgba(102, 126, 234, 0.1);
+            background: rgba(0, 0, 0, 0.05);
             transition: all 0.3s ease;
             font-weight: 500;
             font-size: 14px;
@@ -143,7 +143,7 @@
             align-items: center;
             justify-content: center;
         }
-        
+
         .nav a:hover, .nav a:active {
             background: #667eea;
             color: white;
@@ -152,9 +152,9 @@
         
         .mobile-menu-toggle {
             display: none;
-            background: #667eea;
-            color: white;
-            border: none;
+            background: rgba(0, 0, 0, 0.05);
+            color: #000000;
+            border: 1px solid rgba(0, 0, 0, 0.1);
             padding: 10px;
             border-radius: 8px;
             cursor: pointer;
@@ -1161,7 +1161,7 @@
         }
 
         .breadcrumb-link {
-            color: #667eea;
+            color: #000000;
             text-decoration: none;
             font-weight: 500;
             transition: all 0.2s ease;
@@ -1174,13 +1174,13 @@
         }
 
         .breadcrumb-link:hover {
-            color: #5a67d8;
+            color: #000000;
             background: rgba(102, 126, 234, 0.1);
             text-decoration: none;
         }
 
         .breadcrumb-current {
-            color: #4a5568;
+            color: #000000;
             font-weight: 600;
             display: inline-flex;
             align-items: center;
@@ -1189,7 +1189,7 @@
         }
 
         .breadcrumb-separator {
-            color: #a0aec0;
+            color: #333333;
             font-weight: normal;
             user-select: none;
             margin: 0 2px;
@@ -1233,12 +1233,12 @@
             background: #667eea;
             color: white;
             border: none;
-            border-radius: 8px;
-            padding: 12px;
+            border-radius: 6px;
+            padding: 8px;
             cursor: pointer;
-            font-size: 18px;
-            min-height: 44px;
-            min-width: 44px;
+            font-size: 16px;
+            min-height: 36px;
+            min-width: 36px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -1261,16 +1261,16 @@
             top: 100%;
             right: 0;
             background: white;
-            border-radius: 8px;
+            border-radius: 6px;
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
             border: 1px solid #e2e8f0;
-            min-width: 200px;
+            min-width: 160px;
             z-index: 1000;
             opacity: 0;
             visibility: hidden;
             transform: translateY(-10px);
             transition: all 0.3s ease;
-            margin-top: 5px;
+            margin-top: 3px;
         }
 
         .burger-menu-dropdown.show {
@@ -1281,7 +1281,7 @@
 
         .burger-menu-item {
             display: block;
-            padding: 12px 16px;
+            padding: 8px 12px;
             color: #4a5568;
             text-decoration: none;
             transition: all 0.2s ease;
@@ -1290,18 +1290,18 @@
             width: 100%;
             text-align: left;
             cursor: pointer;
-            font-size: 14px;
+            font-size: 13px;
             border-radius: 0;
         }
 
         .burger-menu-item:first-child {
-            border-top-left-radius: 8px;
-            border-top-right-radius: 8px;
+            border-top-left-radius: 6px;
+            border-top-right-radius: 6px;
         }
 
         .burger-menu-item:last-child {
-            border-bottom-left-radius: 8px;
-            border-bottom-right-radius: 8px;
+            border-bottom-left-radius: 6px;
+            border-bottom-right-radius: 6px;
         }
 
         .burger-menu-item:hover {
@@ -1316,22 +1316,22 @@
 
         .burger-menu-item i,
         .burger-menu-item .icon {
-            margin-right: 8px;
-            width: 16px;
+            margin-right: 6px;
+            width: 14px;
             display: inline-block;
         }
 
         /* Mobile burger menu adjustments */
         @media (max-width: 768px) {
             .burger-menu-dropdown {
-                min-width: 180px;
+                min-width: 150px;
                 right: -10px;
             }
 
             .burger-menu-item {
-                padding: 14px 16px;
-                font-size: 16px;
-                min-height: 44px;
+                padding: 10px 12px;
+                font-size: 14px;
+                min-height: 36px;
                 display: flex;
                 align-items: center;
             }
@@ -1378,18 +1378,57 @@
                         <div class="user-actions">
                             <span class="welcome-text">Welcome, <%= current_user.username %>!</span>
                             <a href="/logout" class="logout-link">Logout</a>
-                            <a href="/profile" class="profile-icon" title="User Profile">⚙️</a>
+                            <a href="/profile" class="profile-icon" title="User Profile">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <circle cx="12" cy="12" r="3"></circle>
+                                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                                </svg>
+                            </a>
                         </div>
                     </div>
                 <% end %>
             </div>
-            <button class="mobile-menu-toggle" onclick="toggleMobileMenu()">☰</button>
+            <button class="mobile-menu-toggle" onclick="toggleMobileMenu()">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="3" y1="6" x2="21" y2="6"></line>
+                    <line x1="3" y1="12" x2="21" y2="12"></line>
+                    <line x1="3" y1="18" x2="21" y2="18"></line>
+                </svg>
+            </button>
             <nav class="nav" id="mobile-nav">
                 <% if logged_in? %>
-                    <a href="/gigs">📋 Gigs</a>
-                    <a href="/calendar">📅 Calendar</a>
-                    <a href="/songs">🎵 Songs</a>
-                    <a href="/venues">🏢 Venues</a>
+                    <a href="/gigs">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 6px;">
+                            <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
+                            <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
+                        </svg>
+                        Gigs
+                    </a>
+                    <a href="/calendar">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 6px;">
+                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                            <line x1="16" y1="2" x2="16" y2="6"></line>
+                            <line x1="8" y1="2" x2="8" y2="6"></line>
+                            <line x1="3" y1="10" x2="21" y2="10"></line>
+                        </svg>
+                        Calendar
+                    </a>
+                    <a href="/songs">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 6px;">
+                            <path d="M9 18V5l12-2v13"></path>
+                            <circle cx="6" cy="18" r="3"></circle>
+                            <circle cx="18" cy="16" r="3"></circle>
+                        </svg>
+                        Songs
+                    </a>
+                    <a href="/venues">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 6px;">
+                            <path d="M3 21h18"></path>
+                            <path d="M5 21V7l8-4v18"></path>
+                            <path d="M19 21V11l-6-4"></path>
+                        </svg>
+                        Venues
+                    </a>
                 <% else %>
                     <a href="/login">Login</a>
                     <a href="/signup">Sign Up</a>

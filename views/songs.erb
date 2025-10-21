@@ -1,8 +1,29 @@
 <div class="page-header">
-    <h2 class="page-title">🎵 Songs (<%= @songs.count %>)</h2>
+    <h2 class="page-title">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -4px; margin-right: 8px;">
+            <path d="M9 18V5l12-2v13"></path>
+            <circle cx="6" cy="18" r="3"></circle>
+            <circle cx="18" cy="16" r="3"></circle>
+        </svg>
+        Songs (<%= @songs.count %>)
+    </h2>
     <div class="page-actions">
-        <a href="/song_catalogs" class="btn btn-secondary">🌍 Song Catalog</a>
-        <a href="/song_catalogs/new" class="btn btn-success">➕ Add Songs</a>
+        <a href="/song_catalogs" class="btn btn-secondary">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 6px;">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="2" y1="12" x2="22" y2="12"></line>
+                <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+            </svg>
+            Song Catalog
+        </a>
+        <a href="/song_catalogs/new" class="btn btn-success">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 6px;">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="8" x2="12" y2="16"></line>
+                <line x1="8" y1="12" x2="16" y2="12"></line>
+            </svg>
+            Add Songs
+        </a>
     </div>
 </div>
 

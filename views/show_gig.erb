@@ -12,7 +12,13 @@
 <% end %>
 
 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 10px;">
-    <h2>📋 <%= @gig.name %></h2>
+    <h2>
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -4px; margin-right: 8px;">
+            <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
+            <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
+        </svg>
+        <%= @gig.name %>
+    </h2>
     <div style="display: flex; align-items: center; gap: 8px;">
         <a href="/gigs/<%= @gig.id %>/print" target="_blank" class="print-icon-button" style="display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; background: #f7fafc; border: 1px solid #e2e8f0; border-radius: 8px; text-decoration: none; color: #4a5568; transition: all 0.2s;" onmouseover="this.style.backgroundColor='#edf2f7'; this.style.borderColor='#cbd5e0';" onmouseout="this.style.backgroundColor='#f7fafc'; this.style.borderColor='#e2e8f0';" title="Print Gig">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -23,18 +29,38 @@
         </a>
         <div class="burger-menu">
         <button type="button" class="burger-button" onclick="toggleGigMenu()">
-            ☰
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="3" y1="6" x2="21" y2="6"></line>
+                <line x1="3" y1="12" x2="21" y2="12"></line>
+                <line x1="3" y1="18" x2="21" y2="18"></line>
+            </svg>
         </button>
         <div class="burger-menu-dropdown" id="gig-menu">
             <a href="/gigs/<%= @gig.id %>/edit" class="burger-menu-item">
-                <span class="icon">✏️</span>Edit
+                <span class="icon">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                    </svg>
+                </span>Edit
             </a>
             <button type="button" class="burger-menu-item" onclick="confirmCopyGig()">
-                <span class="icon">📋</span>Copy
+                <span class="icon">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                    </svg>
+                </span>Copy
             </button>
             <% if @gig.songs.any? %>
                 <button type="button" class="burger-menu-item" onclick="showCopyToGigModal(); closeGigMenu();">
-                    <span class="icon">🎵</span>Copy Songs to Gig
+                    <span class="icon">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M9 18V5l12-2v13"></path>
+                            <circle cx="6" cy="18" r="3"></circle>
+                            <circle cx="18" cy="16" r="3"></circle>
+                        </svg>
+                    </span>Copy Songs to Gig
                 </button>
             <% end %>
         </div>
@@ -162,7 +188,13 @@
                     </div>
                     <% if gig_song.song.url.present? %>
                       <div class="actions" onclick="event.stopPropagation();" style="display: flex; gap: 5px; flex-shrink: 0;">
-                        <a href="<%= gig_song.song.url %>" target="_blank" class="btn btn-small" style="font-size: 0.75rem; padding: 4px 8px; min-height: 28px;">🎵</a>
+                        <a href="<%= gig_song.song.url %>" target="_blank" class="btn btn-small" style="font-size: 0.75rem; padding: 4px 8px; min-height: 28px;">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M9 18V5l12-2v13"></path>
+                                <circle cx="6" cy="18" r="3"></circle>
+                                <circle cx="18" cy="16" r="3"></circle>
+                            </svg>
+                        </a>
                       </div>
                     <% end %>
                   </div>
