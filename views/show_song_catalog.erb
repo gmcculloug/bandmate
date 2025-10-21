@@ -1,16 +1,15 @@
 <% if params[:copied] %>
     <div style="margin-bottom: 20px; padding: 15px; background: #f0fff4; border-radius: 8px; border-left: 4px solid #38a169;">
         <p style="margin: 0; color: #2f855a; font-weight: 500;">
-            ✅ Song successfully copied to <%= params[:copied] == '1' ? '1 band' : "#{params[:copied]} bands" %>!
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 6px;"><polyline points="20,6 9,17 4,12"></polyline></svg>Song successfully copied to <%= params[:copied] == '1' ? '1 band' : "#{params[:copied]} bands" %>!
         </p>
     </div>
 <% end %>
 
 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
-    <h2>🌍 <%= @song_catalog.title %></h2>
+    <h2><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -3px; margin-right: 8px;"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg><%= @song_catalog.title %></h2>
     <div class="actions">
         <a href="/song_catalogs/<%= @song_catalog.id %>/edit" class="btn">Edit</a>
-        <a href="/song_catalogs" class="btn">Back to Song Catalogs</a>
     </div>
 </div>
 
@@ -50,7 +49,7 @@
             <h3>Actions</h3>
             <% if @song_catalog.url.present? %>
                 <div style="margin-bottom: 20px;">
-                    <a href="<%= @song_catalog.url %>" target="_blank" class="btn btn-success">🎵 Listen on Streaming Platform</a>
+                    <a href="<%= @song_catalog.url %>" target="_blank" class="btn btn-success"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 6px;"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>Listen on Streaming Platform</a>
                 </div>
             <% end %>
             
@@ -64,14 +63,14 @@
                         <% existing_copy = band.songs.find_by(song_catalog_id: @song_catalog.id) %>
                         <% if existing_copy %>
                             <div style="margin-bottom: 8px; padding: 8px; background: #f0f4f8; border-radius: 4px; color: #666;">
-                                ✓ Already copied to <%= band.name %>
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 4px;"><polyline points="20,6 9,17 4,12"></polyline></svg>Already copied to <%= band.name %>
                             </div>
                         <% else %>
                             <form method="POST" action="/bands/<%= band.id %>/copy_songs" style="margin-bottom: 8px;">
                                 <input type="hidden" name="song_catalog_ids[]" value="<%= @song_catalog.id %>">
                                 <input type="hidden" name="from_song_catalog" value="<%= @song_catalog.id %>">
                                 <button type="submit" class="btn" style="width: 100%; text-align: left;">
-                                    📋 Copy to <%= band.name %>
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 6px;"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>Copy to <%= band.name %>
                                 </button>
                             </form>
                         <% end %>

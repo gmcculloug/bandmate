@@ -1,22 +1,22 @@
 <% if params[:copied] %>
     <div style="margin-bottom: 20px; padding: 15px; background: #f0fff4; border-radius: 8px; border-left: 4px solid #38a169;">
         <p style="margin: 0; color: #2f855a; font-weight: 500;">
-            ✅ Venue successfully copied to <%= params[:copied] == '1' ? '1 band' : "#{params[:copied]} bands" %>!
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 6px;"><polyline points="20,6 9,17 4,12"></polyline></svg>Venue successfully copied to <%= params[:copied] == '1' ? '1 band' : "#{params[:copied]} bands" %>!
         </p>
     </div>
 <% end %>
 
 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; flex-wrap: wrap; gap: 10px;">
     <div>
-        <h2>🏢 <%= @venue.name %><% if @venue.archived? %> <span style="color: #e53e3e; font-size: 0.7rem; font-weight: normal;">(Archived)</span><% end %></h2>
+        <h2><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -3px; margin-right: 8px;"><path d="M3 21h18"></path><path d="M5 21V7l8-4v18"></path><path d="M19 21V11l-6-4"></path></svg><%= @venue.name %><% if @venue.archived? %> <span style="color: #e53e3e; font-size: 0.7rem; font-weight: normal;">(Archived)</span><% end %></h2>
         <% if @venue.archived? && @venue.archived_at.present? %>
             <div style="margin-top: 5px; font-size: 0.85rem; color: #a0aec0;">
-                📦 Archived on <%= @venue.archived_at.strftime('%B %d, %Y at %I:%M %p') %>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 6px;"><polyline points="21,8 21,21 3,21 3,8"></polyline><rect x="1" y="3" width="22" height="5"></rect><line x1="10" y1="12" x2="14" y2="12"></line></svg>Archived on <%= @venue.archived_at.strftime('%B %d, %Y at %I:%M %p') %>
             </div>
         <% end %>
     </div>
     <div class="actions">
-        <a href="/venues/<%= @venue.id %>/edit" class="btn">Edit</a>
+        <a href="/venues/<%= @venue.id %>/edit<%= @gig ? "?from_gig=#{@gig.id}" : "" %>" class="btn">Edit</a>
     </div>
 </div>
 
@@ -35,14 +35,14 @@
         <% if @venue.website.present? %>
             <div class="detail-item">
                 <span class="detail-label">Website:</span> 
-                <a href="<%= @venue.website %>" target="_blank" style="color: #667eea; text-decoration: none;">🌐 <%= @venue.website %></a>
+                <a href="<%= @venue.website %>" target="_blank" style="color: #667eea; text-decoration: none;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 6px;"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg><%= @venue.website %></a>
             </div>
         <% end %>
     </div>
     
     <% if @venue.notes.present? %>
         <div style="margin-top: 20px;">
-            <h4 style="margin-bottom: 10px; color: #4a5568;">📝 Notes</h4>
+            <h4 style="margin-bottom: 10px; color: #4a5568;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 6px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14,2 14,8 20,8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10,9 9,9 8,9"></polyline></svg>Notes</h4>
             <div style="background: #f7fafc; padding: 15px; border-radius: 8px; border-left: 4px solid #667eea;">
                 <p style="margin: 0; white-space: pre-wrap; line-height: 1.6;"><%= @venue.notes %></p>
             </div>
@@ -62,14 +62,14 @@
                 <% existing_copy = band.venues.find_by(name: @venue.name) %>
                 <% if existing_copy %>
                     <div style="margin-bottom: 8px; padding: 8px; background: #f0f4f8; border-radius: 4px; color: #666;">
-                        ✓ Already copied to <%= band.name %>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 6px;"><polyline points="20,6 9,17 4,12"></polyline></svg>Already copied to <%= band.name %>
                     </div>
                 <% else %>
                     <form method="POST" action="/venues/<%= @venue.id %>/copy" style="margin-bottom: 8px;">
                         <input type="hidden" name="target_band_id" value="<%= band.id %>">
                         <input type="hidden" name="from_venue" value="<%= @venue.id %>">
                         <button type="submit" class="btn" style="width: 100%; text-align: left;">
-                            📋 Copy to <%= band.name %>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 6px;"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>Copy to <%= band.name %>
                         </button>
                     </form>
                 <% end %>
@@ -116,16 +116,16 @@
     <div style="margin-top: 15px; display: flex; gap: 10px; flex-wrap: wrap;">
         <% if @venue.archived? %>
             <form method="POST" action="/venues/<%= @venue.id %>/unarchive" style="display: inline;">
-                <button type="submit" class="btn btn-success" onclick="return confirm('Unarchive this venue? It will appear in the active venues list and be available for new gigs.')">📂 Unarchive Venue</button>
+                <button type="submit" class="btn btn-success" onclick="return confirm('Unarchive this venue? It will appear in the active venues list and be available for new gigs.')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 6px;"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>Unarchive Venue</button>
             </form>
         <% else %>
             <form method="POST" action="/venues/<%= @venue.id %>/archive" style="display: inline;">
-                <button type="submit" class="btn btn-warning" onclick="return confirm('Archive this venue? It will be hidden from the venues list and unavailable for new gigs.')">📦 Archive Venue</button>
+                <button type="submit" class="btn btn-warning" onclick="return confirm('Archive this venue? It will be hidden from the venues list and unavailable for new gigs.')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 6px;"><polyline points="21,8 21,21 3,21 3,8"></polyline><rect x="1" y="3" width="22" height="5"></rect><line x1="10" y1="12" x2="14" y2="12"></line></svg>Archive Venue</button>
             </form>
         <% end %>
         <form method="POST" action="/venues/<%= @venue.id %>" style="display: inline;">
             <input type="hidden" name="_method" value="DELETE">
-            <button type="submit" class="btn btn-danger" onclick="return confirm('Delete this venue? This will also remove it from any associated gigs.')">🗑️ Delete Venue</button>
+            <button type="submit" class="btn btn-danger" onclick="return confirm('Delete this venue? This will also remove it from any associated gigs.')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 6px;"><polyline points="3,6 5,6 21,6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>Delete Venue</button>
         </form>
     </div>
 </div> 

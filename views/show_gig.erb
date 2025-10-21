@@ -84,7 +84,7 @@
                     venue_tooltip_parts << "Phone: #{@gig.venue.phone_number}" if @gig.venue.phone_number.present?
                     venue_tooltip = venue_tooltip_parts.join("&#10;")
                     %>
-                    <a href="/venues/<%= @gig.venue.id %>" class="venue-link" style="color: #667eea; text-decoration: none;" <% if venue_tooltip.present? %>data-venue-tooltip="<%= venue_tooltip %>"<% end %>><%= @gig.venue.name %></a>
+                    <a href="/venues/<%= @gig.venue.id %>?from_gig=<%= @gig.id %>" class="venue-link" style="color: #667eea; text-decoration: none;" <% if venue_tooltip.present? %>data-venue-tooltip="<%= venue_tooltip %>"<% end %>><%= @gig.venue.name %></a>
                 </div>
             <% end %>
             <% if @gig.performance_date.present? %>
@@ -171,7 +171,7 @@
                   tooltip_parts << "Year: #{gig_song.song.year}" if gig_song.song.year.present?
                   tooltip_content = tooltip_parts.join("&#10;")
                 %>
-                <div class="song-card" style="margin-bottom: 4px; padding: 8px 12px; border: 1px solid #e2e8f0; border-radius: 4px; cursor: pointer;" onclick="window.location.href='/songs/<%= gig_song.song.id %>'" data-tooltip="<%= tooltip_content %>">
+                <div class="song-card" style="margin-bottom: 4px; padding: 8px 12px; border: 1px solid #e2e8f0; border-radius: 4px; cursor: pointer;" onclick="window.location.href='/songs/<%= gig_song.song.id %>?from_gig=<%= @gig.id %>'" data-tooltip="<%= tooltip_content %>">
                   <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px; white-space: nowrap;">
                     <div style="flex: 1; min-width: 0; display: flex; align-items: center; gap: 8px; overflow: hidden;">
                       <div style="font-weight: 600; font-size: 1rem; overflow: hidden; text-overflow: ellipsis; min-width: 0; flex: 1;">

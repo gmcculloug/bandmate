@@ -1,6 +1,5 @@
-<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
-    <h2>📋 Copy from Song Catalog</h2>
-    <a href="/songs" class="btn btn-secondary">← Back to Songs</a>
+<div style="margin-bottom: 20px;">
+    <h2><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -3px; margin-right: 8px;"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>Copy from Song Catalog</h2>
 </div>
 
 <form id="copy-songs-form" method="post" action="/songs/copy_from_song_catalog">
@@ -9,7 +8,7 @@
         <!-- Left Column: Song Catalog -->
         <div class="song-catalog-section">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                <h3 style="margin: 0;">🌍 Song Catalog (<span id="catalog-count"><%= @song_catalogs.count %></span>)</h3>
+                <h3 style="margin: 0;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -3px; margin-right: 6px;"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>Song Catalog (<span id="catalog-count"><%= @song_catalogs.count %></span>)</h3>
                 <div style="display: flex; gap: 10px;">
                     <button type="button" id="select-all-catalog" class="btn btn-outline" style="padding: 5px 10px; font-size: 0.8rem;">Select All</button>
                     <button type="button" id="clear-catalog" class="btn btn-outline" style="padding: 5px 10px; font-size: 0.8rem;">Clear</button>
@@ -74,7 +73,7 @@
         <!-- Right Column: Selected Songs -->
         <div class="selected-songs-section">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                <h3 style="margin: 0;">🎵 Songs to Copy (<span id="selected-count">0</span>)</h3>
+                <h3 style="margin: 0;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -3px; margin-right: 6px;"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>Songs to Copy (<span id="selected-count">0</span>)</h3>
                 <button type="button" id="clear-selected" class="btn btn-outline" style="padding: 5px 10px; font-size: 0.8rem;">Clear All</button>
             </div>
             
@@ -90,7 +89,7 @@
     <!-- Copy Button -->
     <div style="text-align: center; margin-top: 20px;">
         <button type="submit" id="copy-button" class="btn btn-success" style="padding: 12px 24px; font-size: 16px;" disabled>
-            🎵 Copy Selected Songs to Band
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 6px;"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>Copy Selected Songs to Band
         </button>
     </div>
 </form>

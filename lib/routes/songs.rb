@@ -40,7 +40,7 @@ class Routes::Songs < Sinatra::Base
     # Set breadcrumbs
     set_breadcrumbs(
       breadcrumb_for_section('songs'),
-      { label: 'New', icon: '➕', url: nil }
+      { label: 'New', icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 6px;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg>', url: nil }
     )
 
     erb :new_song
@@ -50,6 +50,12 @@ class Routes::Songs < Sinatra::Base
   get '/songs/copy_from_catalog' do
     require_login
     return redirect '/gigs' unless current_band
+
+    # Set breadcrumbs
+    set_breadcrumbs(
+      breadcrumb_for_section('songs'),
+      { label: 'Copy from Catalog', icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 6px;"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>', url: nil }
+    )
 
     @search = params[:search]
 
@@ -126,7 +132,7 @@ class Routes::Songs < Sinatra::Base
     # Set breadcrumbs
     set_breadcrumbs(
       breadcrumb_for_section('songs'),
-      { label: 'Archived', icon: '📦', url: nil }
+      { label: 'Archived', icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 6px;"><polyline points="21,8 21,21 3,21 3,8"></polyline><rect x="1" y="3" width="22" height="5"></rect><line x1="10" y1="12" x2="14" y2="12"></line></svg>', url: nil }
     )
 
     @songs = filter_by_current_band(Song).archived.order('LOWER(title)')
@@ -157,11 +163,22 @@ class Routes::Songs < Sinatra::Base
     require_login
     @song = current_band.songs.find(params[:id])
 
-    # Set breadcrumbs
-    set_breadcrumbs(
-      breadcrumb_for_section('songs'),
-      { label: @song.title, icon: '🎵', url: nil }
-    )
+    # Set breadcrumbs based on context
+    if params[:from_gig]
+      # Coming from a gig - use gig breadcrumbs
+      @gig = filter_by_current_band(Gig).find(params[:from_gig])
+      set_breadcrumbs(
+        breadcrumb_for_section('gigs'),
+        { label: @gig.name, icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 6px;"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect></svg>', url: "/gigs/#{@gig.id}" },
+        { label: @song.title, icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 6px;"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>', url: nil }
+      )
+    else
+      # Default song breadcrumbs
+      set_breadcrumbs(
+        breadcrumb_for_section('songs'),
+        { label: @song.title, icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 6px;"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>', url: nil }
+      )
+    end
 
     erb :show_song
   end
@@ -170,12 +187,24 @@ class Routes::Songs < Sinatra::Base
     require_login
     @song = current_band.songs.find(params[:id])
 
-    # Set breadcrumbs
-    set_breadcrumbs(
-      breadcrumb_for_section('songs'),
-      { label: @song.title, icon: '🎵', url: "/songs/#{@song.id}" },
-      { label: 'Edit', icon: '✏️', url: nil }
-    )
+    # Set breadcrumbs based on context
+    if params[:from_gig]
+      # Coming from a gig - use gig breadcrumbs
+      @gig = filter_by_current_band(Gig).find(params[:from_gig])
+      set_breadcrumbs(
+        breadcrumb_for_section('gigs'),
+        { label: @gig.name, icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 6px;"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect></svg>', url: "/gigs/#{@gig.id}" },
+        { label: @song.title, icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 6px;"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>', url: "/songs/#{@song.id}?from_gig=#{@gig.id}" },
+        { label: 'Edit', icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 6px;"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>', url: nil }
+      )
+    else
+      # Default song breadcrumbs
+      set_breadcrumbs(
+        breadcrumb_for_section('songs'),
+        { label: @song.title, icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 6px;"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>', url: "/songs/#{@song.id}" },
+        { label: 'Edit', icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 6px;"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>', url: nil }
+      )
+    end
 
     erb :edit_song
   end
@@ -183,11 +212,34 @@ class Routes::Songs < Sinatra::Base
   put '/songs/:id' do
     require_login
     @song = current_band.songs.find(params[:id])
-    
+
     if @song.update(params[:song])
-      redirect "/songs/#{@song.id}"
+      # Preserve gig context on successful update
+      if params[:from_gig]
+        redirect "/songs/#{@song.id}?from_gig=#{params[:from_gig]}"
+      else
+        redirect "/songs/#{@song.id}"
+      end
     else
       @errors = @song.errors.full_messages
+
+      # Set breadcrumbs for error case (same as edit route)
+      if params[:from_gig]
+        @gig = filter_by_current_band(Gig).find(params[:from_gig])
+        set_breadcrumbs(
+          breadcrumb_for_section('gigs'),
+          { label: @gig.name, icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 6px;"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect></svg>', url: "/gigs/#{@gig.id}" },
+          { label: @song.title, icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 6px;"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>', url: "/songs/#{@song.id}?from_gig=#{@gig.id}" },
+          { label: 'Edit', icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 6px;"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>', url: nil }
+        )
+      else
+        set_breadcrumbs(
+          breadcrumb_for_section('songs'),
+          { label: @song.title, icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 6px;"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>', url: "/songs/#{@song.id}" },
+          { label: 'Edit', icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 6px;"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>', url: nil }
+        )
+      end
+
       erb :edit_song
     end
   end
@@ -214,6 +266,12 @@ class Routes::Songs < Sinatra::Base
   get '/song_catalogs' do
     require_login
 
+    # Set breadcrumbs
+    set_breadcrumbs(
+      breadcrumb_for_section('songs'),
+      breadcrumb_for_section('song_catalogs')
+    )
+
     @search = params[:search]
     @song_catalogs = SongCatalog.order('LOWER(title)')
 
@@ -228,6 +286,12 @@ class Routes::Songs < Sinatra::Base
   get '/song_catalog' do
     require_login
 
+    # Set breadcrumbs
+    set_breadcrumbs(
+      breadcrumb_for_section('songs'),
+      breadcrumb_for_section('song_catalogs')
+    )
+
     @search = params[:search]
     @song_catalogs = SongCatalog.order('LOWER(title)')
 
@@ -241,11 +305,27 @@ class Routes::Songs < Sinatra::Base
 
   get '/song_catalog/new' do
     require_login
+
+    # Set breadcrumbs
+    set_breadcrumbs(
+      breadcrumb_for_section('songs'),
+      breadcrumb_for_section('song_catalogs'),
+      { label: 'New', icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 6px;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg>', url: nil }
+    )
+
     erb :new_song_catalog
   end
 
   get '/song_catalogs/new' do
     require_login
+
+    # Set breadcrumbs
+    set_breadcrumbs(
+      breadcrumb_for_section('songs'),
+      breadcrumb_for_section('song_catalogs'),
+      { label: 'New', icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 6px;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg>', url: nil }
+    )
+
     erb :new_song_catalog
   end
 
@@ -276,6 +356,14 @@ class Routes::Songs < Sinatra::Base
   get '/song_catalog/:id' do
     require_login
     @song_catalog = SongCatalog.find(params[:id])
+
+    # Set breadcrumbs
+    set_breadcrumbs(
+      breadcrumb_for_section('songs'),
+      breadcrumb_for_section('song_catalogs'),
+      { label: @song_catalog.title, icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 6px;"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>', url: nil }
+    )
+
     @bands = user_bands
     erb :show_song_catalog
   end
@@ -283,6 +371,14 @@ class Routes::Songs < Sinatra::Base
   get '/song_catalogs/:id' do
     require_login
     @song_catalog = SongCatalog.find(params[:id])
+
+    # Set breadcrumbs
+    set_breadcrumbs(
+      breadcrumb_for_section('songs'),
+      breadcrumb_for_section('song_catalogs'),
+      { label: @song_catalog.title, icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 6px;"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>', url: nil }
+    )
+
     @bands = user_bands
     erb :show_song_catalog
   end
@@ -290,6 +386,15 @@ class Routes::Songs < Sinatra::Base
   get '/song_catalog/:id/edit' do
     require_login
     @song_catalog = SongCatalog.find(params[:id])
+
+    # Set breadcrumbs
+    set_breadcrumbs(
+      breadcrumb_for_section('songs'),
+      breadcrumb_for_section('song_catalogs'),
+      { label: @song_catalog.title, icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 6px;"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>', url: "/song_catalogs/#{@song_catalog.id}" },
+      { label: 'Edit', icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 6px;"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>', url: nil }
+    )
+
     erb :edit_song_catalog
   end
 
@@ -299,9 +404,10 @@ class Routes::Songs < Sinatra::Base
 
     # Set breadcrumbs
     set_breadcrumbs(
+      breadcrumb_for_section('songs'),
       breadcrumb_for_section('song_catalogs'),
-      { label: @song_catalog.title, icon: '🎵', url: "/song_catalogs/#{@song_catalog.id}" },
-      { label: 'Edit', icon: '✏️', url: nil }
+      { label: @song_catalog.title, icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 6px;"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>', url: "/song_catalogs/#{@song_catalog.id}" },
+      { label: 'Edit', icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 6px;"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>', url: nil }
     )
 
     erb :edit_song_catalog

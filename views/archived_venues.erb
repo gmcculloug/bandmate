@@ -1,20 +1,17 @@
 <div class="page-header">
-    <h2 class="page-title">📦 Archived Venues</h2>
-    <div class="page-actions">
-        <a href="/venues" class="btn">← Back to Active Venues</a>
-    </div>
+    <h2 class="page-title"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -3px; margin-right: 8px;"><polyline points="21,8 21,21 3,21 3,8"></polyline><rect x="1" y="3" width="22" height="5"></rect><line x1="10" y1="12" x2="14" y2="12"></line></svg>Archived Venues</h2>
 </div>
 
 <% if @venues.any? %>
     <div style="display: flex; flex-direction: column; gap: 8px;">
         <% @venues.each do |venue| %>
-            <div class="venue-card" style="padding: 12px; border: 1px solid #fbb6ce; border-radius: 6px; background: #fef7f7;">
+            <div class="venue-card" style="padding: 12px; border: 1px solid #fbb6ce; border-radius: 6px; background: #fef7f7; cursor: pointer;" onclick="window.location.href='/venues/<%= venue.id %>'">
                 <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
                     <div style="flex: 1; min-width: 0;">
                         <div style="font-weight: 600; font-size: 1.1rem; word-break: break-word; color: #718096;"><%= venue.name %> <span style="color: #e53e3e; font-size: 0.8rem; font-weight: normal;">(Archived)</span></div>
                         <% if venue.archived_at.present? %>
                             <div style="margin-top: 2px; font-size: 0.75rem; color: #a0aec0;">
-                                📦 Archived on <%= venue.archived_at.strftime('%B %d, %Y at %I:%M %p') %>
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 6px;"><polyline points="21,8 21,21 3,21 3,8"></polyline><rect x="1" y="3" width="22" height="5"></rect><line x1="10" y1="12" x2="14" y2="12"></line></svg>Archived on <%= venue.archived_at.strftime('%B %d, %Y at %I:%M %p') %>
                             </div>
                         <% end %>
                         <div style="margin-top: 4px; display: flex; gap: 15px; font-size: 0.85rem; color: #4a5568; flex-wrap: wrap;">
@@ -24,19 +21,18 @@
                         </div>
                         <% if venue.website.present? %>
                             <div style="margin-top: 4px; font-size: 0.85rem; color: #718096;">
-                                <a href="<%= venue.website %>" target="_blank" style="color: #667eea; text-decoration: none;">🌐 <%= venue.website %></a>
+                                <a href="<%= venue.website %>" target="_blank" style="color: #667eea; text-decoration: none;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 6px;"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg><%= venue.website %></a>
                             </div>
                         <% end %>
                         <% if venue.notes.present? %>
                             <div style="margin-top: 4px; font-size: 0.85rem; color: #718096;">
-                                <strong>📝 Notes:</strong> <%= venue.notes.length > 100 ? venue.notes[0..100] + '...' : venue.notes %>
+                                <strong><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 6px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14,2 14,8 20,8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10,9 9,9 8,9"></polyline></svg>Notes:</strong> <%= venue.notes.length > 100 ? venue.notes[0..100] + '...' : venue.notes %>
                             </div>
                         <% end %>
                     </div>
                     <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-                        <a href="/venues/<%= venue.id %>" class="btn btn-small" style="font-size: 0.8rem;">View</a>
-                        <form method="POST" action="/venues/<%= venue.id %>/unarchive" style="display: inline;" onsubmit="return confirm('Are you sure you want to unarchive this venue?');">
-                            <button type="submit" class="btn btn-success btn-small" style="font-size: 0.8rem;">📂 Unarchive</button>
+                        <form method="POST" action="/venues/<%= venue.id %>/unarchive" style="display: inline;" onsubmit="return confirm('Are you sure you want to unarchive this venue?');" onclick="event.stopPropagation();">
+                            <button type="submit" class="btn btn-success btn-small" style="font-size: 0.8rem;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 6px;"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>Unarchive</button>
                         </form>
                     </div>
                 </div>
@@ -47,6 +43,5 @@
     <div style="text-align: center; padding: 40px;">
         <h3>No archived venues</h3>
         <p>You haven't archived any venues yet.</p>
-        <a href="/venues" class="btn">← Back to Active Venues</a>
     </div>
 <% end %>

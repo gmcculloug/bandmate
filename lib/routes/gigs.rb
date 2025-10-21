@@ -44,7 +44,7 @@ class Routes::Gigs < Sinatra::Base
     # Set breadcrumbs
     set_breadcrumbs(
       breadcrumb_for_section('gigs'),
-      { label: 'New', icon: '➕', url: nil }
+      { label: 'New', icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 6px;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg>', url: nil }
     )
 
     @venues = filter_by_current_band(Venue).active.order(:name)
@@ -85,7 +85,7 @@ class Routes::Gigs < Sinatra::Base
     # Set breadcrumbs
     set_breadcrumbs(
       breadcrumb_for_section('gigs'),
-      { label: @gig.name, icon: '📋', url: nil }
+      { label: @gig.name, icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 6px;"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect></svg>', url: nil }
     )
 
     @available_songs = filter_by_current_band(Song).where.not(id: @gig.song_ids).order(:title)
@@ -99,8 +99,8 @@ class Routes::Gigs < Sinatra::Base
     # Set breadcrumbs
     set_breadcrumbs(
       breadcrumb_for_section('gigs'),
-      { label: @gig.name, icon: '📋', url: "/gigs/#{@gig.id}" },
-      { label: 'Edit', icon: '✏️', url: nil }
+      { label: @gig.name, icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 6px;"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect></svg>', url: "/gigs/#{@gig.id}" },
+      { label: 'Edit', icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 6px;"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>', url: nil }
     )
 
     @venues = filter_by_current_band(Venue).active.order(:name)
@@ -114,8 +114,8 @@ class Routes::Gigs < Sinatra::Base
     # Set breadcrumbs
     set_breadcrumbs(
       breadcrumb_for_section('gigs'),
-      { label: @gig.name, icon: '📋', url: "/gigs/#{@gig.id}" },
-      { label: 'Manage Songs', icon: '🎵', url: nil }
+      { label: @gig.name, icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 6px;"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect></svg>', url: "/gigs/#{@gig.id}" },
+      { label: 'Manage Songs', icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 6px;"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>', url: nil }
     )
 
     # Get all songs for the current band

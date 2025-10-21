@@ -1,4 +1,4 @@
-<h2>➕ Add New Song Catalog</h2>
+<h2><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -3px; margin-right: 8px;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg>Add New Song Catalog</h2>
 
 <% if defined?(@errors) && @errors.any? %>
     <div class="errors">
@@ -12,7 +12,7 @@
 
 <div style="margin-bottom: 20px; padding: 15px; background: #e6fffa; border-radius: 8px; border-left: 4px solid #38a169;">
     <p style="margin: 0; color: #2f855a; font-weight: 500;">
-        ℹ️ You're adding a song to the song catalog. This will make it available for all bands to copy and use in their repertoires.
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 6px;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>You're adding a song to the song catalog. This will make it available for all bands to copy and use in their repertoires.
     </p>
 </div>
 
@@ -205,16 +205,16 @@ async function lookupSongData() {
             }
             
             if (fieldsUpdated.length > 0) {
-                showMessage(`✅ Found and updated: ${fieldsUpdated.join(', ')}`, 'success');
+                showMessage(`Found and updated: ${fieldsUpdated.join(', ')}`, 'success');
             } else {
-                showMessage('ℹ️ Song found but no new data to update (fields already filled)', 'info');
+                showMessage('Song found but no new data to update (fields already filled)', 'info');
             }
         } else {
-            showMessage(`❌ ${result.error || 'Song not found on songbpm.com'}`, 'error');
+            showMessage(`${result.error || 'Song not found on songbpm.com'}`, 'error');
         }
     } catch (error) {
         console.error('Lookup error:', error);
-        showMessage('❌ Network error during lookup', 'error');
+        showMessage('Network error during lookup', 'error');
     } finally {
         // Restore button state
         lookupBtn.innerHTML = originalText;
