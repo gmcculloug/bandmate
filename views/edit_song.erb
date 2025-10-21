@@ -1,5 +1,11 @@
 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
-    <h2>✏️ Edit Song: <%= @song.title %></h2>
+    <h2>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -3px; margin-right: 8px; color: black;">
+            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+            <path d="m18.5 2.5 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+        </svg>
+        Edit Song: <%= @song.title %>
+    </h2>
     <div class="actions">
         <button type="submit" form="edit-song-form" class="btn btn-success">Update Song</button>
         <a href="/songs" class="btn">Cancel</a>

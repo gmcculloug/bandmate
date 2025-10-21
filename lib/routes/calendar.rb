@@ -23,7 +23,10 @@ class Routes::Calendar < Sinatra::Base
     
     # Ensure month is valid
     @month = [[1, @month].max, 12].min
-    
+
+    # Set breadcrumbs
+    set_breadcrumbs(breadcrumb_for_section('calendar'))
+
     # Get the full calendar range including padding days from previous/next month
     start_date = Date.new(@year, @month, 1)
     next_month = @month == 12 ? Date.new(@year + 1, 1, 1) : Date.new(@year, @month + 1, 1)
