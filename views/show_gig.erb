@@ -120,17 +120,19 @@
     </div>
 
     <% if @gig.songs.any? %>
-        <% 
+        <%
           gig_songs_by_set = @gig.gig_songs.includes(:song).order(:set_number, :position).group_by(&:set_number)
           max_set = gig_songs_by_set.keys.max || 1
         %>
-        
-        <% (1..max_set).each do |set_number| %>
-          <% if gig_songs_by_set[set_number] %>
-            <div style="margin-bottom: 25px;">
-              <h4 style="color: #2d3748; margin-bottom: 10px; padding-bottom: 5px; border-bottom: 2px solid #e2e8f0;">
-                Set <%= set_number %> (<%= gig_songs_by_set[set_number].count %> songs)
-              </h4>
+
+        <!-- Sets container for side-by-side layout -->
+        <div style="display: flex; gap: 20px; flex-wrap: wrap; align-items: flex-start;">
+          <% (1..max_set).each do |set_number| %>
+            <% if gig_songs_by_set[set_number] %>
+              <div style="flex: 1; min-width: 300px; margin-bottom: 25px;">
+                <h4 style="color: #2d3748; margin-bottom: 10px; padding-bottom: 5px; border-bottom: 2px solid #e2e8f0;">
+                  Set <%= set_number %> (<%= gig_songs_by_set[set_number].count %> songs)
+                </h4>
               
               <% gig_songs_by_set[set_number].each_with_index do |gig_song, index| %>
                 <%
@@ -143,16 +145,16 @@
                   tooltip_content = tooltip_parts.join("&#10;")
                 %>
                 <div class="song-card" style="margin-bottom: 4px; padding: 8px 12px; border: 1px solid #e2e8f0; border-radius: 4px; cursor: pointer;" onclick="window.location.href='/songs/<%= gig_song.song.id %>'" data-tooltip="<%= tooltip_content %>">
-                  <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px;">
-                    <div style="flex: 1; min-width: 0; display: flex; align-items: center; gap: 10px;">
-                      <div style="font-weight: 600; font-size: 1rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; flex: 1;">
+                  <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px; white-space: nowrap;">
+                    <div style="flex: 1; min-width: 0; display: flex; align-items: center; gap: 8px; overflow: hidden;">
+                      <div style="font-weight: 600; font-size: 1rem; overflow: hidden; text-overflow: ellipsis; min-width: 0; flex: 1;">
                         <%= gig_song.song.title %>
                         <% if gig_song.song.notes.present? %>
                           <span style="color: #718096; font-weight: normal; font-size: 0.9rem;"> • <%= gig_song.song.notes %></span>
                         <% end %>
                       </div>
-                      <div style="font-size: 0.85rem; color: #4a5568; flex-shrink: 0;">
-                        <span style="background: #667eea; color: white; padding: 2px 6px; border-radius: 10px; font-size: 0.75rem;">
+                      <div style="font-size: 0.85rem; color: #4a5568; flex-shrink: 0; flex-grow: 0;">
+                        <span style="background: #667eea; color: white; padding: 2px 6px; border-radius: 10px; font-size: 0.75rem; white-space: nowrap;">
                           <%= gig_song.song.key %>
                         </span>
                       </div>
@@ -165,9 +167,11 @@
                   </div>
                 </div>
               <% end %>
-            </div>
+              </div>
+            <% end %>
           <% end %>
-        <% end %>
+        </div>
+        <!-- End sets container -->
 
     <% else %>
         <div style="text-align: center; padding: 40px;">
