@@ -271,15 +271,17 @@ class GigMode {
         const contentEl = document.getElementById('song-content');
         contentEl.textContent = content;
 
-        // Update navigation buttons
-        const currentIndex = this.getCurrentSongIndex();
-        const totalSongs = this.songs.length;
+        // Update navigation buttons - use current set position
+        const setPosition = this.getCurrentSetSongPosition();
+        const setTotalSongs = this.getCurrentSetTotalSongs();
 
-        document.getElementById('current-position').textContent = currentIndex + 1;
-        document.getElementById('total-songs').textContent = totalSongs;
+        document.getElementById('current-position-header').textContent = setPosition;
+        document.getElementById('total-songs-header').textContent = setTotalSongs;
 
-        document.getElementById('prev-song').disabled = currentIndex === 0;
-        document.getElementById('next-song').disabled = currentIndex === totalSongs - 1;
+        const globalIndex = this.getCurrentSongIndex();
+        const globalTotal = this.songs.length;
+        document.getElementById('prev-song').disabled = globalIndex === 0;
+        document.getElementById('next-song').disabled = globalIndex === globalTotal - 1;
 
         // Show modal
         const modal = document.getElementById('song-modal');
@@ -299,6 +301,23 @@ class GigMode {
     getCurrentSongIndex() {
         if (!this.currentSong) return -1;
         return this.songs.findIndex(song => song.id === this.currentSong.id);
+    }
+
+    getCurrentSetSongPosition() {
+        if (!this.currentSong || !this.gigData) return 1;
+
+        const setData = this.gigData.sets[this.currentSet];
+        if (!setData) return 1;
+
+        const songIndex = setData.songs.findIndex(song => song.id === this.currentSong.id);
+        return songIndex >= 0 ? songIndex + 1 : 1;
+    }
+
+    getCurrentSetTotalSongs() {
+        if (!this.gigData) return 1;
+
+        const setData = this.gigData.sets[this.currentSet];
+        return setData ? setData.songs.length : 1;
     }
 
     navigateToSong(direction) {

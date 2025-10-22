@@ -422,6 +422,21 @@ body {
   margin: 0;
 }
 
+.header-title-section {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  min-width: 0;
+  flex: 1;
+}
+
+.song-position-header {
+  font-size: calc(0.8rem * var(--font-size-multiplier));
+  color: var(--text-muted);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
 .modal-body {
   flex: 1;
   overflow-y: auto;

@@ -70,7 +70,12 @@
         <div class="modal" id="song-modal">
             <div class="modal-content">
                 <header class="modal-header">
-                    <h3 id="song-title" class="song-title-compact">Song Title</h3>
+                    <div class="header-title-section">
+                        <h3 id="song-title" class="song-title-compact">Song Title</h3>
+                        <div class="song-position-header">
+                            <span id="current-position-header">1</span> of <span id="total-songs-header">10</span>
+                        </div>
+                    </div>
                     <button id="close-modal" class="icon-btn">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -91,13 +96,8 @@
                             <polygon points="19,20 9,12 19,4"></polygon>
                             <line x1="5" y1="19" x2="5" y2="5"></line>
                         </svg>
-                        Previous
                     </button>
-                    <div class="song-position">
-                        <span id="current-position">1</span> of <span id="total-songs">10</span>
-                    </div>
                     <button id="next-song" class="nav-btn">
-                        Next
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <polygon points="5,4 15,12 5,20"></polygon>
                             <line x1="19" y1="5" x2="19" y2="19"></line>
@@ -141,12 +141,6 @@
                         <label>
                             <input type="checkbox" id="keep-screen-on" checked>
                             Keep Screen On
-                        </label>
-                    </div>
-                    <div class="setting-group">
-                        <label>
-                            <input type="checkbox" id="auto-advance" disabled>
-                            Auto-advance Songs
                         </label>
                     </div>
                     <div class="setting-group">
