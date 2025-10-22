@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="mobile-web-app-capable" content="yes">
+    <title><%= @gig.name %> - Gig Mode</title>
+    <link rel="stylesheet" href="/gig-mode.css">
+    <link rel="manifest" href="/manifest.json">
+</head>
+<body class="theme-dark">
+    <!-- Loading Screen -->
+    <div id="loading-screen" class="loading-screen">
+        <div class="loading-content">
+            <div class="loading-spinner"></div>
+            <h2>Loading Gig Mode</h2>
+            <p>Preparing your setlist...</p>
+            <div class="loading-status" id="loading-status">Initializing...</div>
+        </div>
+    </div>
+
+    <!-- Main App Container -->
+    <div id="app" class="app hidden">
+        <!-- Header Bar -->
+        <header class="header">
+            <div class="header-left">
+                <button id="back-btn" class="icon-btn" title="Exit Gig Mode">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M19 12H5M12 19l-7-7 7-7"/>
+                    </svg>
+                </button>
+                <div class="gig-info">
+                    <h1 id="gig-name" class="gig-name">
+                        <%= @gig.name %>
+                        <% if @gig.performance_date %>
+                            <span class="gig-date"> • <%= @gig.performance_date.strftime('%b %d, %Y') %></span>
+                        <% end %>
+                    </h1>
+                </div>
+            </div>
+            <div class="header-right">
+                <div class="connection-status" id="connection-status" title="Online Status">
+                    <div class="status-indicator online" id="status-indicator"></div>
+                </div>
+                <button id="menu-btn" class="icon-btn" title="Menu">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="3" y1="6" x2="21" y2="6"></line>
+                        <line x1="3" y1="12" x2="21" y2="12"></line>
+                        <line x1="3" y1="18" x2="21" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+        </header>
+
+        <!-- Set Navigation -->
+        <nav class="set-nav" id="set-nav">
+            <!-- Dynamically populated -->
+        </nav>
+
+        <!-- Song List View -->
+        <main class="main-content" id="main-content">
+            <div class="song-list" id="song-list">
+                <!-- Dynamically populated -->
+            </div>
+        </main>
+
+        <!-- Song Detail Modal -->
+        <div class="modal" id="song-modal">
+            <div class="modal-content">
+                <header class="modal-header">
+                    <h3 id="song-title" class="song-title-compact">Song Title</h3>
+                    <button id="close-modal" class="icon-btn">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                    </button>
+                </header>
+                <div class="modal-body">
+                    <div class="lyrics-container">
+                        <div id="song-content" class="song-content">
+                            <!-- Combined stats, notes, and lyrics content -->
+                        </div>
+                    </div>
+                </div>
+                <footer class="modal-footer">
+                    <button id="prev-song" class="nav-btn">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polygon points="19,20 9,12 19,4"></polygon>
+                            <line x1="5" y1="19" x2="5" y2="5"></line>
+                        </svg>
+                        Previous
+                    </button>
+                    <div class="song-position">
+                        <span id="current-position">1</span> of <span id="total-songs">10</span>
+                    </div>
+                    <button id="next-song" class="nav-btn">
+                        Next
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polygon points="5,4 15,12 5,20"></polygon>
+                            <line x1="19" y1="5" x2="19" y2="19"></line>
+                        </svg>
+                    </button>
+                </footer>
+            </div>
+        </div>
+
+        <!-- Settings Menu -->
+        <div class="menu-overlay" id="menu-overlay">
+            <div class="menu-panel">
+                <header class="menu-header">
+                    <h3>Gig Mode Settings</h3>
+                    <button id="close-menu" class="icon-btn">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                    </button>
+                </header>
+                <div class="menu-content">
+                    <div class="setting-group">
+                        <label for="theme-select">Theme</label>
+                        <select id="theme-select">
+                            <option value="dark">Dark (Stage Friendly)</option>
+                            <option value="light">Light</option>
+                            <option value="amber">Amber (Low Light)</option>
+                        </select>
+                    </div>
+                    <div class="setting-group">
+                        <label for="font-size-select">Font Size</label>
+                        <select id="font-size-select">
+                            <option value="small">Small</option>
+                            <option value="medium">Medium</option>
+                            <option value="large" selected>Large</option>
+                            <option value="extra-large">Extra Large</option>
+                        </select>
+                    </div>
+                    <div class="setting-group">
+                        <label>
+                            <input type="checkbox" id="keep-screen-on" checked>
+                            Keep Screen On
+                        </label>
+                    </div>
+                    <div class="setting-group">
+                        <label>
+                            <input type="checkbox" id="auto-advance" disabled>
+                            Auto-advance Songs
+                        </label>
+                    </div>
+                    <div class="setting-group">
+                        <button id="cache-gig" class="action-btn">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                <polyline points="7,10 12,15 17,10"></polyline>
+                                <line x1="12" y1="15" x2="12" y2="3"></line>
+                            </svg>
+                            Cache for Offline
+                        </button>
+                    </div>
+                    <div class="setting-group">
+                        <div class="cache-status" id="cache-status">
+                            <div class="status-item">
+                                <span>Offline Ready:</span>
+                                <span id="offline-status" class="status-value">Checking...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Touch Indicators -->
+        <div class="touch-indicators" id="touch-indicators">
+            <div class="swipe-hint left">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="15,18 9,12 15,6"></polyline>
+                </svg>
+                Previous
+            </div>
+            <div class="swipe-hint right">
+                Next
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="9,6 15,12 9,18"></polyline>
+                </svg>
+            </div>
+        </div>
+    </div>
+
+    <!-- Error Message -->
+    <div id="error-message" class="error-message hidden">
+        <div class="error-content">
+            <h3>Connection Error</h3>
+            <p id="error-text">Unable to load gig data. Please check your connection.</p>
+            <button id="retry-btn" class="action-btn">Retry</button>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script>
+        // Pass server data to JavaScript
+        window.GIG_DATA = {
+            id: <%= @gig.id %>,
+            name: <%= @gig.name.to_json %>,
+            performance_date: <%= @gig.performance_date&.strftime('%Y-%m-%d').to_json %>,
+            venue: <%= @gig.venue&.name.to_json %>,
+            notes: <%= @gig.notes.to_json %>
+        };
+    </script>
+    <script src="/gig-mode.js"></script>
+</body>
+</html>

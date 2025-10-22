@@ -291,8 +291,15 @@ class Routes::Gigs < Sinatra::Base
   get '/gigs/:id/print' do
     require_login
     @gig = filter_by_current_band(Gig).find(params[:id])
-    
+
     erb :print_gig, layout: false
+  end
+
+  get '/gigs/:id/gig_mode' do
+    require_login
+    @gig = filter_by_current_band(Gig).includes(:venue, gig_songs: :song).find(params[:id])
+
+    erb :gig_mode, layout: false
   end
 
   post '/gigs/:id/copy' do

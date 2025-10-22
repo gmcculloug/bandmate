@@ -20,7 +20,15 @@
         <%= @gig.name %>
     </h2>
     <div style="display: flex; align-items: center; gap: 8px;">
-        <a href="/gigs/<%= @gig.id %>/print" target="_blank" class="print-icon-button" style="display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; background: #f7fafc; border: 1px solid #e2e8f0; border-radius: 8px; text-decoration: none; color: #4a5568; transition: all 0.2s;" onmouseover="this.style.backgroundColor='#edf2f7'; this.style.borderColor='#cbd5e0';" onmouseout="this.style.backgroundColor='#f7fafc'; this.style.borderColor='#e2e8f0';" title="Print Gig">
+        <a href="/gigs/<%= @gig.id %>/gig_mode" target="_blank" class="gig-mode-button" style="display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; background: white; border: 1px solid #e2e8f0; border-radius: 8px; text-decoration: none; color: #4a5568; transition: all 0.2s;" onmouseover="this.style.backgroundColor='#667eea'; this.style.borderColor='#5a67d8'; this.style.color='white';" onmouseout="this.style.backgroundColor='white'; this.style.borderColor='#e2e8f0'; this.style.color='#4a5568';" title="Gig Mode - Offline Performance View">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                <line x1="8" y1="21" x2="16" y2="21"></line>
+                <line x1="12" y1="17" x2="12" y2="21"></line>
+                <circle cx="12" cy="10" r="3"></circle>
+            </svg>
+        </a>
+        <a href="/gigs/<%= @gig.id %>/print" target="_blank" class="print-icon-button" style="display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; background: white; border: 1px solid #e2e8f0; border-radius: 8px; text-decoration: none; color: #4a5568; transition: all 0.2s;" onmouseover="this.style.backgroundColor='#667eea'; this.style.borderColor='#5a67d8'; this.style.color='white';" onmouseout="this.style.backgroundColor='white'; this.style.borderColor='#e2e8f0'; this.style.color='#4a5568';" title="Print Gig">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <polyline points="6,9 6,2 18,2 18,9"></polyline>
                 <path d="M6,18H4a2,2 0,0,1-2-2V11a2,2 0,0,1,2-2H20a2,2 0,0,1,2,2v5a2,2 0,0,1-2,2H18"></path>
