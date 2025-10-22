@@ -369,15 +369,11 @@ body {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.8);
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  background: var(--primary-bg);
   z-index: 1000;
   opacity: 0;
   visibility: hidden;
   transition: all 0.3s;
-  padding: 1rem;
 }
 
 .modal.open {
@@ -387,19 +383,16 @@ body {
 
 .modal-content {
   background: var(--primary-bg);
-  border-radius: 16px;
   width: 100%;
-  max-width: 600px;
-  max-height: 90vh;
+  height: 100%;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 20px 25px rgba(0, 0, 0, 0.5);
-  transform: scale(0.9) translateY(20px);
+  transform: translateX(100%);
   transition: transform 0.3s;
 }
 
 .modal.open .modal-content {
-  transform: scale(1) translateY(0);
+  transform: translateX(0);
 }
 
 .modal-header {
@@ -453,7 +446,7 @@ body {
   line-height: 1.4;
   white-space: pre-wrap;
   color: var(--text-secondary);
-  max-height: 400px;
+  height: 100%;
   overflow-y: auto;
 }
 
@@ -811,10 +804,6 @@ body {
     gap: 0.5rem;
   }
 
-  .modal {
-    padding: 0.5rem;
-  }
-
   .modal-header,
   .modal-body,
   .modal-footer {
@@ -848,10 +837,6 @@ body {
   .song-item {
     padding: 1rem;
     margin-bottom: 0.75rem;
-  }
-
-  .modal-content {
-    max-height: 95vh;
   }
 }
 
