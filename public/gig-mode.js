@@ -27,6 +27,10 @@ class GigMode {
 
         this.currentSpeedIndex = 18; // Default to 1.0x (index 18)
 
+        // Font size properties
+        this.fontSizeOptions = ['xs', 'sm', 'md', 'lg', 'xl', '2xl', '3xl'];
+        this.currentFontSizeIndex = 2; // Default to 'md' (index 2)
+
         this.init();
     }
 
@@ -300,6 +304,9 @@ class GigMode {
         this.updateScrollSpeedDisplay();
         this.updateAutoScrollButton();
 
+        // Initialize font size controls
+        this.updateFontSize();
+
         // Show modal
         const modal = document.getElementById('song-modal');
         modal.classList.add('open');
@@ -413,6 +420,15 @@ class GigMode {
 
         document.getElementById('scroll-speed-up').addEventListener('click', () => {
             this.increaseScrollSpeed();
+        });
+
+        // Font size controls
+        document.getElementById('font-size-down').addEventListener('click', () => {
+            this.decreaseFontSize();
+        });
+
+        document.getElementById('font-size-up').addEventListener('click', () => {
+            this.increaseFontSize();
         });
 
         // Pause auto-scroll on manual interaction with lyrics
@@ -764,6 +780,7 @@ class GigMode {
     // Auto-scroll functionality
     toggleAutoScroll() {
         this.autoScrollEnabled = !this.autoScrollEnabled;
+        console.log(`Auto-scroll toggled: ${this.autoScrollEnabled ? 'ON' : 'OFF'}`);
 
         if (this.autoScrollEnabled) {
             this.startAutoScroll();
@@ -778,12 +795,23 @@ class GigMode {
         this.stopAutoScroll(); // Clear any existing interval
 
         const contentEl = document.getElementById('song-content');
-        if (!contentEl) return;
+        if (!contentEl) {
+            console.warn('song-content element not found for auto-scroll');
+            return;
+        }
 
-        // Calculate scroll speed: base speed of 800ms * speed multiplier
-        // Multiply by 4 to make current 0.25x behave like 1x
-        const baseSpeed = 800;
-        const scrollSpeed = Math.max(10, baseSpeed / (this.autoScrollSpeed * 4));
+        // Check if content is scrollable
+        if (contentEl.scrollHeight <= contentEl.clientHeight) {
+            console.warn('Content is not scrollable - too short for auto-scroll');
+            return;
+        }
+
+        // Calculate scroll speed: lower number = faster scroll
+        // Base interval of 50ms, adjusted by speed multiplier
+        const baseInterval = 50; // milliseconds between scroll steps
+        const scrollInterval = Math.max(10, baseInterval / this.autoScrollSpeed);
+
+        console.log(`Starting auto-scroll at ${this.autoScrollSpeed}x speed (${scrollInterval}ms interval)`);
 
         this.autoScrollInterval = setInterval(() => {
             const currentScroll = contentEl.scrollTop;
@@ -791,6 +819,7 @@ class GigMode {
 
             if (currentScroll >= maxScroll) {
                 // Reached the end, stop auto-scroll
+                console.log('Auto-scroll reached end of content');
                 this.autoScrollEnabled = false;
                 this.stopAutoScroll();
                 this.updateAutoScrollButton();
@@ -798,11 +827,12 @@ class GigMode {
                 // Scroll down by 1 pixel
                 contentEl.scrollTop += 1;
             }
-        }, scrollSpeed);
+        }, scrollInterval);
     }
 
     stopAutoScroll() {
         if (this.autoScrollInterval) {
+            console.log('Stopping auto-scroll');
             clearInterval(this.autoScrollInterval);
             this.autoScrollInterval = null;
         }
@@ -873,6 +903,46 @@ class GigMode {
                 `;
                 toggleBtn.title = 'Start auto-scroll';
             }
+        }
+    }
+
+    // Font size functionality
+    increaseFontSize() {
+        if (this.currentFontSizeIndex < this.fontSizeOptions.length - 1) {
+            this.currentFontSizeIndex++;
+            this.updateFontSize();
+        }
+    }
+
+    decreaseFontSize() {
+        if (this.currentFontSizeIndex > 0) {
+            this.currentFontSizeIndex--;
+            this.updateFontSize();
+        }
+    }
+
+    updateFontSize() {
+        const contentEl = document.getElementById('song-content');
+        if (contentEl) {
+            // Remove all existing font size classes
+            this.fontSizeOptions.forEach(size => {
+                contentEl.classList.remove(`font-${size}`);
+            });
+
+            // Add the current font size class
+            const currentSize = this.fontSizeOptions[this.currentFontSizeIndex];
+            contentEl.classList.add(`font-${currentSize}`);
+        }
+
+        // Update button states
+        const fontSizeDownBtn = document.getElementById('font-size-down');
+        const fontSizeUpBtn = document.getElementById('font-size-up');
+
+        if (fontSizeDownBtn) {
+            fontSizeDownBtn.disabled = this.currentFontSizeIndex === 0;
+        }
+        if (fontSizeUpBtn) {
+            fontSizeUpBtn.disabled = this.currentFontSizeIndex === this.fontSizeOptions.length - 1;
         }
     }
 }

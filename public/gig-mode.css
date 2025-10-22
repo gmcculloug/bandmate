@@ -421,6 +421,7 @@ body {
   gap: 1rem;
   min-width: 0;
   flex: 1;
+  justify-content: space-between;
 }
 
 .song-position-header {
@@ -428,11 +429,12 @@ body {
   color: var(--text-muted);
   font-weight: 500;
   white-space: nowrap;
+  text-align: center;
+  flex: 1;
 }
 
 .modal-body {
   flex: 1;
-  overflow-y: auto;
   padding: 1rem;
 }
 
@@ -462,6 +464,15 @@ body {
   max-height: 400px;
   overflow-y: auto;
 }
+
+/* Song content font size variants */
+.song-content.font-xs { font-size: calc(0.75rem * var(--font-size-multiplier)); }
+.song-content.font-sm { font-size: calc(0.875rem * var(--font-size-multiplier)); }
+.song-content.font-md { font-size: calc(1rem * var(--font-size-multiplier)); }
+.song-content.font-lg { font-size: calc(1.125rem * var(--font-size-multiplier)); }
+.song-content.font-xl { font-size: calc(1.25rem * var(--font-size-multiplier)); }
+.song-content.font-2xl { font-size: calc(1.5rem * var(--font-size-multiplier)); }
+.song-content.font-3xl { font-size: calc(1.875rem * var(--font-size-multiplier)); }
 
 .modal-footer {
   padding: 1rem 1.5rem;
@@ -517,6 +528,14 @@ body {
   justify-content: center;
 }
 
+/* Font size controls */
+.font-size-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  justify-content: center;
+}
+
 .scroll-control-btn {
   background: var(--secondary-bg);
   border: 1px solid var(--border-color);
@@ -563,6 +582,20 @@ body {
   color: var(--text-primary);
   min-width: 40px;
   text-align: center;
+}
+
+/* Font size icon styles */
+.font-size-icon {
+  font-weight: 700;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.font-size-icon.small {
+  font-size: 10px;
+}
+
+.font-size-icon.large {
+  font-size: 20px;
 }
 
 /* Menu Overlay */
@@ -804,10 +837,24 @@ body {
     gap: 0.5rem;
   }
 
+  .modal-header {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .header-title-section {
+    flex: 1 1 100%;
+    min-width: 0;
+  }
+
   .modal-header,
   .modal-body,
   .modal-footer {
     padding: 1rem;
+  }
+
+  .font-size-controls {
+    gap: 0.25rem;
   }
 
   .menu-panel {
