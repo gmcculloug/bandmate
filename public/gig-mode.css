@@ -516,6 +516,62 @@ body {
   text-align: center;
 }
 
+/* Auto-scroll controls */
+.auto-scroll-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  justify-content: center;
+}
+
+.scroll-control-btn {
+  background: var(--secondary-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  padding: 0.5rem;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 36px;
+  min-height: 36px;
+}
+
+.scroll-control-btn:hover {
+  background: var(--accent-bg);
+  color: var(--text-primary);
+}
+
+.scroll-control-btn.active {
+  background: var(--accent-color);
+  color: white;
+  border-color: var(--accent-color);
+}
+
+.scroll-control-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.scroll-control-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+.scroll-speed-indicator {
+  background: var(--accent-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  padding: 0.5rem 0.75rem;
+  font-size: calc(0.8rem * var(--font-size-multiplier));
+  font-weight: 600;
+  color: var(--text-primary);
+  min-width: 40px;
+  text-align: center;
+}
+
 /* Menu Overlay */
 .menu-overlay {
   position: fixed;

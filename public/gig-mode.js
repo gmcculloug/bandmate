@@ -14,6 +14,19 @@ class GigMode {
         this.touchStartY = null;
         this.swipeThreshold = 100;
 
+        // Auto-scroll properties
+        this.autoScrollEnabled = false;
+        this.autoScrollSpeed = 1.0; // Speed multiplier - 1x normal speed
+        this.autoScrollInterval = null;
+
+        // Generate speed options from 0.1x to 2x in 0.05x increments
+        this.scrollSpeedOptions = [];
+        for (let i = 0.1; i <= 2.0; i += 0.05) {
+            this.scrollSpeedOptions.push(Math.round(i * 100) / 100); // Round to avoid floating point precision
+        }
+
+        this.currentSpeedIndex = 18; // Default to 1.0x (index 18)
+
         this.init();
     }
 
@@ -283,6 +296,10 @@ class GigMode {
         document.getElementById('prev-song').disabled = globalIndex === 0;
         document.getElementById('next-song').disabled = globalIndex === globalTotal - 1;
 
+        // Initialize auto-scroll controls
+        this.updateScrollSpeedDisplay();
+        this.updateAutoScrollButton();
+
         // Show modal
         const modal = document.getElementById('song-modal');
         modal.classList.add('open');
@@ -295,6 +312,11 @@ class GigMode {
         const modal = document.getElementById('song-modal');
         modal.classList.remove('open');
         document.body.style.overflow = '';
+
+        // Stop auto-scroll when closing modal
+        this.autoScrollEnabled = false;
+        this.stopAutoScroll();
+
         this.currentSong = null;
     }
 
@@ -378,6 +400,28 @@ class GigMode {
 
         document.getElementById('next-song').addEventListener('click', () => {
             this.navigateToSong('next');
+        });
+
+        // Auto-scroll controls
+        document.getElementById('auto-scroll-toggle').addEventListener('click', () => {
+            this.toggleAutoScroll();
+        });
+
+        document.getElementById('scroll-speed-down').addEventListener('click', () => {
+            this.decreaseScrollSpeed();
+        });
+
+        document.getElementById('scroll-speed-up').addEventListener('click', () => {
+            this.increaseScrollSpeed();
+        });
+
+        // Pause auto-scroll on manual interaction with lyrics
+        document.addEventListener('click', (e) => {
+            if (e.target.closest('#song-content') && this.autoScrollEnabled) {
+                this.autoScrollEnabled = false;
+                this.stopAutoScroll();
+                this.updateAutoScrollButton();
+            }
         });
 
         // Modal overlay click-to-close
@@ -715,6 +759,121 @@ class GigMode {
         const div = document.createElement('div');
         div.textContent = text;
         return div.innerHTML;
+    }
+
+    // Auto-scroll functionality
+    toggleAutoScroll() {
+        this.autoScrollEnabled = !this.autoScrollEnabled;
+
+        if (this.autoScrollEnabled) {
+            this.startAutoScroll();
+        } else {
+            this.stopAutoScroll();
+        }
+
+        this.updateAutoScrollButton();
+    }
+
+    startAutoScroll() {
+        this.stopAutoScroll(); // Clear any existing interval
+
+        const contentEl = document.getElementById('song-content');
+        if (!contentEl) return;
+
+        // Calculate scroll speed: base speed of 800ms * speed multiplier
+        // Multiply by 4 to make current 0.25x behave like 1x
+        const baseSpeed = 800;
+        const scrollSpeed = Math.max(10, baseSpeed / (this.autoScrollSpeed * 4));
+
+        this.autoScrollInterval = setInterval(() => {
+            const currentScroll = contentEl.scrollTop;
+            const maxScroll = contentEl.scrollHeight - contentEl.clientHeight;
+
+            if (currentScroll >= maxScroll) {
+                // Reached the end, stop auto-scroll
+                this.autoScrollEnabled = false;
+                this.stopAutoScroll();
+                this.updateAutoScrollButton();
+            } else {
+                // Scroll down by 1 pixel
+                contentEl.scrollTop += 1;
+            }
+        }, scrollSpeed);
+    }
+
+    stopAutoScroll() {
+        if (this.autoScrollInterval) {
+            clearInterval(this.autoScrollInterval);
+            this.autoScrollInterval = null;
+        }
+    }
+
+    increaseScrollSpeed() {
+        if (this.currentSpeedIndex < this.scrollSpeedOptions.length - 1) {
+            this.currentSpeedIndex++;
+            this.autoScrollSpeed = this.scrollSpeedOptions[this.currentSpeedIndex];
+            this.updateScrollSpeedDisplay();
+
+            // Restart auto-scroll if it's currently running
+            if (this.autoScrollEnabled) {
+                this.startAutoScroll();
+            }
+        }
+    }
+
+    decreaseScrollSpeed() {
+        if (this.currentSpeedIndex > 0) {
+            this.currentSpeedIndex--;
+            this.autoScrollSpeed = this.scrollSpeedOptions[this.currentSpeedIndex];
+            this.updateScrollSpeedDisplay();
+
+            // Restart auto-scroll if it's currently running
+            if (this.autoScrollEnabled) {
+                this.startAutoScroll();
+            }
+        }
+    }
+
+    updateScrollSpeedDisplay() {
+        const speedText = document.getElementById('scroll-speed-text');
+        if (speedText) {
+            speedText.textContent = `${this.autoScrollSpeed}x`;
+        }
+
+        // Update button states
+        const speedDownBtn = document.getElementById('scroll-speed-down');
+        const speedUpBtn = document.getElementById('scroll-speed-up');
+
+        if (speedDownBtn) {
+            speedDownBtn.disabled = this.currentSpeedIndex === 0;
+        }
+        if (speedUpBtn) {
+            speedUpBtn.disabled = this.currentSpeedIndex === this.scrollSpeedOptions.length - 1;
+        }
+    }
+
+    updateAutoScrollButton() {
+        const toggleBtn = document.getElementById('auto-scroll-toggle');
+        if (toggleBtn) {
+            if (this.autoScrollEnabled) {
+                toggleBtn.classList.add('active');
+                toggleBtn.innerHTML = `
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="6" y="4" width="4" height="16"></rect>
+                        <rect x="14" y="4" width="4" height="16"></rect>
+                    </svg>
+                `;
+                toggleBtn.title = 'Pause auto-scroll';
+            } else {
+                toggleBtn.classList.remove('active');
+                toggleBtn.innerHTML = `
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polygon points="5,3 19,12 5,21"></polygon>
+                    </svg>
+                `;
+                toggleBtn.title = 'Start auto-scroll';
+            }
+        }
     }
 }
 
