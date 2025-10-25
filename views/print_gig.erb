@@ -36,11 +36,45 @@
         @media print {
             @page {
                 margin: 0.5in 0.25in;
+            }
+
+            /* Default portrait orientation */
+            body.layout-portrait {
+                /* Portrait styles */
+            }
+
+            body.layout-portrait @page {
                 size: letter portrait;
+            }
+
+            /* Landscape orientation */
+            body.layout-landscape {
+                /* Landscape-specific layout optimizations */
             }
 
             body.layout-landscape @page {
                 size: letter landscape;
+                margin: 0.25in 0.5in; /* Swap margins for landscape */
+            }
+
+            /* Alternative landscape approach for better browser compatibility */
+            @page landscape {
+                size: letter landscape;
+                margin: 0.25in 0.5in;
+            }
+
+            body.layout-landscape .set-row {
+                /* Optimize set layout for landscape */
+                display: flex;
+                flex-direction: row;
+                gap: 30px;
+            }
+
+            body.layout-landscape .set-column {
+                /* Better column distribution in landscape */
+                flex: 1;
+                min-width: 0;
+                max-width: 50%;
             }
 
             .controls {
@@ -185,21 +219,24 @@
                 right: 20px;
                 display: flex;
                 flex-direction: column;
-                gap: 10px;
+                gap: 8px;
                 z-index: 1000;
+                max-width: 180px;
             }
 
             .print-button {
                 background: #007bff;
                 color: white;
                 border: none;
-                padding: 12px 20px;
-                border-radius: 8px;
+                padding: 8px 12px;
+                border-radius: 6px;
                 cursor: pointer;
-                font-size: 16px;
-                min-height: 44px;
-                min-width: 44px;
-                box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+                font-size: 14px;
+                width: 100%;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+                display: flex;
+                align-items: center;
+                justify-content: center;
             }
 
             .print-button:hover {
@@ -208,25 +245,28 @@
 
             .font-size-control {
                 background: white;
-                padding: 10px;
-                border-radius: 8px;
-                box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+                padding: 6px;
+                border-radius: 6px;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.15);
                 border: 1px solid #ddd;
+                width: 100%;
             }
 
             .font-size-control label {
                 display: block;
-                margin-bottom: 5px;
-                font-size: 14px;
+                margin-bottom: 3px;
+                font-size: 12px;
                 font-weight: bold;
+                color: #333;
             }
 
             .font-size-control select {
                 width: 100%;
-                padding: 5px;
+                padding: 4px;
                 border: 1px solid #ddd;
-                border-radius: 4px;
-                font-size: 14px;
+                border-radius: 3px;
+                font-size: 12px;
+                background: #fff;
             }
         }
         
@@ -270,11 +310,29 @@
                 grid-template-columns: 1fr;
             }
 
-            .print-button {
+            .controls {
                 top: 10px;
                 right: 10px;
-                padding: 10px 15px;
-                font-size: 14px;
+                max-width: 150px;
+            }
+
+            .print-button {
+                padding: 6px 10px;
+                font-size: 12px;
+            }
+
+            .font-size-control {
+                padding: 4px;
+            }
+
+            .font-size-control label {
+                font-size: 10px;
+                margin-bottom: 2px;
+            }
+
+            .font-size-control select {
+                padding: 3px;
+                font-size: 10px;
             }
         }
         
@@ -292,11 +350,29 @@
                 font-size: 1.1rem;
             }
             
-            .print-button {
+            .controls {
                 top: 5px;
                 right: 5px;
-                padding: 8px 12px;
-                font-size: 12px;
+                max-width: 140px;
+            }
+
+            .print-button {
+                padding: 5px 8px;
+                font-size: 11px;
+            }
+
+            .font-size-control {
+                padding: 3px;
+            }
+
+            .font-size-control label {
+                font-size: 9px;
+                margin-bottom: 1px;
+            }
+
+            .font-size-control select {
+                padding: 2px;
+                font-size: 9px;
             }
         }
     </style>
@@ -322,6 +398,11 @@
             }
         }
 
+        // Simple print function
+        function printPage() {
+            window.print();
+        }
+
         // Set initial settings
         document.addEventListener('DOMContentLoaded', function() {
             changeFontSize('large');
@@ -332,8 +413,8 @@
 </head>
 <body class="font-large layout-portrait">
     <div class="controls">
-        <button class="print-button" onclick="window.print()">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 8px;">
+        <button class="print-button" onclick="printPage()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 6px;">
                 <polyline points="6,9 6,2 18,2 18,9"></polyline>
                 <path d="M6,18H4a2,2 0,0,1-2-2V11a2,2 0,0,1,2-2H20a2,2 0,0,1,2,2v5a2,2 0,0,1-2,2H18"></path>
                 <polyline points="6,14 18,14 18,20 6,20 6,14"></polyline>
