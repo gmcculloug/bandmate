@@ -7,11 +7,24 @@
 <% end %>
 
 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
-    <h2><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -3px; margin-right: 8px;"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg><%= @song_catalog.title %></h2>
+    <h2>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -3px; margin-right: 8px;"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg><%= @song_catalog.title %>
+        <% if @song_catalog.archived? %>
+            <span style="background: #e53e3e; color: white; padding: 4px 8px; border-radius: 10px; font-size: 0.7rem; margin-left: 12px; font-weight: normal;">🗃️ ARCHIVED</span>
+        <% end %>
+    </h2>
     <div class="actions">
         <a href="/song_catalogs/<%= @song_catalog.id %>/edit" class="btn">Edit</a>
     </div>
 </div>
+
+<% if @song_catalog.archived? %>
+    <div style="margin-bottom: 20px; padding: 15px; background: #fed7d7; border-radius: 8px; border-left: 4px solid #e53e3e;">
+        <p style="margin: 0; color: #c53030; font-weight: 500;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 6px;"><polyline points="21,8 21,21 3,21 3,8"></polyline><rect x="1" y="3" width="22" height="5"></rect><line x1="10" y1="12" x2="14" y2="12"></line></svg>This song catalog entry is archived and cannot be copied to bands. It can be unarchived from the edit page.
+        </p>
+    </div>
+<% end %>
 
 <div class="card">
     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px;">
@@ -53,35 +66,37 @@
                 </div>
             <% end %>
             
-            <div style="margin-bottom: 20px;">
-                <h4>Copy to Band</h4>
-                <% if @bands.any? %>
-                    <p style="color: #666; font-size: 0.9rem; margin-bottom: 10px;">
-                        Select a band to copy this song to their repertoire:
-                    </p>
-                    <% @bands.each do |band| %>
-                        <% existing_copy = band.songs.find_by(song_catalog_id: @song_catalog.id) %>
-                        <% if existing_copy %>
-                            <div style="margin-bottom: 8px; padding: 8px; background: #f0f4f8; border-radius: 4px; color: #666;">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 4px;"><polyline points="20,6 9,17 4,12"></polyline></svg>Already copied to <%= band.name %>
-                            </div>
-                        <% else %>
-                            <form method="POST" action="/bands/<%= band.id %>/copy_songs" style="margin-bottom: 8px;">
-                                <input type="hidden" name="song_catalog_ids[]" value="<%= @song_catalog.id %>">
-                                <input type="hidden" name="from_song_catalog" value="<%= @song_catalog.id %>">
-                                <button type="submit" class="btn" style="width: 100%; text-align: left;">
-                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 6px;"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>Copy to <%= band.name %>
-                                </button>
-                            </form>
+            <% unless @song_catalog.archived? %>
+                <div style="margin-bottom: 20px;">
+                    <h4>Copy to Band</h4>
+                    <% if @bands.any? %>
+                        <p style="color: #666; font-size: 0.9rem; margin-bottom: 10px;">
+                            Select a band to copy this song to their repertoire:
+                        </p>
+                        <% @bands.each do |band| %>
+                            <% existing_copy = band.songs.find_by(song_catalog_id: @song_catalog.id) %>
+                            <% if existing_copy %>
+                                <div style="margin-bottom: 8px; padding: 8px; background: #f0f4f8; border-radius: 4px; color: #666;">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 4px;"><polyline points="20,6 9,17 4,12"></polyline></svg>Already copied to <%= band.name %>
+                                </div>
+                            <% else %>
+                                <form method="POST" action="/bands/<%= band.id %>/copy_songs" style="margin-bottom: 8px;">
+                                    <input type="hidden" name="song_catalog_ids[]" value="<%= @song_catalog.id %>">
+                                    <input type="hidden" name="from_song_catalog" value="<%= @song_catalog.id %>">
+                                    <button type="submit" class="btn" style="width: 100%; text-align: left;">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 6px;"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>Copy to <%= band.name %>
+                                    </button>
+                                </form>
+                            <% end %>
                         <% end %>
+                    <% else %>
+                        <p style="color: #666; font-size: 0.9rem; margin-bottom: 10px;">
+                            You need to be a member of at least one band to copy songs.
+                            <a href="/bands/new" class="btn btn-success" style="margin-top: 10px; display: inline-block;">Create a Band</a>
+                        </p>
                     <% end %>
-                <% else %>
-                    <p style="color: #666; font-size: 0.9rem; margin-bottom: 10px;">
-                        You need to be a member of at least one band to copy songs. 
-                        <a href="/bands/new" class="btn btn-success" style="margin-top: 10px; display: inline-block;">Create a Band</a>
-                    </p>
-                <% end %>
-            </div>
+                </div>
+            <% end %>
 
             <div>
                 <h4>Usage Statistics</h4>

@@ -1,11 +1,13 @@
 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
-    <h2><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -3px; margin-right: 8px;"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>Song Catalog</h2>
-    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-        <% if current_band %>
-            <a href="/bands/<%= current_band.id %>/copy_songs" class="btn btn-primary"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 6px;"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>Copy Songs to <%= current_band.name %></a>
-        <% end %>
-        <a href="/song_catalogs/new" class="btn btn-success"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 6px;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg>Add New Song</a>
-    </div>
+    <h2><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -3px; margin-right: 8px;"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>Song Catalog<% if @show_archived %> - Archived<% end %></h2>
+    <% unless @show_archived %>
+        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+            <% if current_band %>
+                <a href="/bands/<%= current_band.id %>/copy_songs" class="btn btn-primary"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 6px;"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>Copy Songs to <%= current_band.name %></a>
+            <% end %>
+            <a href="/song_catalogs/new" class="btn btn-success"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 6px;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg>Add New Song</a>
+        </div>
+    <% end %>
 </div>
 
 
@@ -105,7 +107,15 @@ document.addEventListener('DOMContentLoaded', function() {
                             <% if song_catalog.artist.present? %>
                                 <span style="color: #718096; font-weight: normal; font-size: 0.9rem;"> • <%= song_catalog.artist %></span>
                             <% end %>
+                            <% if song_catalog.archived? && !@show_archived %>
+                                <span style="background: #e53e3e; color: white; padding: 2px 6px; border-radius: 10px; font-size: 0.7rem; margin-left: 8px; font-weight: normal;">🗃️ ARCHIVED</span>
+                            <% end %>
                         </div>
+                        <% if @show_archived && song_catalog.archived? && song_catalog.archived_at.present? %>
+                            <div style="font-size: 0.8rem; color: #718096; margin-bottom: 8px;">
+                                📦 Archived on <%= song_catalog.archived_at.strftime('%B %d, %Y at %I:%M %p') %>
+                            </div>
+                        <% end %>
                         <div style="font-size: 0.8rem; color: #a0aec0; display: flex; flex-wrap: wrap; gap: 5px;">
                             <span style="background: #667eea; color: white; padding: 2px 6px; border-radius: 10px;">
                                 <%= song_catalog.key %>
@@ -127,6 +137,12 @@ document.addEventListener('DOMContentLoaded', function() {
                         <% if song_catalog.url.present? %>
                             <a href="<%= song_catalog.url %>" target="_blank" class="btn" style="padding: 6px 12px; font-size: 0.8rem;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -1px;"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg></a>
                         <% end %>
+
+                        <% if @show_archived && song_catalog.archived? %>
+                            <form method="POST" action="/song_catalogs/<%= song_catalog.id %>/unarchive" style="display: inline;" onsubmit="return confirm('Are you sure you want to unarchive this song?');">
+                                <button type="submit" class="btn btn-success btn-small" style="font-size: 0.8rem;">📂 Unarchive</button>
+                            </form>
+                        <% end %>
                     </div>
                 </div>
             </div>
@@ -134,8 +150,24 @@ document.addEventListener('DOMContentLoaded', function() {
     </div>
 <% else %>
     <div class="card">
-        <h3>No songs in catalog yet!</h3>
-        <p>Get started by adding the first song to the song catalog. This will make it available for all bands to copy and use.</p>
-        <a href="/song_catalogs/new" class="btn btn-success">Add First Song to Catalog</a>
+        <% if @show_archived %>
+            <h3>No archived songs</h3>
+            <p>You haven't archived any songs yet.</p>
+            <a href="?<%= @search.present? ? "search=#{CGI.escape(@search)}" : "" %>" class="btn">Back to Active Songs</a>
+        <% else %>
+            <h3>No songs in catalog yet!</h3>
+            <p>Get started by adding the first song to the song catalog. This will make it available for all bands to copy and use.</p>
+            <a href="/song_catalogs/new" class="btn btn-success">Add First Song to Catalog</a>
+        <% end %>
+    </div>
+<% end %>
+
+<% if @show_archived %>
+    <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #e2e8f0;">
+        <a href="?<%= @search.present? ? "search=#{CGI.escape(@search)}" : "" %>" style="color: #718096; text-decoration: none; font-size: 0.9rem;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 4px;"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>Back to Active Songs</a>
+    </div>
+<% elsif SongCatalog.archived.any? %>
+    <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #e2e8f0;">
+        <a href="?<%= @search.present? ? "search=#{CGI.escape(@search)}&" : "" %>show_archived=true" style="color: #718096; text-decoration: none; font-size: 0.9rem;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 4px;"><polyline points="21,8 21,21 3,21 3,8"></polyline><rect x="1" y="3" width="22" height="5"></rect><line x1="10" y1="12" x2="14" y2="12"></line></svg>View Archived Songs</a>
     </div>
 <% end %>

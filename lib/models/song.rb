@@ -58,4 +58,5 @@ class Song < ActiveRecord::Base
   def active?
     !archived
   end
+
 end

@@ -5,7 +5,7 @@
 <% if @songs.any? %>
     <div style="display: flex; flex-direction: column; gap: 8px;">
         <% @songs.each do |song| %>
-            <div class="song-card" style="padding: 12px; border: 1px solid #fbb6ce; border-radius: 6px; background: #fef7f7;">
+            <div class="song-card" style="padding: 12px; border: 1px solid #fbb6ce; border-radius: 6px; background: #fef7f7; cursor: pointer;" onclick="window.location.href='/songs/<%= song.id %>'">
                 <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
                     <div style="flex: 1; min-width: 0;">
                         <div style="font-weight: 600; font-size: 1.1rem; word-break: break-word; color: #718096;"><%= song.title %> <span style="color: #e53e3e; font-size: 0.8rem; font-weight: normal;">(Archived)</span></div>
@@ -32,8 +32,7 @@
                             </div>
                         <% end %>
                     </div>
-                    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-                        <a href="/songs/<%= song.id %>" class="btn btn-small" style="font-size: 0.8rem;">View</a>
+                    <div style="display: flex; gap: 8px; flex-wrap: wrap;" onclick="event.stopPropagation();">
                         <form method="POST" action="/songs/<%= song.id %>/unarchive" style="display: inline;" onsubmit="return confirm('Are you sure you want to unarchive this song?');">
                             <button type="submit" class="btn btn-success btn-small" style="font-size: 0.8rem;">📂 Unarchive</button>
                         </form>

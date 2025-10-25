@@ -61,7 +61,7 @@ class Routes::Songs < Sinatra::Base
 
     # Get all song catalogs not already in current band
     existing_song_catalog_ids = current_band.songs.where.not(song_catalog_id: nil).pluck(:song_catalog_id)
-    @song_catalogs = SongCatalog.where.not(id: existing_song_catalog_ids).order('LOWER(title)')
+    @song_catalogs = SongCatalog.active.where.not(id: existing_song_catalog_ids).order('LOWER(title)')
 
     # Apply search filter
     if @search.present?
@@ -266,14 +266,28 @@ class Routes::Songs < Sinatra::Base
   get '/song_catalogs' do
     require_login
 
-    # Set breadcrumbs
-    set_breadcrumbs(
-      breadcrumb_for_section('songs'),
-      breadcrumb_for_section('song_catalogs')
-    )
-
     @search = params[:search]
-    @song_catalogs = SongCatalog.order('LOWER(title)')
+    @show_archived = params[:show_archived] == 'true'
+
+    # Set breadcrumbs
+    if @show_archived
+      set_breadcrumbs(
+        breadcrumb_for_section('songs'),
+        breadcrumb_for_section('song_catalogs'),
+        { label: "Archived", icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 6px;"><polyline points="21,8 21,21 3,21 3,8"></polyline><rect x="1" y="3" width="22" height="5"></rect><line x1="10" y1="12" x2="14" y2="12"></line></svg>', url: nil }
+      )
+    else
+      set_breadcrumbs(
+        breadcrumb_for_section('songs'),
+        breadcrumb_for_section('song_catalogs')
+      )
+    end
+
+    if @show_archived
+      @song_catalogs = SongCatalog.archived.order('LOWER(title)')
+    else
+      @song_catalogs = SongCatalog.active.order('LOWER(title)')
+    end
 
     # Apply search filter
     if @search.present?
@@ -286,14 +300,28 @@ class Routes::Songs < Sinatra::Base
   get '/song_catalog' do
     require_login
 
-    # Set breadcrumbs
-    set_breadcrumbs(
-      breadcrumb_for_section('songs'),
-      breadcrumb_for_section('song_catalogs')
-    )
-
     @search = params[:search]
-    @song_catalogs = SongCatalog.order('LOWER(title)')
+    @show_archived = params[:show_archived] == 'true'
+
+    # Set breadcrumbs
+    if @show_archived
+      set_breadcrumbs(
+        breadcrumb_for_section('songs'),
+        breadcrumb_for_section('song_catalogs'),
+        { label: "Archived", icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 6px;"><polyline points="21,8 21,21 3,21 3,8"></polyline><rect x="1" y="3" width="22" height="5"></rect><line x1="10" y1="12" x2="14" y2="12"></line></svg>', url: nil }
+      )
+    else
+      set_breadcrumbs(
+        breadcrumb_for_section('songs'),
+        breadcrumb_for_section('song_catalogs')
+      )
+    end
+
+    if @show_archived
+      @song_catalogs = SongCatalog.archived.order('LOWER(title)')
+    else
+      @song_catalogs = SongCatalog.active.order('LOWER(title)')
+    end
 
     # Apply search filter
     if @search.present?
@@ -437,17 +465,31 @@ class Routes::Songs < Sinatra::Base
     end
   end
 
-  delete '/song_catalog/:id' do
+  post '/song_catalog/:id/archive' do
     require_login
     song_catalog = SongCatalog.find(params[:id])
-    song_catalog.destroy
+    song_catalog.archive!
     redirect '/song_catalog'
   end
 
-  delete '/song_catalogs/:id' do
+  post '/song_catalogs/:id/archive' do
     require_login
     song_catalog = SongCatalog.find(params[:id])
-    song_catalog.destroy
+    song_catalog.archive!
+    redirect '/song_catalogs'
+  end
+
+  post '/song_catalog/:id/unarchive' do
+    require_login
+    song_catalog = SongCatalog.find(params[:id])
+    song_catalog.unarchive!
+    redirect '/song_catalog'
+  end
+
+  post '/song_catalogs/:id/unarchive' do
+    require_login
+    song_catalog = SongCatalog.find(params[:id])
+    song_catalog.unarchive!
     redirect '/song_catalogs'
   end
 end

@@ -229,8 +229,16 @@ class Routes::Bands < Sinatra::Base
   get '/bands/:band_id/copy_songs' do
     require_login
     @band = user_bands.find(params[:band_id])
+
+    # Set breadcrumbs
+    set_breadcrumbs(
+      breadcrumb_for_section('songs'),
+      breadcrumb_for_section('song_catalogs'),
+      { label: "Copy Songs to #{@band.name}", icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 6px;"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>', url: nil }
+    )
+
     @search = params[:search]
-    @song_catalogs = SongCatalog.order('LOWER(title)')
+    @song_catalogs = SongCatalog.active.order('LOWER(title)')
 
     # Apply search filter
     if @search.present?

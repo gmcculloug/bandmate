@@ -1,6 +1,11 @@
 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
-    <h2>📋 Copy Songs to <%= @band.name %></h2>
-    <a href="/bands/<%= @band.id %>" class="btn">Back to Band</a>
+    <h2>
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -4px; margin-right: 8px;">
+            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+        </svg>
+        Copy Songs to <%= @band.name %>
+    </h2>
 </div>
 
 <div style="margin-bottom: 20px; padding: 15px; background: #e6fffa; border-radius: 8px; border-left: 4px solid #38a169;">
@@ -188,7 +193,6 @@ document.addEventListener('DOMContentLoaded', function() {
             <% else %>
                 <a href="/song_catalogs/new" class="btn btn-success">Add Songs to Song Catalog</a>
             <% end %>
-            <a href="/bands/<%= @band.id %>" class="btn">Back to Band</a>
         </div>
     </div>
 <% end %>

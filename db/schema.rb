@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_10_21_173940) do
+ActiveRecord::Schema[8.0].define(version: 2025_10_25_005550) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -106,6 +106,10 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_21_173940) do
     t.text "lyrics"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.boolean "archived", default: false, null: false
+    t.datetime "archived_at"
+    t.index ["archived"], name: "index_song_catalogs_on_archived"
+    t.index ["archived_at"], name: "index_song_catalogs_on_archived_at"
     t.index ["artist"], name: "index_song_catalogs_on_artist"
     t.index ["key"], name: "index_song_catalogs_on_key"
     t.index ["title"], name: "index_song_catalogs_on_title"

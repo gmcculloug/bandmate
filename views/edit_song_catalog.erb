@@ -126,10 +126,30 @@
 
 <div class="card" style="margin-top: 20px;">
     <h3>Song Management</h3>
-    <form method="POST" action="/song_catalogs/<%= @song_catalog.id %>" style="margin-top: 15px;">
-        <input type="hidden" name="_method" value="DELETE">
-        <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure you want to delete this song catalog entry? This will permanently remove it from the song catalog.')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 6px;"><polyline points="3,6 5,6 21,6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>Delete Song Catalog</button>
-    </form>
+    <% if @song_catalog.archived? %>
+        <form method="POST" action="/song_catalogs/<%= @song_catalog.id %>/unarchive" style="margin-top: 15px;">
+            <button type="submit" class="btn btn-success" onclick="return confirm('Are you sure you want to unarchive this song catalog entry? It will be available again in the catalog.')">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 6px;">
+                    <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                    <polyline points="7.5,4.21 12,6.81 16.5,4.21"></polyline>
+                    <polyline points="7.5,19.79 7.5,14.6 3,12"></polyline>
+                    <polyline points="21,12 16.5,14.6 16.5,19.79"></polyline>
+                </svg>
+                Unarchive Song Catalog
+            </button>
+        </form>
+    <% else %>
+        <form method="POST" action="/song_catalogs/<%= @song_catalog.id %>/archive" style="margin-top: 15px;">
+            <button type="submit" class="btn btn-warning" onclick="return confirm('Are you sure you want to archive this song catalog entry? It will be hidden from the main catalog but can be restored later.')">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 6px;">
+                    <polyline points="21,8 21,21 3,21 3,8"></polyline>
+                    <rect x="1" y="3" width="22" height="5"></rect>
+                    <line x1="10" y1="12" x2="14" y2="12"></line>
+                </svg>
+                Archive Song Catalog
+            </button>
+        </form>
+    <% end %>
 </div>
 
 <script>
