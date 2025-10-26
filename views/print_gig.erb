@@ -6,19 +6,7 @@
     <title><%= @gig.name %> - Gig</title>
     <style>
         :root {
-            --font-size-multiplier: 1;
-        }
-
-        body.font-small {
-            --font-size-multiplier: 0.8;
-        }
-
-        body.font-medium {
-            --font-size-multiplier: 1;
-        }
-
-        body.font-large {
-            --font-size-multiplier: 1.2;
+            --base-font-size: 15pt;
         }
 
         body.layout-portrait {
@@ -83,7 +71,7 @@
         }
         
         body {
-            font-family: 'Times New Roman', serif;
+            font-family: Arial, sans-serif;
             line-height: 1.4;
             color: #000;
             background: white;
@@ -139,26 +127,26 @@
         }
 
         .song-title {
-            font-size: calc(1.2rem * var(--font-size-multiplier));
+            font-size: calc(var(--base-font-size) * 1.2);
             font-weight: bold;
             word-break: break-word;
         }
         
         .song-artist {
-            font-size: calc(1rem * var(--font-size-multiplier));
+            font-size: var(--base-font-size);
             color: #666;
             word-break: break-word;
         }
         
         .song-key {
-            font-size: calc(1rem * var(--font-size-multiplier));
+            font-size: var(--base-font-size);
             color: #666;
             font-weight: bold;
             flex-shrink: 0;
         }
 
         .song-notes {
-            font-size: calc(0.9rem * var(--font-size-multiplier));
+            font-size: var(--base-font-size);
             color: #555;
             font-style: italic;
             margin-top: 0;
@@ -176,7 +164,7 @@
         }
         
         .summary h3 {
-            font-size: calc(1.3rem * var(--font-size-multiplier));
+            font-size: calc(var(--base-font-size) * 1.3);
             margin-bottom: 8px;
         }
 
@@ -187,7 +175,7 @@
         }
 
         .summary-item {
-            font-size: calc(1rem * var(--font-size-multiplier));
+            font-size: var(--base-font-size);
         }
         
         .summary-label {
@@ -377,10 +365,8 @@
         }
     </style>
     <script>
-        function changeFontSize(size) {
-            const body = document.body;
-            body.className = body.className.replace(/font-(small|medium|large)/g, '');
-            body.classList.add('font-' + size);
+        function changeFontSize(pointSize) {
+            document.documentElement.style.setProperty('--base-font-size', pointSize + 'pt');
         }
 
         function changeLayout(layout) {
@@ -405,13 +391,13 @@
 
         // Set initial settings
         document.addEventListener('DOMContentLoaded', function() {
-            changeFontSize('large');
+            changeFontSize(15);
             changeLayout('portrait');
             toggleSongKeys('show');
         });
     </script>
 </head>
-<body class="font-large layout-portrait">
+<body class="layout-portrait">
     <div class="controls">
         <button class="print-button" onclick="printPage()">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 6px;">
@@ -423,11 +409,8 @@
         </button>
         <div class="font-size-control">
             <label for="font-size-selector">Font Size:</label>
-            <select id="font-size-selector" onchange="changeFontSize(this.value)">
-                <option value="small">Small</option>
-                <option value="medium">Medium</option>
-                <option value="large" selected>Large</option>
-            </select>
+            <input type="number" id="font-size-selector" min="8" max="36" value="15" onchange="changeFontSize(this.value)" style="width: 60px;">
+            <span style="font-size: 10px; color: #666;">pt</span>
         </div>
         <div class="font-size-control">
             <label for="layout-selector">Layout:</label>
@@ -470,9 +453,9 @@
                   <% if current_set <= max_set && gig_songs_by_set[current_set] %>
                     <div class="set-column">
                       <div class="set-section" style="margin-bottom: 20px;">
-                        <h2 style="font-size: calc(1.2rem * var(--font-size-multiplier)); margin-bottom: 8px; border-bottom: 2px solid #333; padding-bottom: 6px;">
+                        <h2 style="font-size: calc(var(--base-font-size) * 1.2); margin-bottom: 8px; border-bottom: 2px solid #333; padding-bottom: 6px;">
                           Set <%= current_set %>
-                          <span style="font-size: calc(0.9rem * var(--font-size-multiplier)); color: #666; font-weight: normal;">
+                          <span style="font-size: calc(var(--base-font-size) * 0.9); color: #666; font-weight: normal;">
                             <%
                               set_songs = gig_songs_by_set[current_set]
                               total_set_minutes = set_songs.sum do |gs|
