@@ -1,0 +1,188 @@
+<h2>
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -4px; margin-right: 8px;">
+        <path d="M3 12h18m-9-9v18"></path>
+        <circle cx="12" cy="12" r="10"></circle>
+    </svg>
+    Schedule Practice Session
+</h2>
+
+<% if defined?(@error) && @error %>
+    <div class="errors">
+        <%= @error %>
+    </div>
+<% end %>
+
+<form method="POST" action="/practices" class="card">
+    <div class="form-group">
+        <label for="practice_title">Practice Title (Optional)</label>
+        <input type="text" id="practice_title" name="title" placeholder="e.g., Weekly Practice, Pre-Gig Rehearsal" value="<%= @practice&.title %>">
+    </div>
+
+    <div class="form-group">
+        <label style="margin-bottom: 10px; display: block;">Practice Dates *</label>
+        <div style="display: flex; gap: 20px; flex-wrap: wrap;">
+            <div style="flex: 1; min-width: 200px;">
+                <label for="practice_start_date" style="font-weight: 500; margin-bottom: 5px; display: block; cursor: pointer;" onclick="document.getElementById('practice_start_date').focus()">Start Date</label>
+                <div style="position: relative; cursor: pointer;" onclick="document.getElementById('practice_start_date').showPicker ? document.getElementById('practice_start_date').showPicker() : document.getElementById('practice_start_date').focus()">
+                    <input type="date" id="practice_start_date" name="week_start_date" required value="<%= @practice&.week_start_date %>" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 6px; cursor: pointer;">
+                </div>
+            </div>
+            <div style="flex: 1; min-width: 200px;">
+                <label for="practice_end_date" style="font-weight: 500; margin-bottom: 5px; display: block; cursor: pointer;" onclick="document.getElementById('practice_end_date').focus()">End Date</label>
+                <div style="position: relative; cursor: pointer;" onclick="document.getElementById('practice_end_date').showPicker ? document.getElementById('practice_end_date').showPicker() : document.getElementById('practice_end_date').focus()">
+                    <input type="date" id="practice_end_date" name="end_date" required value="<%= @practice&.end_date %>" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 6px; cursor: pointer;">
+                </div>
+            </div>
+        </div>
+        <div style="color: #718096; font-size: 0.9em; margin-top: 5px;">
+            Select the date range for scheduling availability.
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label for="practice_description">Description (Optional)</label>
+        <textarea id="practice_description" name="description" rows="3" placeholder="Add any details about the practice session, location, or what you'll be working on..."><%= @practice&.description %></textarea>
+    </div>
+
+    <div style="background: #f7fafc; padding: 20px; border-radius: 8px; margin: 20px 0;">
+        <h4 style="color: #4a5568; margin-bottom: 10px; display: flex; align-items: center;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 8px;">
+                <circle cx="12" cy="12" r="10"></circle>
+                <path d="m9 12 2 2 4-4"></path>
+            </svg>
+            How it works:
+        </h4>
+        <ul style="color: #718096; font-size: 0.9em; margin: 10px 0 0 20px; line-height: 1.6;">
+            <li>Each band member can mark their availability for each day in the date range</li>
+            <li>Options: Available, Maybe, or Not Available</li>
+            <li>The system will calculate and show the best day for practice</li>
+            <li>You can finalize the session once everyone has responded</li>
+        </ul>
+    </div>
+
+    <div class="actions">
+        <button type="submit" class="btn btn-success">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 6px;">
+                <path d="M20 6L9 17l-5-5"></path>
+            </svg>
+            Create Practice Session
+        </button>
+        <a href="/practices" class="btn">Cancel</a>
+    </div>
+</form>
+
+<script>
+// Validate end date is after start date
+function validateDates() {
+    const startDateInput = document.getElementById('practice_start_date');
+    const endDateInput = document.getElementById('practice_end_date');
+    const startDate = new Date(startDateInput.value);
+    const endDate = new Date(endDateInput.value);
+
+    // Remove any existing feedback
+    document.querySelectorAll('.date-feedback').forEach(el => el.remove());
+
+    if (startDateInput.value && endDateInput.value) {
+        if (endDate < startDate) {
+            const feedback = document.createElement('div');
+            feedback.className = 'date-feedback';
+            feedback.style.cssText = 'color: #e53e3e; font-size: 0.9em; margin-top: 5px; font-weight: 500;';
+            feedback.textContent = 'End date must be after start date';
+            endDateInput.parentNode.appendChild(feedback);
+            return false;
+        } else {
+            const daysDiff = Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24)) + 1;
+            const feedback = document.createElement('div');
+            feedback.className = 'date-feedback';
+            feedback.style.cssText = 'color: #38a169; font-size: 0.9em; margin-top: 5px; font-weight: 500;';
+            feedback.textContent = `Practice period: ${daysDiff} day${daysDiff !== 1 ? 's' : ''} (${startDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })} - ${endDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })})`;
+            endDateInput.parentNode.appendChild(feedback);
+            return true;
+        }
+    }
+    return true;
+}
+
+// Add event listeners to both date inputs
+document.getElementById('practice_start_date').addEventListener('change', validateDates);
+document.getElementById('practice_end_date').addEventListener('change', validateDates);
+
+// Auto-populate end date when start date is selected (end of that week - Sunday)
+document.getElementById('practice_start_date').addEventListener('change', function() {
+    const endDateInput = document.getElementById('practice_end_date');
+    if (!endDateInput.value && this.value) {
+        const startDate = new Date(this.value);
+        const endDate = new Date(startDate);
+
+        // Calculate days to add to reach Sunday (end of week)
+        // getDay(): 0=Sunday, 1=Monday, 2=Tuesday, etc.
+        const dayOfWeek = startDate.getDay();
+        const daysToSunday = (7 - dayOfWeek) % 7; // Days until next Sunday (0 if already Sunday)
+
+        endDate.setDate(startDate.getDate() + daysToSunday);
+        endDateInput.value = endDate.toISOString().split('T')[0];
+        validateDates();
+    }
+});
+
+// Set default dates if no values
+window.addEventListener('DOMContentLoaded', function() {
+    const startDateInput = document.getElementById('practice_start_date');
+    const endDateInput = document.getElementById('practice_end_date');
+
+    if (!startDateInput.value) {
+        const today = new Date();
+        const tomorrow = new Date(today);
+        tomorrow.setDate(today.getDate() + 1);
+        startDateInput.value = tomorrow.toISOString().split('T')[0];
+
+        if (!endDateInput.value) {
+            const endDate = new Date(tomorrow);
+
+            // Calculate days to add to reach Sunday (end of week)
+            const dayOfWeek = tomorrow.getDay();
+            const daysToSunday = (7 - dayOfWeek) % 7; // Days until next Sunday (0 if already Sunday)
+
+            endDate.setDate(tomorrow.getDate() + daysToSunday);
+            endDateInput.value = endDate.toISOString().split('T')[0];
+        }
+        validateDates();
+    }
+});
+
+// Form validation before submit
+document.querySelector('form').addEventListener('submit', function(e) {
+    if (!validateDates()) {
+        e.preventDefault();
+        alert('Please fix the date validation errors before submitting.');
+    }
+});
+</script>
+
+<style>
+/* Enhanced date picker styling */
+.date-container {
+    transition: all 0.2s ease;
+}
+
+.date-container:hover {
+    background-color: #f8fafc;
+    border-radius: 6px;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.date-container:hover input {
+    border-color: #667eea;
+}
+
+.date-container input:focus {
+    border-color: #667eea !important;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1) !important;
+    outline: none;
+}
+
+.date-container label {
+    user-select: none;
+}
+</style>

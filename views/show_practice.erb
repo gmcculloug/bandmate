@@ -1,0 +1,764 @@
+<div class="page-header">
+    <div>
+        <h2 class="page-title" style="display: flex; align-items: center; gap: 15px; margin-bottom: 8px;">
+            <div style="display: flex; align-items: center;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -4px; margin-right: 8px;">
+                    <path d="M3 12h18m-9-9v18"></path>
+                    <circle cx="12" cy="12" r="10"></circle>
+                </svg>
+                <%= @practice.title.present? ? @practice.title : "Practice" %>
+            </div>
+            <span style="color: #000000; font-weight: 600;">
+                <%= @practice.formatted_week_range %>
+            </span>
+        </h2>
+        <p style="color: #718096; margin: 0 0 0 0; font-size: 0.9em;">
+            Created by <%= @practice.created_by_user.username %>
+        </p>
+    </div>
+    <div class="page-actions" style="display: flex; gap: 10px; flex-wrap: wrap;">
+        <% if @practice.status == 'active' && (@practice.created_by_user == current_user || current_band.owned_by?(current_user)) %>
+            <form method="POST" action="/practices/<%= @practice.id %>/finalize" style="display: inline;">
+                <button type="submit" class="btn btn-warning" onclick="return confirm('Are you sure you want to finalize this practice session? This will mark it as complete.')">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 6px;">
+                        <path d="M20 6L9 17l-5-5"></path>
+                    </svg>
+                    Finalize
+                </button>
+            </form>
+        <% end %>
+        <% if @practice.status == 'finalized' && (@practice.created_by_user == current_user || current_band.owned_by?(current_user)) %>
+            <form method="POST" action="/practices/<%= @practice.id %>/reopen" style="display: inline;">
+                <button type="submit" class="btn btn-success" onclick="return confirm('Are you sure you want to reopen this practice session? This will allow further changes.')">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 6px;">
+                        <path d="M3 12h18m-9-9v18"></path>
+                        <circle cx="12" cy="12" r="10"></circle>
+                    </svg>
+                    Reopen
+                </button>
+            </form>
+        <% end %>
+        <% if @practice.created_by_user == current_user || current_band.owned_by?(current_user) %>
+            <form method="POST" action="/practices/<%= @practice.id %>" style="display: inline;">
+                <input type="hidden" name="_method" value="DELETE">
+                <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure you want to delete this practice session? This cannot be undone.')">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 6px;">
+                        <path d="M3 6h18"></path>
+                        <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
+                        <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
+                    </svg>
+                    Delete
+                </button>
+            </form>
+        <% end %>
+    </div>
+</div>
+
+<% if @practice.description.present? %>
+    <div class="card" style="margin-bottom: 30px;">
+        <h4 style="color: #4a5568; margin-bottom: 10px;">Description</h4>
+        <p style="color: #718096; line-height: 1.6;"><%= @practice.description %></p>
+    </div>
+<% end %>
+
+<!-- Status and Best Day Summary -->
+<div class="card" style="margin-bottom: 30px;">
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
+        <div>
+            <h4 style="color: #4a5568; margin-bottom: 5px;">Status</h4>
+            <span style="background: <%= @practice.status == 'active' ? 'rgba(102, 126, 234, 0.1)' : @practice.status == 'finalized' ? 'rgba(56, 161, 105, 0.1)' : 'rgba(226, 232, 240, 0.8)' %>; color: <%= @practice.status == 'active' ? '#667eea' : @practice.status == 'finalized' ? '#38a169' : '#718096' %>; padding: 6px 12px; border-radius: 12px; font-size: 0.9em; font-weight: 500; text-transform: capitalize;">
+                <%= @practice.status %>
+            </span>
+        </div>
+        <div>
+            <h4 style="color: #4a5568; margin-bottom: 5px;">Responses</h4>
+            <span style="color: #2d3748; font-weight: 600; font-size: 1.1em;">
+                <%= @practice.response_count %> / <%= @practice.total_band_members %>
+                <span style="color: #718096; font-weight: normal; font-size: 0.9em;">band members</span>
+            </span>
+        </div>
+        <div id="best-day-container" style="<%= @best_day ? '' : 'display: none;' %>">
+            <h4 style="color: #4a5568; margin-bottom: 5px;">Best Day</h4>
+            <span id="best-day-value" style="background: rgba(56, 161, 105, 0.1); color: #38a169; padding: 6px 12px; border-radius: 12px; font-size: 0.9em; font-weight: 600;">
+                <%= @best_day %>
+            </span>
+        </div>
+    </div>
+</div>
+
+<!-- Popular Time Suggestions -->
+<%
+  # Calculate popular times for each day that has suggestions
+  popular_times_by_day = {}
+  @practice.practice_dates.each_with_index do |date, day_index|
+    popular_time = @practice.most_popular_time_for_day(day_index)
+    if popular_time && popular_time[:count] > 0
+      popular_times_by_day[day_index] = popular_time.merge(date: date)
+    end
+  end
+%>
+
+<% if popular_times_by_day.any? %>
+    <div class="card" style="margin-bottom: 30px;">
+        <h3 style="color: #2d3748; margin-bottom: 20px;">Popular Time Suggestions</h3>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+            <% popular_times_by_day.each do |day_index, time_info| %>
+                <div style="border: 1px solid #e2e8f0; border-radius: 8px; padding: 15px; text-align: center;">
+                    <h4 style="color: #4a5568; margin-bottom: 8px; font-size: 0.9em;">
+                        <%= time_info[:date].strftime('%A') %>
+                        <div style="font-size: 0.8em; color: #718096; font-weight: normal;">
+                            <%= time_info[:date].strftime('%B %d') %>
+                        </div>
+                    </h4>
+                    <div style="color: #667eea; font-weight: 600; font-size: 1.1em; margin-bottom: 5px;">
+                        <%= time_info[:start_time] %> - <%= time_info[:end_time] %>
+                    </div>
+                    <div style="color: #718096; font-size: 0.8em;">
+                        <%= time_info[:count] %> of <%= time_info[:total_suggestions] %> suggestions
+                    </div>
+                </div>
+            <% end %>
+        </div>
+    </div>
+<% end %>
+
+<!-- Band Member Responses -->
+<div class="card" style="margin-bottom: 30px;">
+    <h3 style="color: #2d3748; margin-bottom: 20px;">Band Member Responses</h3>
+    <% if @practice.status == 'active' %>
+        <form method="POST" action="/practices/<%= @practice.id %>/responses" id="responses-form">
+            <div style="overflow-x: auto;">
+                <table style="width: 100%; border-collapse: collapse;">
+                    <thead>
+                        <tr style="background: #f7fafc;">
+                            <th style="padding: 12px; text-align: left; border-bottom: 1px solid #e2e8f0;">Member</th>
+                            <% @practice.practice_dates.each_with_index do |date, day_index| %>
+                                <th style="padding: 12px; text-align: center; border-bottom: 1px solid #e2e8f0; font-size: 0.9em;"
+                                    data-day-index="<%= day_index %>"
+                                    data-day-name="<%= date.strftime('%A') %>">
+                                    <div><%= date.strftime('%a') %></div>
+                                    <div style="font-size: 0.8em; color: #718096;"><%= date.strftime('%m/%d') %></div>
+                                </th>
+                            <% end %>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <%
+                        # Sort members to put current user first
+                        sorted_members = @band_members.sort_by { |member| member == current_user ? 0 : 1 }
+                        %>
+                        <% sorted_members.each do |member| %>
+                            <% member_availabilities = @practice.practice_availabilities.where(user: member).index_by(&:day_of_week) %>
+                            <tr style="border-bottom: 1px solid #f1f5f9;">
+                                <td style="padding: 12px; font-weight: 500;">
+                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                        <input type="radio" name="selected_user" value="<%= member.id %>"
+                                               id="user_<%= member.id %>"
+                                               <%= 'checked' if member == current_user %>
+                                               onchange="handleUserSelection(this)"
+                                               style="margin: 0;">
+                                        <label for="user_<%= member.id %>" style="margin: 0; cursor: pointer; display: flex; align-items: center; gap: 4px;">
+                                            <%= member.username %>
+                                            <% if member == current_user %>
+                                                <span style="color: #667eea; font-size: 0.8em;">(You)</span>
+                                            <% end %>
+                                        </label>
+                                    </div>
+                                </td>
+                                <% @practice.practice_dates.each_with_index do |date, day_index| %>
+                                    <% availability = member_availabilities[day_index] %>
+                                    <td style="padding: 8px; text-align: center;" class="availability-cell"
+                                        data-current="<%= availability&.availability || '' %>"
+                                        data-user-id="<%= member.id %>">
+                                        <!-- Dropdown for selected user -->
+                                        <div class="user-dropdown" data-user-id="<%= member.id %>"
+                                             style="display: <%= member == current_user ? 'block' : 'none' %>;">
+                                            <select name="user_<%= member.id %>_day_<%= day_index %>"
+                                                    class="availability-select colorful-dropdown <%= case availability&.availability when 'available' then 'dropdown-available' when 'maybe' then 'dropdown-maybe' when 'not_available' then 'dropdown-not-available' else 'dropdown-no-response' end %>"
+                                                    style="width: 60px; padding: 4px; border: 1px solid #e2e8f0; border-radius: 4px; font-size: 1.0em; text-align: center; font-weight: bold;"
+                                                    value="<%= availability&.availability || '' %>"
+                                                    onchange="updateCellBackgroundAndSave(this)">
+                                                <option value="" class="no-response-option" <%= 'selected' if availability.nil? %>>—</option>
+                                                <option value="available" class="available-option" <%= 'selected' if availability&.availability == 'available' %>>✓</option>
+                                                <option value="maybe" class="maybe-option" <%= 'selected' if availability&.availability == 'maybe' %>>?</option>
+                                                <option value="not_available" class="not-available-option" <%= 'selected' if availability&.availability == 'not_available' %>>✗</option>
+                                            </select>
+
+                                            <!-- Notes input for selected user -->
+                                            <div style="margin-top: 6px;">
+                                                <textarea name="user_<%= member.id %>_notes_<%= day_index %>" rows="2"
+                                                          style="width: 100%; padding: 4px; border: 1px solid #e2e8f0; border-radius: 3px; font-size: 0.7em; resize: vertical;"
+                                                          placeholder="Notes..."
+                                                          onchange="autoSaveUserInput()"><%= availability&.notes %></textarea>
+                                            </div>
+                                        </div>
+
+                                        <!-- Display view for non-selected users -->
+                                        <div class="user-display" data-user-id="<%= member.id %>"
+                                             style="display: <%= member == current_user ? 'none' : 'block' %>;">
+                                            <% if availability&.availability == 'available' %>
+                                                <span style="color: #2f855a; font-size: 1.2em; font-weight: bold;" title="Available<%= availability&.notes.present? ? ': ' + availability.notes : '' %>">✓</span>
+                                            <% elsif availability&.availability == 'maybe' %>
+                                                <span style="color: #975a16; font-size: 1.2em; font-weight: bold;" title="Maybe<%= availability&.notes.present? ? ': ' + availability.notes : '' %>">?</span>
+                                            <% elsif availability&.availability == 'not_available' %>
+                                                <span style="color: #c53030; font-size: 1.2em; font-weight: bold;" title="Not Available<%= availability&.notes.present? ? ': ' + availability.notes : '' %>">✗</span>
+                                            <% else %>
+                                                <span style="color: #a0aec0; font-size: 1.2em;">—</span>
+                                            <% end %>
+                                            <% if availability&.notes.present? %>
+                                                <div style="font-size: 0.7em; color: #718096; margin-top: 2px; padding: 2px 4px; background: #f7fafc; border-radius: 3px;" title="<%= availability.notes %>">
+                                                    <%= availability.notes.length > 20 ? availability.notes[0..20] + '...' : availability.notes %>
+                                                </div>
+                                            <% end %>
+                                        </div>
+                                    </td>
+                                <% end %>
+                            </tr>
+                        <% end %>
+                    </tbody>
+                </table>
+            </div>
+        </form>
+
+        <!-- Legend -->
+        <div style="background: #f7fafc; padding: 15px; border-radius: 8px; margin-top: 20px; border: 1px solid #e2e8f0;">
+            <h4 style="color: #4a5568; margin-bottom: 10px; font-size: 0.9em; font-weight: 600;">Legend:</h4>
+            <div style="display: flex; flex-wrap: wrap; gap: 20px; font-size: 0.9em;">
+                <div style="display: flex; align-items: center; gap: 6px;">
+                    <span style="color: #2f855a; font-size: 1.1em; font-weight: bold;">✓</span>
+                    <span style="color: #4a5568;">Available</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 6px;">
+                    <span style="color: #975a16; font-size: 1.1em; font-weight: bold;">?</span>
+                    <span style="color: #4a5568;">Maybe</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 6px;">
+                    <span style="color: #c53030; font-size: 1.1em; font-weight: bold;">✗</span>
+                    <span style="color: #4a5568;">Not Available</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 6px;">
+                    <span style="color: #a0aec0; font-size: 1.1em; font-weight: bold;">—</span>
+                    <span style="color: #4a5568;">No Response</span>
+                </div>
+            </div>
+        </div>
+    <% else %>
+        <!-- Read-only view for finalized/cancelled practices -->
+        <div style="overflow-x: auto;">
+            <table style="width: 100%; border-collapse: collapse;">
+                <thead>
+                    <tr style="background: #f7fafc;">
+                        <th style="padding: 12px; text-align: left; border-bottom: 1px solid #e2e8f0;">Member</th>
+                        <% @practice.practice_dates.each_with_index do |date, day_index| %>
+                            <th style="padding: 12px; text-align: center; border-bottom: 1px solid #e2e8f0; font-size: 0.9em;"
+                                data-day-index="<%= day_index %>"
+                                data-day-name="<%= date.strftime('%A') %>">
+                                <div><%= date.strftime('%a') %></div>
+                                <div style="font-size: 0.8em; color: #718096;"><%= date.strftime('%m/%d') %></div>
+                            </th>
+                        <% end %>
+                    </tr>
+                </thead>
+                <tbody>
+                    <%
+                    # Sort members to put current user first
+                    sorted_members = @band_members.sort_by { |member| member == current_user ? 0 : 1 }
+                    %>
+                    <% sorted_members.each do |member| %>
+                        <% member_availabilities = @practice.practice_availabilities.where(user: member).index_by(&:day_of_week) %>
+                        <tr style="border-bottom: 1px solid #f1f5f9;">
+                            <td style="padding: 12px; font-weight: 500;">
+                                <%= member.username %>
+                                <% if member == current_user %>
+                                    <span style="color: #667eea; font-size: 0.8em;">(You)</span>
+                                <% end %>
+                            </td>
+                            <% @practice.practice_dates.each_with_index do |date, day_index| %>
+                                <% availability = member_availabilities[day_index] %>
+                                <td style="padding: 12px; text-align: center;">
+                                    <% if availability %>
+                                        <div style="display: flex; flex-direction: column; align-items: center; gap: 2px;">
+                                            <% if availability.availability == 'available' %>
+                                                <span style="color: #2f855a; font-size: 1.2em; font-weight: bold;" title="Available<%= availability.notes.present? ? ': ' + availability.notes : '' %>">✓</span>
+                                            <% elsif availability.availability == 'maybe' %>
+                                                <span style="color: #975a16; font-size: 1.2em; font-weight: bold;" title="Maybe<%= availability.notes.present? ? ': ' + availability.notes : '' %>">?</span>
+                                            <% elsif availability.availability == 'not_available' %>
+                                                <span style="color: #c53030; font-size: 1.2em; font-weight: bold;" title="Not Available<%= availability.notes.present? ? ': ' + availability.notes : '' %>">✗</span>
+                                            <% end %>
+                                            <% if availability.has_suggested_times? %>
+                                                <span style="font-size: 0.7em; color: #667eea; font-weight: 500; background: rgba(102, 126, 234, 0.1); padding: 2px 4px; border-radius: 8px; white-space: nowrap;">
+                                                    <%= availability.suggested_time_range %>
+                                                </span>
+                                            <% end %>
+                                        </div>
+                                    <% else %>
+                                        <span style="color: #a0aec0;">-</span>
+                                    <% end %>
+                                </td>
+                            <% end %>
+                        </tr>
+                    <% end %>
+                </tbody>
+            </table>
+        </div>
+    <% end %>
+    <div style="margin-top: 15px; font-size: 0.8em; color: #718096; text-align: center;">
+        <% if @practice.status == 'active' %>
+            Responses auto-save when changed • Background color matches availability selection • Add notes and times directly in your row above
+        <% else %>
+            Hover over symbols to see notes and details • Blue time badges show suggested practice times
+        <% end %>
+    </div>
+</div>
+
+<% if @practice.status != 'active' %>
+    <div class="card" style="text-align: center; padding: 40px 20px; background: #f7fafc;">
+        <h3 style="color: #4a5568; margin-bottom: 10px;">Practice Session <%= @practice.status.capitalize %></h3>
+        <p style="color: #718096;">
+            <% if @practice.status == 'finalized' %>
+                This practice session has been finalized. No further changes can be made.
+            <% else %>
+                This practice session is no longer active.
+            <% end %>
+        </p>
+    </div>
+<% end %>
+
+
+<script>
+// Function to handle user selection with radio buttons
+function handleUserSelection(radioButton) {
+    const selectedUserId = radioButton.value;
+
+    // Before hiding dropdowns, update display sections with any new notes
+    updateDisplayWithCurrentNotes();
+
+    // Hide all user dropdown sections
+    document.querySelectorAll('.user-dropdown').forEach(section => {
+        section.style.display = 'none';
+    });
+
+    // Show all user display sections
+    document.querySelectorAll('.user-display').forEach(section => {
+        section.style.display = 'block';
+    });
+
+    // Show dropdown for selected user and hide display for selected user
+    document.querySelectorAll(`.user-dropdown[data-user-id="${selectedUserId}"]`).forEach(section => {
+        section.style.display = 'block';
+    });
+
+    document.querySelectorAll(`.user-display[data-user-id="${selectedUserId}"]`).forEach(section => {
+        section.style.display = 'none';
+    });
+
+    // Recalculate best day when switching users
+    calculateAndUpdateBestDay();
+}
+
+// Function to update display sections with current textarea values
+function updateDisplayWithCurrentNotes() {
+    // Find all textareas in dropdown sections
+    document.querySelectorAll('.user-dropdown textarea').forEach(textarea => {
+        const notes = textarea.value.trim();
+        const cell = textarea.closest('.availability-cell');
+        if (cell) {
+            const userId = textarea.closest('.user-dropdown').getAttribute('data-user-id');
+            const displaySection = cell.querySelector(`.user-display[data-user-id="${userId}"]`);
+
+            if (displaySection) {
+                // Find or create the notes display div
+                let notesDiv = displaySection.querySelector('div[style*="font-size: 0.7em"]');
+
+                if (notes.length > 0) {
+                    if (!notesDiv) {
+                        // Create notes div if it doesn't exist
+                        notesDiv = document.createElement('div');
+                        notesDiv.style.cssText = 'font-size: 0.7em; color: #718096; margin-top: 2px; padding: 2px 4px; background: #f7fafc; border-radius: 3px;';
+                        displaySection.appendChild(notesDiv);
+                    }
+                    // Update the notes display
+                    const displayText = notes.length > 20 ? notes.substring(0, 20) + '...' : notes;
+                    notesDiv.textContent = displayText;
+                    notesDiv.title = notes;
+                } else if (notesDiv) {
+                    // Remove notes div if no notes
+                    notesDiv.remove();
+                }
+            }
+        }
+    });
+}
+
+// Function to update cell background, dropdown color, and auto-save
+function updateCellBackgroundAndSave(selectElement) {
+    const cell = selectElement.closest('.availability-cell');
+    const value = selectElement.value;
+
+    // Remove existing background classes
+    cell.classList.remove('available-bg', 'maybe-bg', 'not-available-bg', 'no-response-bg');
+
+    // Add appropriate background class based on selection
+    switch(value) {
+        case 'available':
+            cell.classList.add('available-bg');
+            selectElement.style.color = '#2f855a';
+            selectElement.className = selectElement.className.replace(/dropdown-\w+/, '') + ' dropdown-available';
+            break;
+        case 'maybe':
+            cell.classList.add('maybe-bg');
+            selectElement.style.color = '#975a16';
+            selectElement.className = selectElement.className.replace(/dropdown-\w+/, '') + ' dropdown-maybe';
+            break;
+        case 'not_available':
+            cell.classList.add('not-available-bg');
+            selectElement.style.color = '#c53030';
+            selectElement.className = selectElement.className.replace(/dropdown-\w+/, '') + ' dropdown-not-available';
+            break;
+        default:
+            cell.classList.add('no-response-bg');
+            selectElement.style.color = '#a0aec0';
+            selectElement.className = selectElement.className.replace(/dropdown-\w+/, '') + ' dropdown-no-response';
+            break;
+    }
+
+    // Update the select element's value attribute for CSS styling
+    selectElement.setAttribute('value', value);
+
+    // Calculate and update best day
+    calculateAndUpdateBestDay();
+
+    // Auto-save: Submit the form after a short delay to allow for rapid changes
+    autoSaveForm();
+}
+
+// Function to calculate and update the best day
+function calculateAndUpdateBestDay() {
+    // Get all the day headers with day names
+    const dayHeaders = document.querySelectorAll('th[data-day-index]');
+    if (dayHeaders.length === 0) return;
+
+    // Initialize day scores
+    const dayScores = {};
+    dayHeaders.forEach(header => {
+        const dayIndex = parseInt(header.getAttribute('data-day-index'));
+        dayScores[dayIndex] = {
+            score: 0,
+            name: header.getAttribute('data-day-name')
+        };
+    });
+
+    // Count availability responses for each day
+    const availabilitySelects = document.querySelectorAll('.availability-select');
+    availabilitySelects.forEach(select => {
+        // Extract day index from select name (format: user_X_day_Y)
+        const nameMatch = select.name.match(/user_\d+_day_(\d+)/);
+        if (!nameMatch) return;
+
+        const dayIndex = parseInt(nameMatch[1]);
+        const availability = select.value;
+
+        if (availability === 'available') {
+            dayScores[dayIndex].score += 1.0;
+        } else if (availability === 'maybe') {
+            dayScores[dayIndex].score += 0.5;
+        }
+        // 'not_available' and empty values add 0 points
+    });
+
+    // Find the day with the highest score
+    let bestDay = null;
+    let highestScore = 0;
+
+    Object.values(dayScores).forEach(day => {
+        if (day.score > highestScore) {
+            highestScore = day.score;
+            bestDay = day.name;
+        }
+    });
+
+    // Update the best day display
+    const bestDayContainer = document.getElementById('best-day-container');
+    const bestDayValue = document.getElementById('best-day-value');
+
+    if (bestDay && highestScore > 0) {
+        // Show the best day
+        bestDayContainer.style.display = '';
+        bestDayValue.textContent = bestDay;
+    } else {
+        // Hide the best day section if no availability
+        bestDayContainer.style.display = 'none';
+    }
+}
+
+// Auto-save function for user input (notes and times)
+function autoSaveUserInput() {
+    // Update display with current notes immediately
+    updateDisplayWithCurrentNotes();
+    autoSaveForm();
+}
+
+// Centralized auto-save function
+function autoSaveForm() {
+    clearTimeout(window.autoSaveTimeout);
+    window.autoSaveTimeout = setTimeout(function() {
+        const form = document.getElementById('responses-form');
+        if (form) {
+            // Show a brief saving indicator
+            showSavingIndicator();
+
+            // Submit the form via fetch to avoid page reload
+            const formData = new FormData(form);
+            fetch(form.action, {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                if (response.ok) {
+                    showSavedIndicator();
+                } else {
+                    showErrorIndicator();
+                }
+            })
+            .catch(error => {
+                console.error('Save error:', error);
+                showErrorIndicator();
+            });
+        }
+    }, 500); // Wait 500ms to allow for rapid changes
+}
+
+// Show saving indicator
+function showSavingIndicator() {
+    removeSaveIndicators();
+    const indicator = document.createElement('div');
+    indicator.id = 'save-indicator';
+    indicator.style.cssText = 'position: fixed; top: 20px; right: 20px; background: #667eea; color: white; padding: 8px 16px; border-radius: 8px; font-size: 0.9em; z-index: 1000; box-shadow: 0 2px 4px rgba(0,0,0,0.2);';
+    indicator.textContent = 'Saving...';
+    document.body.appendChild(indicator);
+}
+
+// Show saved indicator
+function showSavedIndicator() {
+    removeSaveIndicators();
+    const indicator = document.createElement('div');
+    indicator.id = 'save-indicator';
+    indicator.style.cssText = 'position: fixed; top: 20px; right: 20px; background: #38a169; color: white; padding: 8px 16px; border-radius: 8px; font-size: 0.9em; z-index: 1000; box-shadow: 0 2px 4px rgba(0,0,0,0.2);';
+    indicator.textContent = '✓ Saved';
+    document.body.appendChild(indicator);
+
+    setTimeout(function() {
+        removeSaveIndicators();
+    }, 2000);
+}
+
+// Show error indicator
+function showErrorIndicator() {
+    removeSaveIndicators();
+    const indicator = document.createElement('div');
+    indicator.id = 'save-indicator';
+    indicator.style.cssText = 'position: fixed; top: 20px; right: 20px; background: #c53030; color: white; padding: 8px 16px; border-radius: 8px; font-size: 0.9em; z-index: 1000; box-shadow: 0 2px 4px rgba(0,0,0,0.2);';
+    indicator.textContent = 'Save failed';
+    document.body.appendChild(indicator);
+
+    setTimeout(function() {
+        removeSaveIndicators();
+    }, 3000);
+}
+
+// Remove save indicators
+function removeSaveIndicators() {
+    const existing = document.getElementById('save-indicator');
+    if (existing) {
+        existing.remove();
+    }
+}
+
+// Initialize backgrounds and best day on page load
+document.addEventListener('DOMContentLoaded', function() {
+    const selects = document.querySelectorAll('.availability-select');
+    selects.forEach(function(select) {
+        // Update backgrounds without auto-saving on initial load
+        const cell = select.closest('.availability-cell');
+        const value = select.value;
+
+        // Remove existing background classes
+        cell.classList.remove('available-bg', 'maybe-bg', 'not-available-bg', 'no-response-bg');
+
+        // Add appropriate background class based on selection
+        switch(value) {
+            case 'available':
+                cell.classList.add('available-bg');
+                select.style.color = '#2f855a';
+                select.className = select.className.replace(/dropdown-\w+/, '') + ' dropdown-available';
+                break;
+            case 'maybe':
+                cell.classList.add('maybe-bg');
+                select.style.color = '#975a16';
+                select.className = select.className.replace(/dropdown-\w+/, '') + ' dropdown-maybe';
+                break;
+            case 'not_available':
+                cell.classList.add('not-available-bg');
+                select.style.color = '#c53030';
+                select.className = select.className.replace(/dropdown-\w+/, '') + ' dropdown-not-available';
+                break;
+            default:
+                cell.classList.add('no-response-bg');
+                select.style.color = '#a0aec0';
+                select.className = select.className.replace(/dropdown-\w+/, '') + ' dropdown-no-response';
+                break;
+        }
+
+        select.setAttribute('value', value);
+    });
+
+    // Calculate initial best day
+    calculateAndUpdateBestDay();
+});
+</script>
+
+<style>
+/* Availability cell background colors - More vibrant */
+.availability-cell {
+    transition: all 0.3s ease;
+}
+
+.available-bg {
+    background: linear-gradient(135deg, rgba(72, 187, 120, 0.4), rgba(56, 161, 105, 0.3)) !important;
+    border-left: 4px solid #38a169;
+    box-shadow: inset 0 0 0 1px rgba(72, 187, 120, 0.3);
+}
+
+.maybe-bg {
+    background: linear-gradient(135deg, rgba(237, 137, 54, 0.4), rgba(221, 107, 32, 0.3)) !important;
+    border-left: 4px solid #dd6b20;
+    box-shadow: inset 0 0 0 1px rgba(237, 137, 54, 0.3);
+}
+
+.not-available-bg {
+    background: linear-gradient(135deg, rgba(245, 101, 101, 0.4), rgba(229, 62, 62, 0.3)) !important;
+    border-left: 4px solid #e53e3e;
+    box-shadow: inset 0 0 0 1px rgba(245, 101, 101, 0.3);
+}
+
+.no-response-bg {
+    background: linear-gradient(135deg, rgba(160, 174, 192, 0.3), rgba(113, 128, 150, 0.2)) !important;
+    border-left: 4px solid #718096;
+    box-shadow: inset 0 0 0 1px rgba(160, 174, 192, 0.3);
+}
+
+/* Style the select dropdowns */
+.availability-select {
+    background: white;
+    border: 1px solid #e2e8f0;
+    transition: all 0.2s ease;
+}
+
+.availability-select:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.availability-select:hover {
+    border-color: #cbd5e0;
+}
+
+/* Colorful dropdown options - Enhanced styling */
+.colorful-dropdown option.available-option {
+    color: #2f855a;
+    background: linear-gradient(135deg, rgba(72, 187, 120, 0.3), rgba(56, 161, 105, 0.2));
+    font-weight: bold;
+    padding: 4px 8px;
+}
+
+.colorful-dropdown option.maybe-option {
+    color: #975a16;
+    background: linear-gradient(135deg, rgba(237, 137, 54, 0.3), rgba(221, 107, 32, 0.2));
+    font-weight: bold;
+    padding: 4px 8px;
+}
+
+.colorful-dropdown option.not-available-option {
+    color: #c53030;
+    background: linear-gradient(135deg, rgba(245, 101, 101, 0.3), rgba(229, 62, 62, 0.2));
+    font-weight: bold;
+    padding: 4px 8px;
+}
+
+.colorful-dropdown option.no-response-option {
+    color: #a0aec0;
+    background: linear-gradient(135deg, rgba(160, 174, 192, 0.2), rgba(113, 128, 150, 0.1));
+    font-weight: bold;
+    padding: 4px 8px;
+}
+
+/* Style the selected value in the dropdown using classes - Enhanced */
+.dropdown-available {
+    color: #2f855a !important;
+    background: linear-gradient(135deg, rgba(72, 187, 120, 0.15), rgba(56, 161, 105, 0.1)) !important;
+    border-color: #48bb78 !important;
+    font-weight: bold;
+    box-shadow: 0 0 0 2px rgba(72, 187, 120, 0.2);
+}
+
+.dropdown-maybe {
+    color: #975a16 !important;
+    background: linear-gradient(135deg, rgba(237, 137, 54, 0.15), rgba(221, 107, 32, 0.1)) !important;
+    border-color: #ed8936 !important;
+    font-weight: bold;
+    box-shadow: 0 0 0 2px rgba(237, 137, 54, 0.2);
+}
+
+.dropdown-not-available {
+    color: #c53030 !important;
+    background: linear-gradient(135deg, rgba(245, 101, 101, 0.15), rgba(229, 62, 62, 0.1)) !important;
+    border-color: #f56565 !important;
+    font-weight: bold;
+    box-shadow: 0 0 0 2px rgba(245, 101, 101, 0.2);
+}
+
+.dropdown-no-response {
+    color: #a0aec0 !important;
+    background: linear-gradient(135deg, rgba(160, 174, 192, 0.1), rgba(113, 128, 150, 0.05)) !important;
+    border-color: #cbd5e0 !important;
+    font-weight: normal;
+    box-shadow: 0 0 0 2px rgba(160, 174, 192, 0.1);
+}
+
+@media (max-width: 768px) {
+    .page-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 15px;
+    }
+
+    .page-actions {
+        justify-content: center;
+    }
+
+    /* Make availability form stack on mobile */
+    .card form > div:first-child {
+        grid-template-columns: 1fr !important;
+    }
+
+    /* Responsive table */
+    table {
+        font-size: 0.8em;
+    }
+
+    th, td {
+        padding: 8px 4px !important;
+    }
+
+    /* Week overview responsive */
+    .card:nth-of-type(3) > div:first-child {
+        grid-template-columns: repeat(4, 1fr) !important;
+        gap: 8px !important;
+    }
+
+    .card:nth-of-type(3) > div:first-child > div:nth-child(n+5) {
+        grid-column: span 1;
+    }
+}
+</style>

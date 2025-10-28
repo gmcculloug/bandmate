@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_10_25_005550) do
+ActiveRecord::Schema[8.0].define(version: 2025_10_28_133019) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -80,6 +80,39 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_25_005550) do
     t.index ["gig_id"], name: "index_google_calendar_events_on_gig_id"
     t.index ["google_event_id"], name: "index_google_calendar_events_on_google_event_id"
     t.index ["last_synced_at"], name: "index_google_calendar_events_on_last_synced_at"
+  end
+
+  create_table "practice_availabilities", force: :cascade do |t|
+    t.bigint "practice_id", null: false
+    t.bigint "user_id", null: false
+    t.integer "day_of_week", null: false
+    t.string "availability", null: false
+    t.text "notes"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.time "suggested_start_time"
+    t.time "suggested_end_time"
+    t.index ["availability"], name: "index_practice_availabilities_on_availability"
+    t.index ["practice_id", "user_id", "day_of_week"], name: "index_practice_availabilities_unique", unique: true
+    t.index ["practice_id"], name: "index_practice_availabilities_on_practice_id"
+    t.index ["user_id"], name: "index_practice_availabilities_on_user_id"
+  end
+
+  create_table "practices", force: :cascade do |t|
+    t.bigint "band_id", null: false
+    t.bigint "created_by_user_id", null: false
+    t.date "week_start_date", null: false
+    t.string "title"
+    t.text "description"
+    t.string "status", default: "active"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.date "end_date"
+    t.index ["band_id", "week_start_date"], name: "index_practices_on_band_id_and_week_start_date"
+    t.index ["band_id"], name: "index_practices_on_band_id"
+    t.index ["created_by_user_id"], name: "index_practices_on_created_by_user_id"
+    t.index ["status"], name: "index_practices_on_status"
+    t.index ["week_start_date"], name: "index_practices_on_week_start_date"
   end
 
   create_table "sessions", force: :cascade do |t|
@@ -196,6 +229,10 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_25_005550) do
   add_foreign_key "gigs", "venues"
   add_foreign_key "google_calendar_events", "bands"
   add_foreign_key "google_calendar_events", "gigs"
+  add_foreign_key "practice_availabilities", "practices"
+  add_foreign_key "practice_availabilities", "users"
+  add_foreign_key "practices", "bands"
+  add_foreign_key "practices", "users", column: "created_by_user_id"
   add_foreign_key "songs", "song_catalogs"
   add_foreign_key "songs_bands", "bands"
   add_foreign_key "songs_bands", "songs"

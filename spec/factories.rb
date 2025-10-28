@@ -75,4 +75,21 @@ FactoryBot.define do
     association :band
     association :gig
   end
+
+  factory :practice do
+    association :band
+    association :created_by_user, factory: :user
+    week_start_date { Date.current.beginning_of_week(:sunday) }
+    title { "Weekly Practice" }
+    description { "Let's practice our upcoming setlist" }
+    status { "active" }
+  end
+
+  factory :practice_availability do
+    association :practice
+    association :user
+    day_of_week { rand(0..6) }
+    availability { ['available', 'maybe', 'not_available'].sample }
+    notes { "Available in the evening" }
+  end
 end 

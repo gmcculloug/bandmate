@@ -17,6 +17,8 @@ require_relative 'lib/models/gig'
 require_relative 'lib/models/gig_song'
 require_relative 'lib/models/blackout_date'
 require_relative 'lib/models/google_calendar_event'
+require_relative 'lib/models/practice'
+require_relative 'lib/models/practice_availability'
 
 # Load services
 require_relative 'lib/services/google_calendar_service'
@@ -31,6 +33,7 @@ require_relative 'lib/routes/songs'
 require_relative 'lib/routes/gigs'
 require_relative 'lib/routes/venues'
 require_relative 'lib/routes/calendar'
+require_relative 'lib/routes/practices'
 require_relative 'lib/routes/api'
 
 enable :sessions
@@ -49,6 +52,7 @@ use Routes::Songs
 use Routes::Gigs
 use Routes::Venues
 use Routes::Calendar
+use Routes::Practices
 use Routes::Api
 
 # Account creation code for user registration (required)

@@ -1,0 +1,58 @@
+<div class="page-header">
+    <div>
+        <h2 class="page-title">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -4px; margin-right: 8px;">
+                <path d="M12 2v6l4-4-4-4z"></path>
+                <path d="M21 12a9 9 0 11-9-9"></path>
+            </svg>
+            Past Practices
+        </h2>
+        <p style="color: #718096; margin: 5px 0 0 0;">Practice sessions with end dates that have passed.</p>
+    </div>
+</div>
+
+<% if @archived_practices.any? %>
+    <div>
+        <% @archived_practices.each do |practice| %>
+            <div class="set-list-item" style="cursor: pointer; opacity: 0.8;" onclick="window.location.href='/practices/<%= practice.id %>'">
+                <div class="set-list-info">
+                    <h3 style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                        <span style="flex: 1; min-width: 200px;">
+                            <span style="font-weight: normal; color: #718096; font-size: 0.9em;">
+                                <%= practice.formatted_week_range %> -
+                            </span>
+                            <%= practice.title.present? ? practice.title : "Practice" %>
+                        </span>
+                        <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                            <span style="background: <%= practice.status == 'finalized' ? 'rgba(56, 161, 105, 0.1)' : 'rgba(226, 232, 240, 0.8)' %>; color: <%= practice.status == 'finalized' ? '#38a169' : '#718096' %>; padding: 4px 8px; border-radius: 12px; font-size: 0.8em; font-weight: 500; text-transform: capitalize;">
+                                <%= practice.status %>
+                            </span>
+                            <% if practice.best_day %>
+                                <span style="background: rgba(56, 161, 105, 0.1); color: #38a169; padding: 4px 8px; border-radius: 12px; font-size: 0.8em; font-weight: 500;">
+                                    Best: <%= practice.best_day %>
+                                </span>
+                            <% end %>
+                        </div>
+                    </h3>
+                    <% if practice.description.present? %>
+                        <p style="color: #718096; margin: 5px 0 0 0; font-size: 0.9em;">
+                            <%= practice.description %>
+                        </p>
+                    <% end %>
+                    <p style="color: #718096; margin: 5px 0 0 0; font-size: 0.8em;">
+                        Created by <%= practice.created_by_user.username %>
+                    </p>
+                </div>
+            </div>
+        <% end %>
+    </div>
+<% else %>
+    <div class="card" style="text-align: center; padding: 60px 20px;">
+        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin: 0 auto 20px auto; color: #a0aec0;">
+            <path d="M12 2v6l4-4-4-4z"></path>
+            <path d="M21 12a9 9 0 11-9-9"></path>
+        </svg>
+        <h3 style="color: #4a5568; margin-bottom: 10px;">No Past Practices</h3>
+        <p style="color: #718096; margin-bottom: 30px;">No practice sessions have ended yet.</p>
+    </div>
+<% end %>

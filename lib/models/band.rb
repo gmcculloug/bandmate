@@ -6,6 +6,7 @@ class Band < ActiveRecord::Base
   has_many :user_bands
   has_many :users, through: :user_bands
   has_many :google_calendar_events, dependent: :destroy
+  has_many :practices, dependent: :destroy
   
   validates :name, presence: true
   validates :name, uniqueness: true
