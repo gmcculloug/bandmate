@@ -19,7 +19,7 @@
     <div class="page-actions" style="display: flex; gap: 10px; flex-wrap: wrap;">
         <% if @practice.status == 'active' && (@practice.created_by_user == current_user || current_band.owned_by?(current_user)) %>
             <form method="POST" action="/practices/<%= @practice.id %>/finalize" style="display: inline;">
-                <button type="submit" class="btn btn-warning" onclick="return confirm('Are you sure you want to finalize this practice session? This will mark it as complete.')">
+                <button type="submit" class="btn btn-warning">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 6px;">
                         <path d="M20 6L9 17l-5-5"></path>
                     </svg>
@@ -29,7 +29,7 @@
         <% end %>
         <% if @practice.status == 'finalized' && (@practice.created_by_user == current_user || current_band.owned_by?(current_user)) %>
             <form method="POST" action="/practices/<%= @practice.id %>/reopen" style="display: inline;">
-                <button type="submit" class="btn btn-success" onclick="return confirm('Are you sure you want to reopen this practice session? This will allow further changes.')">
+                <button type="submit" class="btn btn-success">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 6px;">
                         <path d="M3 12h18m-9-9v18"></path>
                         <circle cx="12" cy="12" r="10"></circle>
@@ -133,7 +133,7 @@
                         <tr style="background: #f7fafc;">
                             <th style="padding: 12px; text-align: left; border-bottom: 1px solid #e2e8f0;">Member</th>
                             <% @practice.practice_dates.each_with_index do |date, day_index| %>
-                                <th style="padding: 12px; text-align: center; border-bottom: 1px solid #e2e8f0; font-size: 0.9em;"
+                                <th style="text-align: center; border-bottom: 1px solid #e2e8f0; font-size: 0.9em;"
                                     data-day-index="<%= day_index %>"
                                     data-day-name="<%= date.strftime('%A') %>">
                                     <div><%= date.strftime('%a') %></div>
@@ -167,22 +167,53 @@
                                 </td>
                                 <% @practice.practice_dates.each_with_index do |date, day_index| %>
                                     <% availability = member_availabilities[day_index] %>
-                                    <td style="padding: 8px; text-align: center;" class="availability-cell"
+                                    <td style="text-align: center;" class="availability-cell"
                                         data-current="<%= availability&.availability || '' %>"
                                         data-user-id="<%= member.id %>">
                                         <!-- Dropdown for selected user -->
                                         <div class="user-dropdown" data-user-id="<%= member.id %>"
                                              style="display: <%= member == current_user ? 'block' : 'none' %>;">
-                                            <select name="user_<%= member.id %>_day_<%= day_index %>"
-                                                    class="availability-select colorful-dropdown <%= case availability&.availability when 'available' then 'dropdown-available' when 'maybe' then 'dropdown-maybe' when 'not_available' then 'dropdown-not-available' else 'dropdown-no-response' end %>"
-                                                    style="width: 60px; padding: 4px; border: 1px solid #e2e8f0; border-radius: 4px; font-size: 1.0em; text-align: center; font-weight: bold;"
-                                                    value="<%= availability&.availability || '' %>"
-                                                    onchange="updateCellBackgroundAndSave(this)">
-                                                <option value="" class="no-response-option" <%= 'selected' if availability.nil? %>>—</option>
-                                                <option value="available" class="available-option" <%= 'selected' if availability&.availability == 'available' %>>✓</option>
-                                                <option value="maybe" class="maybe-option" <%= 'selected' if availability&.availability == 'maybe' %>>?</option>
-                                                <option value="not_available" class="not-available-option" <%= 'selected' if availability&.availability == 'not_available' %>>✗</option>
-                                            </select>
+                                            <div class="availability-options">
+                                                <input type="radio"
+                                                       name="user_<%= member.id %>_day_<%= day_index %>"
+                                                       value=""
+                                                       id="user_<%= member.id %>_day_<%= day_index %>_none"
+                                                       class="availability-radio"
+                                                       <%= 'checked' if availability.nil? %>
+                                                       onchange="updateCellBackgroundAndSave(this)">
+                                                <label for="user_<%= member.id %>_day_<%= day_index %>_none"
+                                                       class="availability-option no-response-option">—</label>
+
+                                                <input type="radio"
+                                                       name="user_<%= member.id %>_day_<%= day_index %>"
+                                                       value="available"
+                                                       id="user_<%= member.id %>_day_<%= day_index %>_available"
+                                                       class="availability-radio"
+                                                       <%= 'checked' if availability&.availability == 'available' %>
+                                                       onchange="updateCellBackgroundAndSave(this)">
+                                                <label for="user_<%= member.id %>_day_<%= day_index %>_available"
+                                                       class="availability-option available-option">✓</label>
+
+                                                <input type="radio"
+                                                       name="user_<%= member.id %>_day_<%= day_index %>"
+                                                       value="maybe"
+                                                       id="user_<%= member.id %>_day_<%= day_index %>_maybe"
+                                                       class="availability-radio"
+                                                       <%= 'checked' if availability&.availability == 'maybe' %>
+                                                       onchange="updateCellBackgroundAndSave(this)">
+                                                <label for="user_<%= member.id %>_day_<%= day_index %>_maybe"
+                                                       class="availability-option maybe-option">?</label>
+
+                                                <input type="radio"
+                                                       name="user_<%= member.id %>_day_<%= day_index %>"
+                                                       value="not_available"
+                                                       id="user_<%= member.id %>_day_<%= day_index %>_not_available"
+                                                       class="availability-radio"
+                                                       <%= 'checked' if availability&.availability == 'not_available' %>
+                                                       onchange="updateCellBackgroundAndSave(this)">
+                                                <label for="user_<%= member.id %>_day_<%= day_index %>_not_available"
+                                                       class="availability-option not-available-option">✗</label>
+                                            </div>
 
                                             <!-- Notes input for selected user -->
                                             <div style="margin-top: 6px;">
@@ -250,7 +281,7 @@
                     <tr style="background: #f7fafc;">
                         <th style="padding: 12px; text-align: left; border-bottom: 1px solid #e2e8f0;">Member</th>
                         <% @practice.practice_dates.each_with_index do |date, day_index| %>
-                            <th style="padding: 12px; text-align: center; border-bottom: 1px solid #e2e8f0; font-size: 0.9em;"
+                            <th style="text-align: center; border-bottom: 1px solid #e2e8f0; font-size: 0.9em;"
                                 data-day-index="<%= day_index %>"
                                 data-day-name="<%= date.strftime('%A') %>">
                                 <div><%= date.strftime('%a') %></div>
@@ -275,7 +306,7 @@
                             </td>
                             <% @practice.practice_dates.each_with_index do |date, day_index| %>
                                 <% availability = member_availabilities[day_index] %>
-                                <td style="padding: 12px; text-align: center;">
+                                <td style="text-align: center;">
                                     <% if availability %>
                                         <div style="display: flex; flex-direction: column; align-items: center; gap: 2px;">
                                             <% if availability.availability == 'available' %>
@@ -390,10 +421,10 @@ function updateDisplayWithCurrentNotes() {
     });
 }
 
-// Function to update cell background, dropdown color, and auto-save
-function updateCellBackgroundAndSave(selectElement) {
-    const cell = selectElement.closest('.availability-cell');
-    const value = selectElement.value;
+// Function to update cell background and auto-save (now works with radio buttons)
+function updateCellBackgroundAndSave(radioElement) {
+    const cell = radioElement.closest('.availability-cell');
+    const value = radioElement.value;
 
     // Remove existing background classes
     cell.classList.remove('available-bg', 'maybe-bg', 'not-available-bg', 'no-response-bg');
@@ -402,28 +433,17 @@ function updateCellBackgroundAndSave(selectElement) {
     switch(value) {
         case 'available':
             cell.classList.add('available-bg');
-            selectElement.style.color = '#2f855a';
-            selectElement.className = selectElement.className.replace(/dropdown-\w+/, '') + ' dropdown-available';
             break;
         case 'maybe':
             cell.classList.add('maybe-bg');
-            selectElement.style.color = '#975a16';
-            selectElement.className = selectElement.className.replace(/dropdown-\w+/, '') + ' dropdown-maybe';
             break;
         case 'not_available':
             cell.classList.add('not-available-bg');
-            selectElement.style.color = '#c53030';
-            selectElement.className = selectElement.className.replace(/dropdown-\w+/, '') + ' dropdown-not-available';
             break;
         default:
             cell.classList.add('no-response-bg');
-            selectElement.style.color = '#a0aec0';
-            selectElement.className = selectElement.className.replace(/dropdown-\w+/, '') + ' dropdown-no-response';
             break;
     }
-
-    // Update the select element's value attribute for CSS styling
-    selectElement.setAttribute('value', value);
 
     // Calculate and update best day
     calculateAndUpdateBestDay();
@@ -449,14 +469,14 @@ function calculateAndUpdateBestDay() {
     });
 
     // Count availability responses for each day
-    const availabilitySelects = document.querySelectorAll('.availability-select');
-    availabilitySelects.forEach(select => {
-        // Extract day index from select name (format: user_X_day_Y)
-        const nameMatch = select.name.match(/user_\d+_day_(\d+)/);
+    const availabilityRadios = document.querySelectorAll('.availability-radio:checked');
+    availabilityRadios.forEach(radio => {
+        // Extract day index from radio name (format: user_X_day_Y)
+        const nameMatch = radio.name.match(/user_\d+_day_(\d+)/);
         if (!nameMatch) return;
 
         const dayIndex = parseInt(nameMatch[1]);
-        const availability = select.value;
+        const availability = radio.value;
 
         if (availability === 'available') {
             dayScores[dayIndex].score += 1.0;
@@ -576,11 +596,11 @@ function removeSaveIndicators() {
 
 // Initialize backgrounds and best day on page load
 document.addEventListener('DOMContentLoaded', function() {
-    const selects = document.querySelectorAll('.availability-select');
-    selects.forEach(function(select) {
+    const checkedRadios = document.querySelectorAll('.availability-radio:checked');
+    checkedRadios.forEach(function(radio) {
         // Update backgrounds without auto-saving on initial load
-        const cell = select.closest('.availability-cell');
-        const value = select.value;
+        const cell = radio.closest('.availability-cell');
+        const value = radio.value;
 
         // Remove existing background classes
         cell.classList.remove('available-bg', 'maybe-bg', 'not-available-bg', 'no-response-bg');
@@ -589,27 +609,17 @@ document.addEventListener('DOMContentLoaded', function() {
         switch(value) {
             case 'available':
                 cell.classList.add('available-bg');
-                select.style.color = '#2f855a';
-                select.className = select.className.replace(/dropdown-\w+/, '') + ' dropdown-available';
                 break;
             case 'maybe':
                 cell.classList.add('maybe-bg');
-                select.style.color = '#975a16';
-                select.className = select.className.replace(/dropdown-\w+/, '') + ' dropdown-maybe';
                 break;
             case 'not_available':
                 cell.classList.add('not-available-bg');
-                select.style.color = '#c53030';
-                select.className = select.className.replace(/dropdown-\w+/, '') + ' dropdown-not-available';
                 break;
             default:
                 cell.classList.add('no-response-bg');
-                select.style.color = '#a0aec0';
-                select.className = select.className.replace(/dropdown-\w+/, '') + ' dropdown-no-response';
                 break;
         }
-
-        select.setAttribute('value', value);
     });
 
     // Calculate initial best day
@@ -759,6 +769,119 @@ document.addEventListener('DOMContentLoaded', function() {
 
     .card:nth-of-type(3) > div:first-child > div:nth-child(n+5) {
         grid-column: span 1;
+    }
+}
+
+/* Availability Options - Side-by-Side Layout */
+.availability-options {
+    display: flex;
+    gap: 2px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.availability-radio {
+    display: none; /* Hide the actual radio buttons */
+}
+
+.availability-option {
+    display: inline-block;
+    padding: 4px 6px;
+    border: 2px solid transparent;
+    border-radius: 6px;
+    font-size: 1.0em;
+    font-weight: bold;
+    cursor: pointer;
+    text-align: center;
+    min-width: 20px;
+    transition: all 0.2s ease;
+    user-select: none;
+    margin: 0;
+}
+
+.availability-option:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* No Response Option */
+.availability-option.no-response-option {
+    background: linear-gradient(135deg, rgba(160, 174, 192, 0.2), rgba(113, 128, 150, 0.1));
+    color: #a0aec0;
+    border-color: rgba(160, 174, 192, 0.3);
+}
+
+.availability-radio:checked + .availability-option.no-response-option {
+    border-color: #718096;
+    box-shadow: 0 0 0 2px rgba(113, 128, 150, 0.3);
+    background: linear-gradient(135deg, rgba(160, 174, 192, 0.3), rgba(113, 128, 150, 0.2));
+}
+
+/* Available Option */
+.availability-option.available-option {
+    background: linear-gradient(135deg, rgba(72, 187, 120, 0.2), rgba(56, 161, 105, 0.1));
+    color: #2f855a;
+    border-color: rgba(72, 187, 120, 0.3);
+}
+
+.availability-radio:checked + .availability-option.available-option {
+    border-color: #38a169;
+    box-shadow: 0 0 0 2px rgba(72, 187, 120, 0.4);
+    background: linear-gradient(135deg, rgba(72, 187, 120, 0.4), rgba(56, 161, 105, 0.3));
+}
+
+/* Maybe Option */
+.availability-option.maybe-option {
+    background: linear-gradient(135deg, rgba(237, 137, 54, 0.2), rgba(221, 107, 32, 0.1));
+    color: #975a16;
+    border-color: rgba(237, 137, 54, 0.3);
+}
+
+.availability-radio:checked + .availability-option.maybe-option {
+    border-color: #dd6b20;
+    box-shadow: 0 0 0 2px rgba(237, 137, 54, 0.4);
+    background: linear-gradient(135deg, rgba(237, 137, 54, 0.4), rgba(221, 107, 32, 0.3));
+}
+
+/* Not Available Option */
+.availability-option.not-available-option {
+    background: linear-gradient(135deg, rgba(245, 101, 101, 0.2), rgba(229, 62, 62, 0.1));
+    color: #c53030;
+    border-color: rgba(245, 101, 101, 0.3);
+}
+
+.availability-radio:checked + .availability-option.not-available-option {
+    border-color: #e53e3e;
+    box-shadow: 0 0 0 2px rgba(245, 101, 101, 0.4);
+    background: linear-gradient(135deg, rgba(245, 101, 101, 0.4), rgba(229, 62, 62, 0.3));
+}
+
+/* Compact day columns - reduce width for better space utilization */
+table th:not(:first-child),
+table td:not(:first-child) {
+    padding: 8px 6px !important;
+    max-width: 120px;
+    width: auto;
+}
+
+/* Default compact styling for availability options */
+
+/* Mobile responsive adjustments for availability options */
+@media (max-width: 768px) {
+    table th:not(:first-child),
+    table td:not(:first-child) {
+        padding: 6px 3px !important;
+        max-width: 100px;
+    }
+
+    .availability-options {
+        gap: 1px;
+    }
+
+    .availability-option {
+        padding: 3px 4px;
+        font-size: 0.9em;
+        min-width: 18px;
     }
 }
 </style>
