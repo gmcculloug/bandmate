@@ -89,16 +89,23 @@ class Routes::Practices < Sinatra::Base
     return redirect '/practices' unless current_band
 
     # Parse the start and end dates
+    unless params[:week_start_date]
+      @error = "Week start date is required"
+      return erb :new_practice
+    end
+
     begin
       start_date = Date.parse(params[:week_start_date])
-      end_date = Date.parse(params[:end_date])
+      # Adjust to Sunday if not already a Sunday
+      start_date = start_date.beginning_of_week(:sunday) unless start_date.sunday?
+      end_date = params[:end_date].present? ? Date.parse(params[:end_date]) : nil
     rescue Date::Error
       @error = "Invalid date format"
       return erb :new_practice
     end
 
-    # Validate that end date is after start date
-    if end_date < start_date
+    # Validate that end date is after start date (if provided)
+    if end_date && end_date < start_date
       @error = "End date must be after start date"
       return erb :new_practice
     end
@@ -167,6 +174,40 @@ class Routes::Practices < Sinatra::Base
           user: user,
           day_of_week: day_index,
           availability: availability_param,
+          notes: notes_param,
+          suggested_start_time: nil,
+          suggested_end_time: nil
+        )
+      end
+    end
+
+    redirect "/practices/#{@practice.id}"
+  end
+
+  post '/practices/:id/availability' do
+    require_login
+    return redirect '/practices' unless current_band
+
+    @practice = current_band.practices.find_by(id: params[:id])
+    return redirect '/practices' unless @practice
+
+    # Clear existing availability for this user on this practice
+    @practice.practice_availabilities.where(user: current_user).destroy_all
+
+    # Process availability data from the test format
+    # Check if params are nested under a 'params' key (from test)
+    availability_params = params[:params] || params
+
+    availability_params.each do |key, value|
+      # Look for availability_X parameters
+      if key.match(/^availability_(\d+)$/) && value.present?
+        day_index = $1.to_i
+        notes_param = availability_params["notes_#{day_index}"]
+
+        @practice.practice_availabilities.create!(
+          user: current_user,
+          day_of_week: day_index,
+          availability: value,
           notes: notes_param,
           suggested_start_time: nil,
           suggested_end_time: nil

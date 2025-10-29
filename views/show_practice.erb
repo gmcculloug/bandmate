@@ -126,6 +126,9 @@
 <div class="card" style="margin-bottom: 30px;">
     <h3 style="color: #2d3748; margin-bottom: 20px;">Band Member Responses</h3>
     <% if @practice.status == 'active' %>
+        <p style="color: #667eea; font-weight: 500; margin-bottom: 15px;">Your Availability: Select your availability for each day below</p>
+    <% end %>
+    <% if @practice.status == 'active' %>
         <form method="POST" action="/practices/<%= @practice.id %>/responses" id="responses-form">
             <div style="overflow-x: auto;">
                 <table style="width: 100%; border-collapse: collapse;">

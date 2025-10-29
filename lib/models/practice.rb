@@ -4,9 +4,10 @@ class Practice < ActiveRecord::Base
   has_many :practice_availabilities, dependent: :destroy
 
   validates :week_start_date, presence: true
-  validates :end_date, presence: true
   validates :status, presence: true, inclusion: { in: %w[active finalized cancelled] }
 
+  validate :week_start_date_must_be_sunday
+  validate :unique_week_for_band
   validate :end_date_after_start_date
   validate :no_overlapping_practices
 
@@ -30,7 +31,7 @@ class Practice < ActiveRecord::Base
   def formatted_date_range
     if week_start_date.year == week_end_date.year
       if week_start_date.month == week_end_date.month
-        "#{week_start_date.strftime('%b %d')} - #{week_end_date.strftime('%d, %Y')}"
+        "#{week_start_date.strftime('%b %d')} - #{week_end_date.strftime('%b %d, %Y')}"
       else
         "#{week_start_date.strftime('%b %d')} - #{week_end_date.strftime('%b %d, %Y')}"
       end
@@ -96,15 +97,14 @@ class Practice < ActiveRecord::Base
     summary = {}
     practice_dates.each_with_index do |date, index|
       day_name = date.strftime('%A')
-      day_key = "#{day_name} (#{date.strftime('%m/%d')})"
       availabilities = practice_availabilities.where(day_of_week: index)
 
-      summary[day_key] = {
+      summary[day_name] = {
         available: availabilities.where(availability: 'available').count,
         maybe: availabilities.where(availability: 'maybe').count,
         not_available: availabilities.where(availability: 'not_available').count,
         no_response: total_band_members - availabilities.count,
-        suggested_times: availabilities.where.not(suggested_start_time: nil, suggested_end_time: nil),
+        suggested_times: availabilities.where.not(suggested_start_time: nil, suggested_end_time: nil).order(:suggested_start_time),
         date: date
       }
     end
@@ -126,8 +126,9 @@ class Practice < ActiveRecord::Base
     time_counts = suggestions.group_by { |s| [s.suggested_start_time.strftime('%H:%M'), s.suggested_end_time.strftime('%H:%M')] }
     return nil if time_counts.empty?
 
-    # Find the most common time suggestion
-    most_common = time_counts.max_by { |time, availabilities| availabilities.length }
+    # Find the most common time suggestion - sort by count descending, then by time ascending for deterministic results
+    sorted_counts = time_counts.sort_by { |time, availabilities| [-availabilities.length, time[0]] }
+    most_common = sorted_counts.first
     start_time_str, end_time_str = most_common[0]
     count = most_common[1].length
 
@@ -141,6 +142,25 @@ class Practice < ActiveRecord::Base
 
   private
 
+  def week_start_date_must_be_sunday
+    return unless week_start_date
+
+    unless week_start_date.sunday?
+      errors.add(:week_start_date, "must be a Sunday")
+    end
+  end
+
+  def unique_week_for_band
+    return unless week_start_date && band_id
+
+    existing = band.practices.where(week_start_date: week_start_date)
+    existing = existing.where.not(id: id) if persisted?
+
+    if existing.exists?
+      errors.add(:week_start_date, "already has a practice scheduled for this week")
+    end
+  end
+
   def end_date_after_start_date
     return unless week_start_date && end_date
 
@@ -150,14 +170,15 @@ class Practice < ActiveRecord::Base
   end
 
   def no_overlapping_practices
-    return unless week_start_date && end_date && band_id
+    return unless week_start_date && band_id
 
+    current_end_date = end_date || week_start_date + 6.days
     overlapping = band.practices.where.not(id: id)
       .where(
         "(week_start_date BETWEEN ? AND ?) OR (COALESCE(end_date, week_start_date + INTERVAL '6 days') BETWEEN ? AND ?) OR (week_start_date <= ? AND COALESCE(end_date, week_start_date + INTERVAL '6 days') >= ?)",
-        week_start_date, end_date,
-        week_start_date, end_date,
-        week_start_date, end_date
+        week_start_date, current_end_date,
+        week_start_date, current_end_date,
+        week_start_date, current_end_date
       )
 
     if overlapping.exists?

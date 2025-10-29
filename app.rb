@@ -111,11 +111,14 @@ end
 post '/test_auth' do
   if settings.test?
     # Allow tests to set authentication state directly
+    # Handle both direct params and nested params format
+    auth_params = params[:params] || params
+
     @test_session = {}
-    @test_session[:user_id] = params[:user_id] if params[:user_id]
-    @test_session[:band_id] = params[:band_id] if params[:band_id]
-    session[:user_id] = params[:user_id] if params[:user_id]
-    session[:band_id] = params[:band_id] if params[:band_id]
+    @test_session[:user_id] = auth_params[:user_id] if auth_params[:user_id]
+    @test_session[:band_id] = auth_params[:band_id] if auth_params[:band_id]
+    session[:user_id] = auth_params[:user_id] if auth_params[:user_id]
+    session[:band_id] = auth_params[:band_id] if auth_params[:band_id]
     status 200
     body "Authentication set"
   else

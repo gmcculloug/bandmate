@@ -439,13 +439,13 @@ RSpec.describe 'Venues API', type: :request do
       it 'filters out archived venues from the main listing' do
         login_as(user, band)
         active_venue = create(:venue, name: 'Active Venue', band: band, archived: false)
-        archived_venue = create(:venue, name: 'Archived Venue', band: band, archived: true)
+        archived_venue = create(:venue, name: 'My Archived Venue', band: band, archived: true)
 
         get '/venues'
 
         expect(last_response).to be_ok
         expect(last_response.body).to include('Active Venue')
-        expect(last_response.body).not_to include('Archived Venue')
+        expect(last_response.body).not_to include('My Archived Venue')
       end
     end
 

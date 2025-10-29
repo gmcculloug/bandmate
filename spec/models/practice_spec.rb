@@ -243,12 +243,13 @@ RSpec.describe Practice, type: :model do
                user: user1,
                day_of_week: 0,
                availability: 'available',
-               suggested_start_time: Time.parse('14:00'),
-               suggested_end_time: Time.parse('16:00'))
+               suggested_start_time: Time.parse('14:00 UTC'),
+               suggested_end_time: Time.parse('16:00 UTC'))
 
         summary = practice.availability_summary
         expect(summary['Sunday'][:suggested_times].count).to eq(1)
-        expect(summary['Sunday'][:suggested_times].first.suggested_start_time.strftime('%H:%M')).to eq('14:00')
+        suggested_time = summary['Sunday'][:suggested_times].first
+        expect(suggested_time.suggested_start_time.strftime('%H:%M')).to eq('14:00')
       end
     end
 
@@ -261,8 +262,8 @@ RSpec.describe Practice, type: :model do
                                        practice: practice,
                                        user: user1,
                                        day_of_week: 1,
-                                       suggested_start_time: Time.parse('14:00'),
-                                       suggested_end_time: Time.parse('16:00'))
+                                       suggested_start_time: Time.parse('14:00 UTC'),
+                                       suggested_end_time: Time.parse('16:00 UTC'))
 
         availability_without_times = create(:practice_availability,
                                           practice: practice,
@@ -290,23 +291,23 @@ RSpec.describe Practice, type: :model do
                practice: practice,
                user: user1,
                day_of_week: 1,
-               suggested_start_time: Time.parse('14:00'),
-               suggested_end_time: Time.parse('16:00'))
+               suggested_start_time: Time.parse('14:00 UTC'),
+               suggested_end_time: Time.parse('16:00 UTC'))
 
         create(:practice_availability,
                practice: practice,
                user: user2,
                day_of_week: 1,
-               suggested_start_time: Time.parse('14:00'),
-               suggested_end_time: Time.parse('16:00'))
+               suggested_start_time: Time.parse('14:00 UTC'),
+               suggested_end_time: Time.parse('16:00 UTC'))
 
         # One user suggests a different time
         create(:practice_availability,
                practice: practice,
                user: user3,
                day_of_week: 1,
-               suggested_start_time: Time.parse('18:00'),
-               suggested_end_time: Time.parse('20:00'))
+               suggested_start_time: Time.parse('18:00 UTC'),
+               suggested_end_time: Time.parse('20:00 UTC'))
 
         result = practice.most_popular_time_for_day(1)
         expect(result[:start_time]).to eq('14:00')
@@ -323,15 +324,15 @@ RSpec.describe Practice, type: :model do
                practice: practice,
                user: user1,
                day_of_week: 1,
-               suggested_start_time: Time.parse('14:00'),
-               suggested_end_time: Time.parse('16:00'))
+               suggested_start_time: Time.parse('14:00 UTC'),
+               suggested_end_time: Time.parse('16:00 UTC'))
 
         create(:practice_availability,
                practice: practice,
                user: user2,
                day_of_week: 1,
-               suggested_start_time: Time.parse('18:00'),
-               suggested_end_time: Time.parse('20:00'))
+               suggested_start_time: Time.parse('18:00 UTC'),
+               suggested_end_time: Time.parse('20:00 UTC'))
 
         result = practice.most_popular_time_for_day(1)
         expect(result[:count]).to eq(1)

@@ -5,71 +5,68 @@ RSpec.describe 'Practice Routes', type: :request do
   let(:band) { create(:band) }
   let(:practice) { create(:practice, band: band, created_by_user: user) }
 
-  before do
-    # Set up user-band association
-    band.users << user
-    # Simulate login
-    post '/test_auth', params: { user_id: user.id, band_id: band.id }
+  shared_context 'logged in user' do
+    before do
+      # Set up user-band association
+      band.users << user
+      # Simulate login
+      login_as(user, band)
+    end
   end
 
   describe 'GET /practices' do
     context 'when logged in' do
+      include_context 'logged in user'
       it 'returns success' do
         get '/practices'
-        expect(response).to have_http_status(200)
+        expect(last_response).to be_ok
       end
 
       it 'displays practices' do
         practice # create the practice
         get '/practices'
-        expect(response.body).to include('Practice Scheduling')
-        expect(response.body).to include(practice.formatted_week_range)
+        expect(last_response.body).to include('Practice Scheduling')
+        expect(last_response.body).to include(practice.formatted_week_range)
       end
 
       it 'shows empty state when no practices exist' do
         get '/practices'
-        expect(response.body).to include('No Practice Sessions Yet')
-        expect(response.body).to include('Schedule your first practice session')
+        expect(last_response.body).to include('No Practice Sessions Yet')
+        expect(last_response.body).to include('Schedule your first practice session')
       end
     end
 
     context 'when not logged in' do
-      before do
-        post '/test_auth', params: { user_id: nil, band_id: nil }
-      end
-
       it 'redirects to login' do
         get '/practices'
-        expect(response).to have_http_status(302)
-        expect(response.location).to include('/login')
+        expect(last_response).to be_redirect
+        expect(last_response.location).to include('/login')
       end
     end
   end
 
   describe 'GET /practices/new' do
     context 'when logged in' do
+      include_context 'logged in user'
+
       it 'returns success' do
         get '/practices/new'
-        expect(response).to have_http_status(200)
+        expect(last_response).to be_ok
       end
 
       it 'displays the new practice form' do
         get '/practices/new'
-        expect(response.body).to include('Schedule Practice Session')
-        expect(response.body).to include('practice_title')
-        expect(response.body).to include('week_start_date')
+        expect(last_response.body).to include('Schedule Practice Session')
+        expect(last_response.body).to include('practice_title')
+        expect(last_response.body).to include('week_start_date')
       end
     end
 
     context 'when not logged in' do
-      before do
-        post '/test_auth', params: { user_id: nil, band_id: nil }
-      end
-
       it 'redirects to login' do
         get '/practices/new'
-        expect(response).to have_http_status(302)
-        expect(response.location).to include('/login')
+        expect(last_response).to be_redirect
+        expect(last_response.location).to include('/login')
       end
     end
   end
@@ -84,23 +81,25 @@ RSpec.describe 'Practice Routes', type: :request do
     end
 
     context 'when logged in' do
+      include_context 'logged in user'
+
       it 'creates a new practice with valid params' do
         expect {
-          post '/practices', params: valid_params
+          post '/practices', valid_params
         }.to change(Practice, :count).by(1)
 
         practice = Practice.last
         expect(practice.title).to eq('Weekly Practice')
         expect(practice.band).to eq(band)
         expect(practice.created_by_user).to eq(user)
-        expect(response).to have_http_status(302)
-        expect(response.location).to include("/practices/#{practice.id}")
+        expect(last_response).to be_redirect
+        expect(last_response.location).to include("/practices/#{practice.id}")
       end
 
       it 'adjusts week_start_date to Sunday' do
         # Use a Wednesday date
         wednesday = Date.current.beginning_of_week(:sunday) + 3.days
-        post '/practices', params: valid_params.merge(week_start_date: wednesday.to_s)
+        post '/practices',valid_params.merge(week_start_date: wednesday.to_s)
 
         practice = Practice.last
         expect(practice.week_start_date.wday).to eq(0) # Sunday
@@ -108,56 +107,54 @@ RSpec.describe 'Practice Routes', type: :request do
       end
 
       it 'handles invalid date format' do
-        post '/practices', params: valid_params.merge(week_start_date: 'invalid-date')
-        expect(response.body).to include('Invalid date format')
+        post '/practices',valid_params.merge(week_start_date: 'invalid-date')
+        expect(last_response.body).to include('Invalid date format')
       end
 
       it 'does not create practice with duplicate week for same band' do
         create(:practice, band: band, week_start_date: Date.current.beginning_of_week(:sunday))
 
-        post '/practices', params: valid_params
-        expect(response.body).to include('Week start date already has a practice scheduled for this week')
+        post '/practices',valid_params
+        expect(last_response.body).to include('Week start date already has a practice scheduled for this week')
       end
     end
 
     context 'when not logged in' do
-      before do
-        post '/test_auth', params: { user_id: nil, band_id: nil }
-      end
-
       it 'redirects to login' do
-        post '/practices', params: valid_params
-        expect(response).to have_http_status(302)
-        expect(response.location).to include('/login')
+        post '/practices',valid_params
+        expect(last_response).to be_redirect
+        expect(last_response.location).to include('/login')
       end
     end
   end
 
   describe 'GET /practices/:id' do
     context 'when logged in' do
+      include_context 'logged in user'
+
       it 'returns success' do
         get "/practices/#{practice.id}"
-        expect(response).to have_http_status(200)
+        expect(last_response).to be_ok
       end
 
       it 'displays practice details' do
         get "/practices/#{practice.id}"
-        expect(response.body).to include(practice.title)
-        expect(response.body).to include(practice.formatted_week_range)
-        expect(response.body).to include('Your Availability')
+        expect(last_response.body).to include(practice.title)
+        expect(last_response.body).to include(practice.formatted_week_range)
+        expect(last_response.body).to include('Your Availability')
       end
 
       it 'shows finalized status when practice is finalized' do
         practice.update!(status: 'finalized')
         get "/practices/#{practice.id}"
-        expect(response.body).to include('finalized')
-        expect(response.body).to include('No further changes can be made')
+        expect(last_response.body).to include('finalized')
+        expect(last_response.body).to include('No further changes can be made')
       end
 
       it 'redirects if practice does not exist' do
         get '/practices/99999'
-        expect(response).to have_http_status(302)
-        expect(response.location).to include('/practices')
+        expect(last_response).to be_redirect
+        expect(last_response.location).to include('/practices')
       end
 
       it 'redirects if practice belongs to different band' do
@@ -165,20 +162,16 @@ RSpec.describe 'Practice Routes', type: :request do
         other_practice = create(:practice, band: other_band)
 
         get "/practices/#{other_practice.id}"
-        expect(response).to have_http_status(302)
-        expect(response.location).to include('/practices')
+        expect(last_response).to be_redirect
+        expect(last_response.location).to include('/practices')
       end
     end
 
     context 'when not logged in' do
-      before do
-        post '/test_auth', params: { user_id: nil, band_id: nil }
-      end
-
       it 'redirects to login' do
         get "/practices/#{practice.id}"
-        expect(response).to have_http_status(302)
-        expect(response.location).to include('/login')
+        expect(last_response).to be_redirect
+        expect(last_response.location).to include('/login')
       end
     end
   end
@@ -196,6 +189,8 @@ RSpec.describe 'Practice Routes', type: :request do
     end
 
     context 'when logged in' do
+      include_context 'logged in user'
+
       it 'creates availability entries' do
         expect {
           post "/practices/#{practice.id}/availability", params: availability_params
@@ -234,33 +229,31 @@ RSpec.describe 'Practice Routes', type: :request do
 
       it 'redirects to practice show page' do
         post "/practices/#{practice.id}/availability", params: availability_params
-        expect(response).to have_http_status(302)
-        expect(response.location).to include("/practices/#{practice.id}")
+        expect(last_response).to be_redirect
+        expect(last_response.location).to include("/practices/#{practice.id}")
       end
     end
 
     context 'when not logged in' do
-      before do
-        post '/test_auth', params: { user_id: nil, band_id: nil }
-      end
-
       it 'redirects to login' do
         post "/practices/#{practice.id}/availability", params: availability_params
-        expect(response).to have_http_status(302)
-        expect(response.location).to include('/login')
+        expect(last_response).to be_redirect
+        expect(last_response.location).to include('/login')
       end
     end
   end
 
   describe 'POST /practices/:id/finalize' do
     context 'when logged in as practice creator' do
+      include_context 'logged in user'
+
       it 'finalizes the practice' do
         post "/practices/#{practice.id}/finalize"
 
         practice.reload
         expect(practice.status).to eq('finalized')
-        expect(response).to have_http_status(302)
-        expect(response.location).to include("/practices/#{practice.id}")
+        expect(last_response).to be_redirect
+        expect(last_response.location).to include("/practices/#{practice.id}")
       end
     end
 
@@ -283,6 +276,8 @@ RSpec.describe 'Practice Routes', type: :request do
     end
 
     context 'when logged in as regular band member' do
+      include_context 'logged in user'
+
       let(:other_user) { create(:user) }
       let(:other_practice) { create(:practice, band: band, created_by_user: other_user) }
 
@@ -291,14 +286,16 @@ RSpec.describe 'Practice Routes', type: :request do
 
         other_practice.reload
         expect(other_practice.status).to eq('active')
-        expect(response).to have_http_status(302)
-        expect(response.location).to include("/practices/#{other_practice.id}")
+        expect(last_response).to be_redirect
+        expect(last_response.location).to include("/practices/#{other_practice.id}")
       end
     end
   end
 
   describe 'DELETE /practices/:id' do
     context 'when logged in as practice creator' do
+      include_context 'logged in user'
+
       it 'deletes the practice' do
         practice_id = practice.id
 
@@ -306,8 +303,8 @@ RSpec.describe 'Practice Routes', type: :request do
           delete "/practices/#{practice_id}"
         }.to change(Practice, :count).by(-1)
 
-        expect(response).to have_http_status(302)
-        expect(response.location).to include('/practices')
+        expect(last_response).to be_redirect
+        expect(last_response.location).to include('/practices')
       end
     end
 
@@ -331,16 +328,21 @@ RSpec.describe 'Practice Routes', type: :request do
     end
 
     context 'when logged in as regular band member' do
+      include_context 'logged in user'
+
       let(:other_user) { create(:user) }
       let(:other_practice) { create(:practice, band: band, created_by_user: other_user) }
 
       it 'does not allow deletion' do
+        # Create the practice before the expectation block to avoid lazy evaluation issues
+        practice_id = other_practice.id
+
         expect {
-          delete "/practices/#{other_practice.id}"
+          delete "/practices/#{practice_id}"
         }.not_to change(Practice, :count)
 
-        expect(response).to have_http_status(302)
-        expect(response.location).to include("/practices/#{other_practice.id}")
+        expect(last_response).to be_redirect
+        expect(last_response.location).to include("/practices/#{practice_id}")
       end
     end
   end

@@ -325,7 +325,7 @@ RSpec.describe 'Gigs API', type: :request do
       
       expect(last_response).to be_ok
       expect(last_response.body).to include('Print Gig')
-      expect(last_response.body).not_to include('layout') # Should not use layout
+      expect(last_response.body).not_to include('class="nav"') # Should not use layout
     end
   end
 

@@ -88,8 +88,8 @@ FactoryBot.define do
   factory :practice_availability do
     association :practice
     association :user
-    day_of_week { rand(0..6) }
-    availability { ['available', 'maybe', 'not_available'].sample }
+    day_of_week { 0 }
+    availability { 'available' }
     notes { "Available in the evening" }
   end
 end 
