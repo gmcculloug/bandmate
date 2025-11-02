@@ -23,7 +23,7 @@
 
         @media print {
             @page {
-                margin: 0.5in 0.25in;
+                margin: 0 0.25in 0 0.25in;
             }
 
             /* Default portrait orientation */
@@ -42,13 +42,13 @@
 
             body.layout-landscape @page {
                 size: letter landscape;
-                margin: 0.25in 0.5in; /* Swap margins for landscape */
+                margin: 0 0.5in 0 0.5in; /* Remove top and bottom margins for landscape */
             }
 
             /* Alternative landscape approach for better browser compatibility */
             @page landscape {
                 size: letter landscape;
-                margin: 0.25in 0.5in;
+                margin: 0 0.5in 0 0.5in;
             }
 
             body.layout-landscape .set-row {
@@ -158,7 +158,7 @@
 
         
         .summary {
-            margin-top: 5px;
+            margin-top: 0;
             padding-top: 8px;
             border-top: 1px solid #000;
         }
