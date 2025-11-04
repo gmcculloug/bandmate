@@ -48,7 +48,7 @@
             <div class="bands-list">
                 <h4>Your Bands</h4>
                 <% user_bands.each do |band| %>
-                    <div class="band-item">
+                    <div class="band-item" style="cursor: pointer; padding: 12px; border: 1px solid #e2e8f0; border-radius: 6px; margin-bottom: 8px; transition: background-color 0.2s;" onclick="window.location.href='/bands/<%= band.id %>'">
                         <div class="band-info">
                             <span class="band-name"><%= band.name %></span>
                             <% if current_band&.id == band.id %>
@@ -62,10 +62,6 @@
                             <span class="stat">
                                 <strong><%= band.gigs.count %></strong> set lists
                             </span>
-                        </div>
-                        <div class="band-actions">
-                            <a href="/bands/<%= band.id %>" class="btn btn-small">View</a>
-                            <a href="/bands/<%= band.id %>/edit" class="btn btn-small">Edit</a>
                         </div>
                     </div>
                 <% end %>

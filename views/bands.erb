@@ -34,15 +34,6 @@
                             </div>
                         <% end %>
                     </div>
-                    <div class="actions" onclick="event.stopPropagation();" style="display: flex; gap: 5px; flex-shrink: 0;">
-                        <% if band.owned_by?(current_user) %>
-                            <a href="/bands/<%= band.id %>/edit" class="btn" style="font-size: 0.8rem; padding: 5px 10px;">Edit</a>
-                            <form method="POST" action="/bands/<%= band.id %>" style="display: inline;">
-                                <input type="hidden" name="_method" value="DELETE">
-                                <button type="submit" class="btn btn-danger" style="font-size: 0.8rem; padding: 5px 10px;" onclick="return confirm('Delete this band? This will also delete all associated songs and set lists.')">Delete</button>
-                            </form>
-                        <% end %>
-                    </div>
                 </div>
             </div>
         <% end %>
