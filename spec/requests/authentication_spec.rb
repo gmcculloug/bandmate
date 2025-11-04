@@ -135,6 +135,27 @@ RSpec.describe 'Authentication', type: :request do
         expect(last_response.body).to include('Delete Account')
         expect(last_response.body).to include('Permanently Delete My Account')
       end
+
+      it 'displays breadcrumbs navigation' do
+        get '/account/delete'
+        expect(last_response).to be_ok
+        expect(last_response.body).to include('<nav class="breadcrumbs"')
+        expect(last_response.body).to include('Profile')
+        expect(last_response.body).to include('Delete Account')
+      end
+
+      it 'displays SVG wireframe icons in breadcrumbs' do
+        get '/account/delete'
+        expect(last_response).to be_ok
+        # Check for SVG home icon
+        expect(last_response.body).to include('<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"')
+        expect(last_response.body).to include('<path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"')
+        # Check for SVG profile/settings icon
+        expect(last_response.body).to include('<circle cx="12" cy="12" r="3"')
+        # Check for SVG trash/delete icon
+        expect(last_response.body).to include('<path d="M3 6h18"')
+        expect(last_response.body).to include('<path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"')
+      end
     end
 
     describe 'POST /account/delete' do
@@ -189,6 +210,23 @@ RSpec.describe 'Authentication', type: :request do
         expect(last_response.body).to include('User Profile')
         expect(last_response.body).to include('testuser')
         expect(last_response.body).to include('test@example.com')
+      end
+
+      it 'displays breadcrumbs navigation' do
+        get '/profile'
+        expect(last_response).to be_ok
+        expect(last_response.body).to include('<nav class="breadcrumbs"')
+        expect(last_response.body).to include('Profile')
+      end
+
+      it 'displays SVG wireframe icons in breadcrumbs' do
+        get '/profile'
+        expect(last_response).to be_ok
+        # Check for SVG home icon
+        expect(last_response.body).to include('<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"')
+        expect(last_response.body).to include('<path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"')
+        # Check for SVG profile/settings icon
+        expect(last_response.body).to include('<circle cx="12" cy="12" r="3"')
       end
     end
 

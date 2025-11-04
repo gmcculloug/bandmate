@@ -4,7 +4,6 @@
         <% if @band.users.include?(current_user) %>
             <a href="/bands/<%= @band.id %>/edit" class="btn">Edit</a>
         <% end %>
-        <a href="/profile" class="btn">Back to Settings</a>
     </div>
 </div>
 
