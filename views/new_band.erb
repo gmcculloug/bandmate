@@ -4,7 +4,7 @@
         <% if params[:first_band] == 'true' %>
             <span style="color: #666; font-style: italic;">First Band Setup</span>
         <% else %>
-            <a href="/bands" class="btn">Back to Bands</a>
+            <a href="/profile" class="btn">Back to Profile</a>
         <% end %>
     </div>
     
@@ -38,7 +38,7 @@
             <div class="actions">
                 <button type="submit" class="btn btn-success">Create Band</button>
                 <% unless params[:first_band] == 'true' %>
-                    <a href="/bands" class="btn">Cancel</a>
+                    <a href="/profile" class="btn">Cancel</a>
                 <% end %>
             </div>
         </form>

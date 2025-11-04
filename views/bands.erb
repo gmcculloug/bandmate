@@ -5,12 +5,6 @@
     </div>
 </div>
 
-<% if params[:left_band] %>
-    <div class="message message--success">
-        You have successfully left the band.
-    </div>
-<% end %>
-
 <% if @bands.any? %>
     <div style="display: flex; flex-direction: column; gap: 8px;">
         <% @bands.each do |band| %>

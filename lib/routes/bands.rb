@@ -42,7 +42,7 @@ class Routes::Bands < Sinatra::Base
         current_user.update(last_selected_band_id: band.id)
         redirect '/gigs'
       else
-        redirect '/bands'
+        redirect '/profile'
       end
     else
       @errors = band.errors.full_messages
@@ -107,8 +107,8 @@ class Routes::Bands < Sinatra::Base
     
     # Delete the band
     band.destroy
-    
-    redirect '/bands'
+
+    redirect '/profile'
   end
 
   # ============================================================================
@@ -179,8 +179,8 @@ class Routes::Bands < Sinatra::Base
       @band.users.delete(user_to_remove)
       
       if user_to_remove == current_user
-        # User is removing themselves - redirect to bands list with message
-        redirect '/bands?left_band=true'
+        # User is removing themselves - redirect to profile to see updated bands list
+        redirect '/profile'
       else
         # Member removing another user - stay on edit page with success message
         @user_success = "Successfully removed '#{user_to_remove.username}' from the band"
