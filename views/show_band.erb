@@ -37,6 +37,8 @@
     <% if @band.users.any? %>
         <div style="margin-bottom: 15px;">
             <% @band.users.order(:username).each do |user| %>
+                <% user_band = @band.user_bands.find_by(user: user) %>
+                <% is_owner = user_band&.owner? %>
                 <div class="user-card" style="margin-bottom: 8px; padding: 10px; border: 1px solid #e2e8f0; border-radius: 6px;">
                     <div style="display: flex; justify-content: space-between; align-items: center;">
                         <div style="flex: 1;">
@@ -45,8 +47,10 @@
                                 <% if user == current_user %>
                                     <span style="background: #667eea; color: white; padding: 2px 6px; border-radius: 10px; font-size: 0.75rem; margin-left: 8px;">You</span>
                                 <% end %>
-                                <% if user == @band.owner %>
+                                <% if is_owner %>
                                     <span style="background: #f59e0b; color: white; padding: 2px 6px; border-radius: 10px; font-size: 0.75rem; margin-left: 8px;">👑 Owner</span>
+                                <% else %>
+                                    <span style="background: #94a3b8; color: white; padding: 2px 6px; border-radius: 10px; font-size: 0.75rem; margin-left: 8px;">Member</span>
                                 <% end %>
                             </div>
                             <div style="margin-top: 4px; font-size: 0.85rem; color: #4a5568;">

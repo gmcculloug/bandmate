@@ -11,4 +11,15 @@ class User < ActiveRecord::Base
   validates :password, length: { minimum: 6 }, if: :password_digest_changed?
   validates :email, uniqueness: { case_sensitive: false }, allow_blank: true
   validates :email, format: { with: URI::MailTo::EMAIL_REGEXP }, allow_blank: true
+  
+  # Helper methods for checking ownership and membership
+  def owner_of?(band)
+    return false unless band
+    user_bands.exists?(band_id: band.id, role: 'owner')
+  end
+  
+  def member_of?(band)
+    return false unless band
+    user_bands.exists?(band_id: band.id)
+  end
 end

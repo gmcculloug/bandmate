@@ -8,12 +8,32 @@ FactoryBot.define do
   factory :user_band do
     association :user
     association :band
+    role { 'member' }
+    
+    trait :owner do
+      role { 'owner' }
+    end
+    
+    trait :member do
+      role { 'member' }
+    end
   end
 
   factory :band do
     sequence(:name) { |n| "Band #{n}" }
     notes { Faker::Lorem.paragraph }
     association :owner, factory: :user
+    
+    after(:create) do |band|
+      # Ensure owner is added as a user_band with owner role
+      unless band.users.include?(band.owner)
+        UserBand.create!(band: band, user: band.owner, role: 'owner')
+      else
+        # Update existing user_band to owner role
+        user_band = band.user_bands.find_by(user: band.owner)
+        user_band&.update!(role: 'owner')
+      end
+    end
   end
 
   factory :song_catalog do

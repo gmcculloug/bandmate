@@ -171,13 +171,25 @@ class Routes::Authentication < Sinatra::Base
       # Clear last selected band reference first
       user.update(last_selected_band_id: nil)
       
-      # Handle bands owned by this user
-      owned_bands = Band.where(owner: user)
-      owned_bands.each do |band|
-        # If band has other members, transfer ownership to the first member
+      # Handle bands owned by this user (using role-based system)
+      owned_user_bands = user.user_bands.where(role: 'owner')
+      owned_user_bands.each do |user_band|
+        band = user_band.band
+        # If band has other members, make the first member an owner if needed
         other_members = band.users.where.not(id: user.id)
         if other_members.any?
-          band.update(owner: other_members.first)
+          # Check if there are other owners
+          other_owners = band.owners.where.not(id: user.id)
+          if other_owners.empty?
+            # No other owners, make first member an owner
+            first_member = other_members.first
+            member_user_band = UserBand.find_by(band: band, user: first_member)
+            if member_user_band
+              member_user_band.update!(role: 'owner')
+              # Update owner_id for backward compatibility
+              band.update_column(:owner_id, first_member.id)
+            end
+          end
         else
           # If no other members, delete the band
           # First clear all user associations
@@ -187,7 +199,7 @@ class Routes::Authentication < Sinatra::Base
       end
       
       # Remove user from all bands
-      user.bands.clear
+      user.user_bands.destroy_all
       
       # Clear session before deleting user
       session.clear

@@ -5,6 +5,8 @@ class Band < ActiveRecord::Base
   has_many :venues
   has_many :user_bands
   has_many :users, through: :user_bands
+  has_many :owner_user_bands, -> { where(role: 'owner') }, class_name: 'UserBand'
+  has_many :owners, through: :owner_user_bands, source: :user
   has_many :google_calendar_events, dependent: :destroy
   has_many :practices, dependent: :destroy
   
@@ -17,11 +19,21 @@ class Band < ActiveRecord::Base
   end
   
   def owner?
-    owner.present?
+    owners.exists?
   end
   
   def owned_by?(user)
-    owner == user
+    return false unless user
+    user_bands.exists?(user_id: user.id, role: 'owner')
+  end
+  
+  def owner_of?(user)
+    return false unless user
+    user_bands.exists?(user_id: user.id, role: 'owner')
+  end
+  
+  def owner_users
+    owners
   end
 
   # Google Calendar integration methods

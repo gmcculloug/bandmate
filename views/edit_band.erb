@@ -14,7 +14,7 @@
     <% if @band.owned_by?(current_user) %>
         <div style="margin-bottom: 20px; padding: 15px; background: #f0f9ff; border-radius: 8px; border-left: 4px solid #0ea5e9;">
             <p style="margin: 0; color: #0c4a6e; font-weight: 500;">
-                👑 You are the owner of this band. You can transfer ownership to another member if needed.
+                👑 You are an owner of this band. You can manage members and their roles.
             </p>
         </div>
     <% end %>
@@ -41,7 +41,11 @@
     <div class="card" style="margin-bottom: 30px;">
         <h3>👥 Band Members</h3>
         <p style="color: #666; margin-bottom: 15px;">
-            Any band member can add or remove other members. The band owner cannot be removed and must transfer ownership first.
+            <% if @band.owned_by?(current_user) %>
+                Only owners can add or remove members and change membership roles.
+            <% else %>
+                Only band owners can manage members. Contact an owner to request changes.
+            <% end %>
         </p>
         
         <% if @user_error %>
@@ -61,14 +65,18 @@
                 <div style="margin-bottom: 20px;">
                     <h4>Current Members</h4>
                     <% @band.users.order(:username).each do |user| %>
+                        <% user_band = @band.user_bands.find_by(user: user) %>
+                        <% is_owner = user_band&.owner? %>
                         <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px; border: 1px solid #e2e8f0; border-radius: 4px; margin-bottom: 5px;">
                             <span style="font-weight: 500;">
                                 <%= user.username %>
                                 <% if user == current_user %>
                                     <span style="background: #667eea; color: white; padding: 2px 6px; border-radius: 10px; font-size: 0.75rem; margin-left: 8px;">You</span>
                                 <% end %>
-                                <% if user == @band.owner %>
+                                <% if is_owner %>
                                     <span style="background: #f59e0b; color: white; padding: 2px 6px; border-radius: 10px; font-size: 0.75rem; margin-left: 8px;">👑 Owner</span>
+                                <% else %>
+                                    <span style="background: #94a3b8; color: white; padding: 2px 6px; border-radius: 10px; font-size: 0.75rem; margin-left: 8px;">Member</span>
                                 <% end %>
                             </span>
                             <div style="display: flex; gap: 5px; align-items: center;">
@@ -78,18 +86,27 @@
                                             <input type="hidden" name="user_id" value="<%= user.id %>">
                                             <button type="submit" class="btn btn-danger" style="font-size: 0.8rem; padding: 3px 8px;" onclick="return confirm('Leave this band? You will no longer have access to its songs and set lists.')">Leave Band</button>
                                         </form>
-                                    <% elsif user != @band.owner %>
-                                        <form method="POST" action="/bands/<%= @band.id %>/remove_user" style="display: inline;">
-                                            <input type="hidden" name="user_id" value="<%= user.id %>">
-                                            <button type="submit" class="btn btn-danger" style="font-size: 0.8rem; padding: 3px 8px;" onclick="return confirm('Remove <%= user.username %> from this band?')">Remove</button>
-                                        </form>
-                                    <% end %>
-                                    
-                                    <% if @band.owned_by?(current_user) && user != current_user %>
-                                        <form method="POST" action="/bands/<%= @band.id %>/transfer_ownership" style="display: inline;">
-                                            <input type="hidden" name="new_owner_id" value="<%= user.id %>">
-                                            <button type="submit" class="btn btn-warning" style="font-size: 0.8rem; padding: 3px 8px;" onclick="return confirm('Transfer ownership to <%= user.username %>? This action cannot be undone.')">Make Owner</button>
-                                        </form>
+                                    <% elsif @band.owned_by?(current_user) %>
+                                        <% unless is_owner && @band.owners.count <= 1 %>
+                                            <form method="POST" action="/bands/<%= @band.id %>/remove_user" style="display: inline;">
+                                                <input type="hidden" name="user_id" value="<%= user.id %>">
+                                                <button type="submit" class="btn btn-danger" style="font-size: 0.8rem; padding: 3px 8px;" onclick="return confirm('Remove <%= user.username %> from this band?')">Remove</button>
+                                            </form>
+                                        <% end %>
+                                        
+                                        <% if is_owner && @band.owners.count > 1 %>
+                                            <form method="POST" action="/bands/<%= @band.id %>/change_membership" style="display: inline;">
+                                                <input type="hidden" name="user_id" value="<%= user.id %>">
+                                                <input type="hidden" name="role" value="member">
+                                                <button type="submit" class="btn btn-secondary" style="font-size: 0.8rem; padding: 3px 8px;" onclick="return confirm('Change <%= user.username %> to Member?')">Make Member</button>
+                                            </form>
+                                        <% elsif !is_owner %>
+                                            <form method="POST" action="/bands/<%= @band.id %>/change_membership" style="display: inline;">
+                                                <input type="hidden" name="user_id" value="<%= user.id %>">
+                                                <input type="hidden" name="role" value="owner">
+                                                <button type="submit" class="btn btn-warning" style="font-size: 0.8rem; padding: 3px 8px;" onclick="return confirm('Make <%= user.username %> an Owner?')">Make Owner</button>
+                                            </form>
+                                        <% end %>
                                     <% end %>
                                 <% elsif user == current_user %>
                                     <span style="font-size: 0.8rem; color: #999; padding: 3px 8px;">Last member</span>
@@ -100,15 +117,17 @@
                 </div>
             <% end %>
 
-            <h4>Add New Member</h4>
-            <form method="POST" action="/bands/<%= @band.id %>/add_user" style="display: flex; gap: 10px; align-items: end;">
-                <div style="flex: 1;">
-                    <label for="username" style="display: block; margin-bottom: 5px; font-weight: bold;">Username</label>
-                    <input type="text" id="username" name="username" required style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 16px;" placeholder="Enter username to add">
-                </div>
-                <button type="submit" class="btn btn-success">Add Member</button>
-            </form>
-            <small style="color: #666; margin-top: 5px; display: block;">Enter the exact username of the user you want to add to this band.</small>
+            <% if @band.owned_by?(current_user) %>
+                <h4>Add New Member</h4>
+                <form method="POST" action="/bands/<%= @band.id %>/add_user" style="display: flex; gap: 10px; align-items: end;">
+                    <div style="flex: 1;">
+                        <label for="username" style="display: block; margin-bottom: 5px; font-weight: bold;">Username</label>
+                        <input type="text" id="username" name="username" required style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 16px;" placeholder="Enter username to add">
+                    </div>
+                    <button type="submit" class="btn btn-success">Add Member</button>
+                </form>
+                <small style="color: #666; margin-top: 5px; display: block;">Enter the exact username of the user you want to add to this band. New members will be added as 'Member' by default.</small>
+            <% end %>
         </div>
     </div>
 

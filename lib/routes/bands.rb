@@ -32,8 +32,8 @@ class Routes::Bands < Sinatra::Base
     band.owner = current_user
     
     if band.save
-      # Associate the current user with the new band
-      current_user.bands << band
+      # Associate the current user with the new band as owner
+      UserBand.create!(band: band, user: current_user, role: 'owner')
       
       # Set this as the current band if it's the user's first band
       if current_user.bands.count == 1
@@ -138,9 +138,9 @@ class Routes::Bands < Sinatra::Base
     require_login
     @band = user_bands.find(params[:id])
     
-    # Any band member can add users
-    unless @band.users.include?(current_user)
-      @user_error = "You must be a member of this band to add new members"
+    # Only owners can add users
+    unless @band.owned_by?(current_user)
+      @user_error = "Only band owners can add new members"
       return erb :edit_band
     end
     
@@ -164,8 +164,8 @@ class Routes::Bands < Sinatra::Base
       return erb :edit_band
     end
     
-    # Add user to band
-    @band.users << user
+    # Add user to band with 'member' role by default
+    UserBand.create!(band: @band, user: user, role: 'member')
     @user_success = "Successfully added '#{username}' to the band"
     
     erb :edit_band
@@ -176,15 +176,15 @@ class Routes::Bands < Sinatra::Base
     @band = user_bands.find(params[:id])
     user_to_remove = User.find(params[:user_id])
     
-    # Any band member can remove other members, but users can always remove themselves
-    if user_to_remove != current_user && !@band.users.include?(current_user)
-      @user_error = "You must be a member of this band to remove other members"
+    # Users can always remove themselves, but only owners can remove other members
+    if user_to_remove != current_user && !@band.owned_by?(current_user)
+      @user_error = "Only band owners can remove other members"
       return erb :edit_band
     end
     
-    # Prevent removing the band owner
-    if user_to_remove == @band.owner
-      @user_error = "Cannot remove the band owner. The owner must transfer ownership first."
+    # Prevent removing owners (unless it's yourself)
+    if user_to_remove != current_user && @band.owner_of?(user_to_remove)
+      @user_error = "Cannot remove an owner. Change their role to member first or have them transfer ownership."
       return erb :edit_band
     end
     
@@ -194,14 +194,21 @@ class Routes::Bands < Sinatra::Base
       return erb :edit_band
     end
     
-    if @band.users.include?(user_to_remove)
-      @band.users.delete(user_to_remove)
+    # Prevent removing the last owner
+    if @band.owner_of?(user_to_remove) && @band.owners.count <= 1
+      @user_error = "Cannot remove the last owner from the band. Add another owner first."
+      return erb :edit_band
+    end
+    
+    user_band = UserBand.find_by(band: @band, user: user_to_remove)
+    if user_band
+      user_band.destroy
       
       if user_to_remove == current_user
         # User is removing themselves - redirect to profile to see updated bands list
         redirect '/profile'
       else
-        # Member removing another user - stay on edit page with success message
+        # Owner removing another user - stay on edit page with success message
         @user_success = "Successfully removed '#{user_to_remove.username}' from the band"
         erb :edit_band
       end
@@ -211,32 +218,84 @@ class Routes::Bands < Sinatra::Base
     end
   end
 
+  post '/bands/:id/change_membership' do
+    require_login
+    @band = user_bands.find(params[:id])
+    user = User.find(params[:user_id])
+    new_role = params[:role]
+    
+    # Only owners can change membership
+    unless @band.owned_by?(current_user)
+      @user_error = "Only band owners can change membership roles"
+      return erb :edit_band
+    end
+    
+    # Validate role
+    unless ['member', 'owner'].include?(new_role)
+      @user_error = "Invalid role. Must be 'member' or 'owner'"
+      return erb :edit_band
+    end
+    
+    # User must be a member of the band
+    user_band = UserBand.find_by(band: @band, user: user)
+    unless user_band
+      @user_error = "User is not a member of this band"
+      return erb :edit_band
+    end
+    
+    # Prevent removing the last owner
+    if user_band.owner? && new_role == 'member' && @band.owners.count <= 1
+      @user_error = "Cannot remove the last owner from the band. Add another owner first."
+      return erb :edit_band
+    end
+    
+    # Update role
+    user_band.update!(role: new_role)
+    
+    # Keep owner_id updated for backward compatibility (set to first owner)
+    if @band.owners.any?
+      @band.update_column(:owner_id, @band.owners.first.id)
+    end
+    
+    role_text = new_role == 'owner' ? 'owner' : 'member'
+    @user_success = "Successfully changed '#{user.username}' to #{role_text}"
+    
+    erb :edit_band
+  end
+
   post '/bands/:id/transfer_ownership' do
     require_login
     @band = user_bands.find(params[:id])
     new_owner = User.find(params[:new_owner_id])
     
-    # Only the current owner can transfer ownership
+    # Only owners can transfer ownership (make someone else an owner)
     unless @band.owned_by?(current_user)
-      @user_error = "Only the band owner can transfer ownership"
+      @user_error = "Only band owners can transfer ownership"
       return erb :edit_band
     end
     
     # New owner must be a member of the band
-    unless @band.users.include?(new_owner)
+    user_band = UserBand.find_by(band: @band, user: new_owner)
+    unless user_band
       @user_error = "The new owner must be a member of this band"
       return erb :edit_band
     end
     
-    # Cannot transfer ownership to yourself
-    if new_owner == current_user
-      @user_error = "You are already the owner of this band"
+    # If they're already an owner, nothing to do
+    if user_band.owner?
+      @user_error = "#{new_owner.username} is already an owner of this band"
       return erb :edit_band
     end
     
-    # Transfer ownership
-    @band.update(owner: new_owner)
-    @user_success = "Successfully transferred ownership to '#{new_owner.username}'"
+    # Make them an owner
+    user_band.update!(role: 'owner')
+    
+    # Keep owner_id updated for backward compatibility (set to first owner)
+    if @band.owners.any?
+      @band.update_column(:owner_id, @band.owners.first.id)
+    end
+    
+    @user_success = "Successfully made '#{new_owner.username}' an owner"
     
     erb :edit_band
   end

@@ -16,9 +16,9 @@
                             <span><strong>Songs:</strong> <%= band.songs.count %></span>
                             <span><strong>Gigs:</strong> <%= band.gigs.count %></span>
                             <span><strong>Members:</strong> <%= band.users.count %></span>
-                            <% if band.owner? %>
+                            <% if band.owners.any? %>
                                 <span style="background: #0ea5e9; color: white; padding: 2px 6px; border-radius: 10px; font-size: 0.75rem;">
-                                    👑 Owner: <%= band.owner.username %>
+                                    👑 Owner<%= band.owners.count > 1 ? 's' : '' %>: <%= band.owners.pluck(:username).join(', ') %>
                                 </span>
                             <% end %>
                         </div>

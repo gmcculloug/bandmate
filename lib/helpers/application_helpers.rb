@@ -38,6 +38,16 @@ module ApplicationHelpers
   def user_bands
     logged_in? ? current_user.bands.order(:name) : Band.none
   end
+  
+  def current_user_owner_of?(band)
+    return false unless band && logged_in?
+    current_user.owner_of?(band)
+  end
+  
+  def current_user_member_of?(band)
+    return false unless band && logged_in?
+    current_user.member_of?(band)
+  end
 
   def filter_by_current_band(collection)
     return collection.none unless current_band && collection.respond_to?(:where)
