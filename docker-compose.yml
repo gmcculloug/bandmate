@@ -2,22 +2,22 @@ services:
   postgres:
     image: postgres:17
     environment:
-      - POSTGRES_DB=bandmate_production
-      - POSTGRES_USER=bandmate
-      - POSTGRES_PASSWORD=bandmate_password
+      - POSTGRES_DB=${DATABASE_NAME}
+      - POSTGRES_PORT=${DATABASE_PORT}
+      - POSTGRES_USER=${DATABASE_USERNAME}
+      - POSTGRES_PASSWORD=${DATABASE_PASSWORD}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
-      - "5432:5432"
+      - "${DATABASE_PORT}:${DATABASE_PORT}"
     restart: unless-stopped
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U bandmate -d bandmate_production"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
       interval: 30s
       timeout: 10s
       retries: 5
-
   bandmate:
-    build: .
+    image: bandmate
     ports:
       - "0.0.0.0:443:4567"  # HTTPS port (map host 8443 to container 4567)
       - "0.0.0.0:4567:4567"  # Direct access (optional)
@@ -32,10 +32,10 @@ services:
       - BANDMATE_ACCT_CREATION_SECRET=${BANDMATE_ACCT_CREATION_SECRET:-your_secret_here}
       # PostgreSQL connection settings for Docker service
       - DATABASE_HOST=postgres
-      - DATABASE_PORT=5432
-      - DATABASE_NAME=bandmate_production
-      - DATABASE_USERNAME=bandmate
-      - DATABASE_PASSWORD=bandmate_password
+      - DATABASE_PORT=${DATABASE_PORT}
+      - DATABASE_NAME=${DATABASE_NAME}
+      - DATABASE_USERNAME=${DATABASE_USERNAME}
+      - DATABASE_PASSWORD=${DATABASE_PASSWORD}
     depends_on:
       postgres:
         condition: service_healthy
@@ -45,7 +45,7 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 40s
+      start_period: 10s
     command: >
       sh -c "
         echo 'BANDMATE_ACCT_CREATION_SECRET: ${BANDMATE_ACCT_CREATION_SECRET}' &&
@@ -68,4 +68,4 @@ services:
       "
 
 volumes:
-  postgres_data: 
+  postgres_data:
