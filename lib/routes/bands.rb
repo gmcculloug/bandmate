@@ -53,7 +53,8 @@ class Routes::Bands < Sinatra::Base
 
   get '/bands/:id' do
     require_login
-    @band = user_bands.find(params[:id])
+    @band = user_bands.includes(:user_bands, :owners).find(params[:id])
+    @user_bands_by_user_id = @band.user_bands.index_by(&:user_id)
     @breadcrumbs = [
       { label: '', url: '/', icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px;"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9,22 9,12 15,12 15,22"></polyline></svg>' },
       { label: 'Profile', url: '/profile', icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px;"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>' },
@@ -64,7 +65,8 @@ class Routes::Bands < Sinatra::Base
 
   get '/bands/:id/edit' do
     require_login
-    @band = user_bands.find(params[:id])
+    @band = user_bands.includes(:user_bands, :owners).find(params[:id])
+    @user_bands_by_user_id = @band.user_bands.index_by(&:user_id)
 
     # Any band member can edit the band
     unless @band.users.include?(current_user)
@@ -83,7 +85,8 @@ class Routes::Bands < Sinatra::Base
 
   put '/bands/:id' do
     require_login
-    @band = user_bands.find(params[:id])
+    @band = user_bands.includes(:user_bands, :owners).find(params[:id])
+    @user_bands_by_user_id = @band.user_bands.index_by(&:user_id)
     
     # Any band member can edit the band
     unless @band.users.include?(current_user)
@@ -136,7 +139,8 @@ class Routes::Bands < Sinatra::Base
 
   post '/bands/:id/add_user' do
     require_login
-    @band = user_bands.find(params[:id])
+    @band = user_bands.includes(:user_bands, :owners).find(params[:id])
+    @user_bands_by_user_id = @band.user_bands.index_by(&:user_id)
     
     # Only owners can add users
     unless @band.owned_by?(current_user)
@@ -166,6 +170,8 @@ class Routes::Bands < Sinatra::Base
     
     # Add user to band with 'member' role by default
     UserBand.create!(band: @band, user: user, role: 'member')
+    @band.user_bands.reload
+    @user_bands_by_user_id = @band.user_bands.index_by(&:user_id)
     @user_success = "Successfully added '#{username}' to the band"
     
     erb :edit_band
@@ -173,7 +179,8 @@ class Routes::Bands < Sinatra::Base
 
   post '/bands/:id/remove_user' do
     require_login
-    @band = user_bands.find(params[:id])
+    @band = user_bands.includes(:user_bands, :owners).find(params[:id])
+    @user_bands_by_user_id = @band.user_bands.index_by(&:user_id)
     user_to_remove = User.find(params[:user_id])
     
     # Users can always remove themselves, but only owners can remove other members
@@ -203,6 +210,8 @@ class Routes::Bands < Sinatra::Base
     user_band = UserBand.find_by(band: @band, user: user_to_remove)
     if user_band
       user_band.destroy
+      @band.user_bands.reload
+      @user_bands_by_user_id = @band.user_bands.index_by(&:user_id)
       
       if user_to_remove == current_user
         # User is removing themselves - redirect to profile to see updated bands list
@@ -220,7 +229,8 @@ class Routes::Bands < Sinatra::Base
 
   post '/bands/:id/change_membership' do
     require_login
-    @band = user_bands.find(params[:id])
+    @band = user_bands.includes(:user_bands, :owners).find(params[:id])
+    @user_bands_by_user_id = @band.user_bands.index_by(&:user_id)
     user = User.find(params[:user_id])
     new_role = params[:role]
     
@@ -251,6 +261,8 @@ class Routes::Bands < Sinatra::Base
     
     # Update role
     user_band.update!(role: new_role)
+    @band.user_bands.reload
+    @user_bands_by_user_id = @band.user_bands.index_by(&:user_id)
     
     # Keep owner_id updated for backward compatibility (set to first owner)
     if @band.owners.any?
@@ -265,7 +277,8 @@ class Routes::Bands < Sinatra::Base
 
   post '/bands/:id/transfer_ownership' do
     require_login
-    @band = user_bands.find(params[:id])
+    @band = user_bands.includes(:user_bands, :owners).find(params[:id])
+    @user_bands_by_user_id = @band.user_bands.index_by(&:user_id)
     new_owner = User.find(params[:new_owner_id])
     
     # Only owners can transfer ownership (make someone else an owner)
@@ -289,6 +302,8 @@ class Routes::Bands < Sinatra::Base
     
     # Make them an owner
     user_band.update!(role: 'owner')
+    @band.user_bands.reload
+    @user_bands_by_user_id = @band.user_bands.index_by(&:user_id)
     
     # Keep owner_id updated for backward compatibility (set to first owner)
     if @band.owners.any?
