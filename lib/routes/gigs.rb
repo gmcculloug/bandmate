@@ -33,8 +33,39 @@ class Routes::Gigs < Sinatra::Base
     all_gigs = filter_by_current_band(Gig).includes(:venue)
     today = Date.current
     @upcoming_gigs = all_gigs.where('performance_date >= ?', today).order(:performance_date) || []
-    @past_gigs = all_gigs.where('performance_date < ?', today).order(performance_date: :desc) || []
+
+    # Count of past gigs for display
+    @past_gigs_count = all_gigs.where('performance_date < ?', today).count
+
     erb :gigs
+  end
+
+  get '/gigs/past' do
+    require_login
+
+    # If user has no bands, redirect to create or join a band
+    if user_bands.empty?
+      redirect '/bands/new?first_band=true'
+    end
+
+    # If no band is selected, redirect to band selection
+    unless current_band
+      redirect '/bands'
+    end
+
+    # Set breadcrumbs
+    set_breadcrumbs(
+      breadcrumb_for_section('gigs'),
+      { label: 'Past Gigs', icon: '', url: nil }
+    )
+
+    all_gigs = filter_by_current_band(Gig).includes(:venue)
+    today = Date.current
+
+    # Past gigs: performance_date is in the past
+    @past_gigs = all_gigs.where('performance_date < ?', today).order(performance_date: :desc) || []
+
+    erb :past_gigs
   end
 
   get '/gigs/new' do

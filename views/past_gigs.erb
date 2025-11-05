@@ -1,0 +1,80 @@
+<div class="page-header">
+    <div>
+        <h2 class="page-title">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -4px; margin-right: 8px;">
+                <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
+                <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
+            </svg>
+            Past Gigs
+        </h2>
+        <p style="color: #718096; margin: 5px 0 0 0;">Performances with dates that have passed.</p>
+    </div>
+</div>
+
+<% if @past_gigs.any? %>
+    <div>
+        <% @past_gigs.each do |set_list| %>
+            <div class="set-list-item" style="cursor: pointer; opacity: 0.7;" onclick="window.location.href='/gigs/<%= set_list.id %>'">
+                <div class="set-list-info">
+                    <h3 style="display: flex; align-items: center; gap: 10px;">
+                        <span style="flex: 1;">
+                            <% if set_list.performance_date.present? %>
+                                <span style="font-weight: normal; color: #718096; font-size: 0.9em;">
+                                    <%= set_list.performance_date.strftime('%a, %b %d') %> -
+                                </span>
+                            <% end %>
+                            <%= set_list.name %>
+                            <% if set_list.start_time.present? %>
+                                <span style="font-weight: normal; color: #718096; font-size: 0.9em;">
+                                    - <%= set_list.start_time.strftime('%I:%M %p') %>
+                                    <% if set_list.end_time.present? %>
+                                        - <%= set_list.end_time.strftime('%I:%M %p') %>
+                                    <% end %>
+                                </span>
+                            <% end %>
+                        </span>
+                        <% if set_list.songs.any? %>
+                            <a href="/gigs/<%= set_list.id %>/gig_mode" target="_blank" class="gig-mode-button" onclick="event.stopPropagation();" style="display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; background: white; border: 1px solid #e2e8f0; border-radius: 6px; text-decoration: none; color: #4a5568; transition: all 0.2s; flex-shrink: 0; opacity: 0.7; margin-right: 4px;" onmouseover="this.style.backgroundColor='#667eea'; this.style.borderColor='#5a67d8'; this.style.color='white'; this.style.opacity='1';" onmouseout="this.style.backgroundColor='white'; this.style.borderColor='#e2e8f0'; this.style.color='#4a5568'; this.style.opacity='0.7';" title="Gig Mode - Offline Performance View">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                                    <line x1="8" y1="21" x2="16" y2="21"></line>
+                                    <line x1="12" y1="17" x2="12" y2="21"></line>
+                                    <circle cx="12" cy="10" r="3"></circle>
+                                </svg>
+                            </a>
+                            <a href="/gigs/<%= set_list.id %>/print" target="_blank" class="print-icon-button" onclick="event.stopPropagation();" style="display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; background: white; border: 1px solid #e2e8f0; border-radius: 6px; text-decoration: none; color: #4a5568; transition: all 0.2s; flex-shrink: 0; opacity: 0.7;" onmouseover="this.style.backgroundColor='#667eea'; this.style.borderColor='#5a67d8'; this.style.color='white'; this.style.opacity='1';" onmouseout="this.style.backgroundColor='white'; this.style.borderColor='#e2e8f0'; this.style.color='#4a5568'; this.style.opacity='0.7';" title="Print Gig">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <polyline points="6,9 6,2 18,2 18,9"></polyline>
+                                    <path d="M6,18H4a2,2 0,0,1-2-2V11a2,2 0,0,1,2,2H20a2,2 0,0,1,2,2v5a2,2 0,0,1-2,2H18"></path>
+                                    <polyline points="6,14 18,14 18,20 6,20 6,14"></polyline>
+                                </svg>
+                            </a>
+                        <% end %>
+                    </h3>
+                    <% if set_list.notes.present? %>
+                        <p style="font-style: italic; color: #718096;"><%= set_list.notes %></p>
+                    <% end %>
+                </div>
+            </div>
+        <% end %>
+    </div>
+<% else %>
+    <div class="card" style="text-align: center; padding: 60px 20px;">
+        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin: 0 auto 20px auto; color: #a0aec0;">
+            <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
+            <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
+        </svg>
+        <h3 style="color: #4a5568; margin-bottom: 10px;">No Past Gigs</h3>
+        <p style="color: #718096; margin-bottom: 30px;">No performances have ended yet.</p>
+    </div>
+<% end %>
+
+<div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #e2e8f0;">
+    <a href="/gigs" style="color: #718096; text-decoration: none; font-size: 0.9rem;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 4px;">
+            <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
+            <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
+        </svg>
+        Back to Gigs
+    </a>
+</div>
