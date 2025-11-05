@@ -22,8 +22,10 @@ require_relative 'lib/models/practice_availability'
 
 # Load services
 require_relative 'lib/services/google_calendar_service'
+require_relative 'lib/services/error_handler'
 
 # Load helpers
+require_relative 'lib/helpers/icon_helpers'
 require_relative 'lib/helpers/application_helpers'
 
 # Load route modules
@@ -152,25 +154,10 @@ post '/select_band' do
     
     # Determine which section to redirect to based on current path
     current_path = params[:current_path] || params[:redirect_to] || '/gigs'
-    
-    # Map current path to appropriate list view
-    redirect_to = case current_path
-    when /^\/songs/
-      '/songs'
-    when /^\/venues/
-      '/venues'
-    when /^\/gigs/
-      '/gigs'
-    when /^\/calendar/
-      '/calendar'
-    when /^\/profile/
-      '/profile'
-    when /^\/song_catalog/
-      '/songs'  # Redirect to regular songs list instead
-    else
-      '/gigs'  # Default fallback
-    end
-    
+
+    # Use helper method to map current path to appropriate list view
+    redirect_to = redirect_path_for_section(current_path)
+
     redirect redirect_to
   else
     status 404

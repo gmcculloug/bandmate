@@ -42,7 +42,7 @@ class Routes::Bands < Sinatra::Base
         current_user.update(last_selected_band_id: band.id)
         redirect '/gigs'
       else
-        redirect '/profile'
+        redirect '/bands'
       end
     else
       @errors = band.errors.full_messages
@@ -125,7 +125,7 @@ class Routes::Bands < Sinatra::Base
     # Delete the band
     band.destroy
 
-    redirect '/profile'
+    redirect '/bands'
   end
 
   # ============================================================================

@@ -71,7 +71,8 @@ class Routes::Gigs < Sinatra::Base
       current_band.sync_gig_to_google_calendar(gig) if current_band.google_calendar_enabled?
       redirect "/gigs/#{gig.id}"
     else
-      @errors = gig.errors.full_messages
+      # Use error handling service to set up @errors consistently
+      ErrorHandler.setup_form_errors(gig, self)
       @venues = filter_by_current_band(Venue).active.order(:name)
       @songs = filter_by_current_band(Song).order(:title)
       erb :new_gig

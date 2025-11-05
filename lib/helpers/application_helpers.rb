@@ -1,4 +1,7 @@
+require_relative 'icon_helpers'
+
 module ApplicationHelpers
+  include IconHelpers
   # Authentication helpers
   def current_user
     if settings.test?
@@ -137,7 +140,7 @@ module ApplicationHelpers
     @breadcrumbs = []
 
     # Always start with Home
-    @breadcrumbs << { label: '', icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px;"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9,22 9,12 15,12 15,22"></polyline></svg>', url: '/gigs' }
+    @breadcrumbs << { label: '', icon: breadcrumb_icon(:home), url: '/gigs' }
 
     # Add provided breadcrumbs
     crumbs.each do |crumb|
@@ -150,26 +153,47 @@ module ApplicationHelpers
     @breadcrumbs << { label: label, url: url, icon: icon }
   end
 
+  # Redirect path mapping for band selection
+  def redirect_path_for_section(current_path)
+    SECTION_REDIRECTS.each do |pattern, redirect|
+      return redirect if current_path.match?(pattern)
+    end
+    '/gigs' # default fallback
+  end
+
   def breadcrumb_for_section(section)
-    case section.to_s.downcase
-    when 'gigs'
-      { label: 'Gigs', icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 6px;"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect></svg>', url: '/gigs' }
-    when 'songs'
-      { label: 'Songs', icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 6px;"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>', url: '/songs' }
-    when 'venues'
-      { label: 'Venues', icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 6px;"><path d="M3 21h18"></path><path d="M5 21V7l8-4v18"></path><path d="M19 21V11l-6-4"></path></svg>', url: '/venues' }
-    when 'calendar'
-      { label: 'Calendar', icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 6px;"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>', url: '/calendar' }
-    when 'practices'
-      { label: 'Practice', icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 6px;"><path d="M3 12h18m-9-9v18"></path><circle cx="12" cy="12" r="10"></circle></svg>', url: '/practices' }
-    when 'bands'
-      { label: 'Bands', icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 6px;"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>', url: '/bands' }
-    when 'profile'
-      { label: 'Profile', icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 6px;"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>', url: '/profile' }
-    when 'song_catalogs'
-      { label: 'Song Catalog', icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 6px;"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>', url: '/song_catalogs' }
+    section_key = section.to_s.downcase
+
+    # Map section names to icon keys and URLs
+    section_config = {
+      'gigs' => { label: 'Gigs', icon_key: :gigs, url: '/gigs' },
+      'songs' => { label: 'Songs', icon_key: :songs, url: '/songs' },
+      'venues' => { label: 'Venues', icon_key: :venues, url: '/venues' },
+      'calendar' => { label: 'Calendar', icon_key: :calendar, url: '/calendar' },
+      'practices' => { label: 'Practice', icon_key: :practices, url: '/practices' },
+      'bands' => { label: 'Bands', icon_key: :bands, url: '/bands' },
+      'profile' => { label: 'Profile', icon_key: :profile, url: '/profile' },
+      'song_catalogs' => { label: 'Song Catalog', icon_key: :song_catalog, url: '/song_catalogs' }
+    }
+
+    if config = section_config[section_key]
+      {
+        label: config[:label],
+        icon: breadcrumb_icon(config[:icon_key]),
+        url: config[:url]
+      }
     else
       { label: section.to_s.capitalize, icon: '', url: nil }
     end
   end
+
+  # Section redirect mappings for band selection
+  SECTION_REDIRECTS = {
+    /^\/songs/ => '/songs',
+    /^\/venues/ => '/venues',
+    /^\/gigs/ => '/gigs',
+    /^\/calendar/ => '/calendar',
+    /^\/profile/ => '/profile',
+    /^\/song_catalog/ => '/songs'
+  }.freeze
 end

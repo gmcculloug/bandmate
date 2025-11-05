@@ -1,14 +1,6 @@
 <h2><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -3px; margin-right: 8px;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg>Add New Venue</h2>
 
-<% if defined?(@errors) && @errors.any? %>
-    <div class="errors">
-        <ul>
-            <% @errors.each do |error| %>
-                <li><%= error %></li>
-            <% end %>
-        </ul>
-    </div>
-<% end %>
+<%= erb :_errors %>
 
 <form method="POST" action="/venues" class="card">
     <div class="form-group">
@@ -41,8 +33,5 @@
         <textarea id="venue_notes" name="venue[notes]" rows="4" placeholder="Any additional notes about the venue (capacity, setup requirements, parking info, etc.)"></textarea>
     </div>
 
-    <div class="actions">
-        <button type="submit" class="btn btn-success">Save Venue</button>
-        <a href="/venues" class="btn">Cancel</a>
-    </div>
+    <%= erb :_form_actions, locals: { submit_text: 'Save Venue', cancel_url: '/venues' } %>
 </form> 

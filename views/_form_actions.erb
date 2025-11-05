@@ -1,0 +1,19 @@
+<%
+  # Default values for form actions
+  submit_text = 'Save'
+  cancel_url = 'javascript:history.back()'
+
+  # Check if locals were passed (for ERB partials with explicit locals)
+  if defined?(local_assigns) && local_assigns
+    submit_text = local_assigns[:submit_text] if local_assigns[:submit_text]
+    cancel_url = local_assigns[:cancel_url] if local_assigns[:cancel_url]
+  end
+
+  # Check if variables were passed as locals directly (Sinatra ERB style)
+  submit_text = submit_text_param if defined?(submit_text_param) && submit_text_param
+  cancel_url = cancel_url_param if defined?(cancel_url_param) && cancel_url_param
+%>
+<div class="actions">
+    <button type="submit" class="btn btn-success"><%= submit_text %></button>
+    <a href="<%= cancel_url %>" class="btn">Cancel</a>
+</div>

@@ -1,14 +1,6 @@
 <h2>📋 Create New Gig</h2>
 
-<% if defined?(@errors) && @errors.any? %>
-    <div class="errors">
-        <ul>
-            <% @errors.each do |error| %>
-                <li><%= error %></li>
-            <% end %>
-        </ul>
-    </div>
-<% end %>
+<%= erb :_errors %>
 
 <form method="POST" action="/gigs" class="card">
     <div class="form-group">
