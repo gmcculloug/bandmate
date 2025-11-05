@@ -48,7 +48,8 @@ class Routes::Venues < Sinatra::Base
     if venue.save
       redirect '/venues'
     else
-      @errors = venue.errors.full_messages
+      # Use error handling service to set up @errors consistently
+      ErrorHandler.setup_form_errors(venue, self)
 
       # Set breadcrumbs for error case
       set_breadcrumbs(
@@ -160,7 +161,8 @@ class Routes::Venues < Sinatra::Base
         redirect "/venues/#{@venue.id}"
       end
     else
-      @errors = @venue.errors.full_messages
+      # Use error handling service to set up @errors consistently
+      ErrorHandler.setup_form_errors(@venue, self)
 
       # Set breadcrumbs for error case based on context
       if params[:from_gig]

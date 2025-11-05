@@ -34,10 +34,7 @@
                 <small style="color: #666;">Optional notes about the band, members, style, etc.</small>
             </div>
 
-            <div class="actions">
-                <button type="submit" class="btn btn-success">Update Band</button>
-                <a href="/bands/<%= @band.id %>" class="btn">Cancel</a>
-            </div>
+            <%= erb :_form_actions, locals: { submit_text: 'Update Band', cancel_url: "/bands/#{@band.id}" } %>
         </form>
     </div>
 

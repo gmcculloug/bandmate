@@ -15,13 +15,7 @@
     </ul>
 </div>
 
-<% if @errors && @errors.any? %>
-    <div class="errors">
-        <% @errors.each do |error| %>
-            <p><%= error %></p>
-        <% end %>
-    </div>
-<% end %>
+<%= erb :_errors %>
 
 <div class="card">
     <h3>Confirm Account Deletion</h3>

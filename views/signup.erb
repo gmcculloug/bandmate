@@ -1,12 +1,6 @@
 <h2>Sign Up for Bandmate</h2>
 
-<% if @errors && @errors.any? %>
-  <div class="errors">
-    <% @errors.each do |error| %>
-      <p><%= error %></p>
-    <% end %>
-  </div>
-<% end %>
+<%= erb :_errors %>
 
 <form method="post" action="/signup">
   <div class="form-group">

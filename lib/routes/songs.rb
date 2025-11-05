@@ -116,7 +116,8 @@ class Routes::Songs < Sinatra::Base
     if song.save
       redirect '/songs'
     else
-      @errors = song.errors.full_messages
+      # Use error handling service to set up @errors consistently
+      ErrorHandler.setup_form_errors(song, self)
       erb :new_song
     end
   end
@@ -221,7 +222,8 @@ class Routes::Songs < Sinatra::Base
         redirect "/songs/#{@song.id}"
       end
     else
-      @errors = @song.errors.full_messages
+      # Use error handling service to set up @errors consistently
+      ErrorHandler.setup_form_errors(@song, self)
 
       # Set breadcrumbs for error case (same as edit route)
       if params[:from_gig]

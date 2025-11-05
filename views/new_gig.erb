@@ -70,10 +70,7 @@
         <textarea id="gig_notes" name="notes" rows="3" placeholder="Any notes about this set list (special instructions, equipment needs, etc.)"></textarea>
     </div>
 
-    <div class="actions">
-        <button type="submit" class="btn btn-success">Create Gig</button>
-        <a href="/gigs" class="btn">Cancel</a>
-    </div>
+    <%= erb :_form_actions, locals: { submit_text: 'Create Gig', cancel_url: '/gigs' } %>
 </form>
 
 <script>

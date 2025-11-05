@@ -8,13 +8,7 @@
     </div>
 <% end %>
 
-<% if @errors && @errors.any? %>
-    <div class="errors">
-        <% @errors.each do |error| %>
-            <p><%= error %></p>
-        <% end %>
-    </div>
-<% end %>
+<%= erb :_errors %>
 
 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px;">
     <!-- Profile Information -->

@@ -98,10 +98,7 @@
         <textarea id="song_lyrics" name="song[lyrics]" rows="8" placeholder="Song lyrics..."></textarea>
     </div>
 
-    <div class="actions">
-        <button type="submit" class="btn btn-success">Save Song</button>
-        <a href="/songs" class="btn">Cancel</a>
-    </div>
+    <%= erb :_form_actions, locals: { submit_text: 'Save Song', cancel_url: '/songs' } %>
 </form>
 
 <script>

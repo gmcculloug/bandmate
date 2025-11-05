@@ -6,15 +6,7 @@
     </div>
 </div>
 
-<% if defined?(@errors) && @errors.any? %>
-    <div class="errors">
-        <ul>
-            <% @errors.each do |error| %>
-                <li><%= error %></li>
-            <% end %>
-        </ul>
-    </div>
-<% end %>
+<%= erb :_errors %>
 
 <div style="margin-bottom: 20px; padding: 15px; background: #fef5e7; border-radius: 8px; border-left: 4px solid #f59e0b;">
     <p style="margin: 0; color: #92400e; font-weight: 500;">

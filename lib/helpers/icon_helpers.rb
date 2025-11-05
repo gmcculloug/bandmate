@@ -1,5 +1,31 @@
+# IconHelpers module provides centralized icon management for the Bandmate application.
+#
+# This module contains all SVG icon definitions used throughout the application,
+# providing a consistent and maintainable way to manage UI icons.
+#
+# Usage:
+#   include IconHelpers
+#   icon(:gigs)          # Returns gigs SVG icon
+#   breadcrumb_icon(:home) # Returns home icon with breadcrumb styling
+#
+# @example Using in views
+#   <%= icon(:add) %>
+#   <%= breadcrumb_icon(:songs) %>
+#
+# @example Using in helpers
+#   def custom_button_with_icon(icon_name, text)
+#     "<button>#{icon(icon_name)} #{text}</button>".html_safe
+#   end
 module IconHelpers
-  # Icon constants with SVG definitions
+  # Icon constants with SVG definitions.
+  #
+  # Each icon is a complete SVG element with consistent styling:
+  # - 16x16 size for most contexts
+  # - 24x24 viewBox for scalability
+  # - Consistent stroke-width and styling
+  # - Margin adjustments for different contexts (breadcrumbs, buttons, etc.)
+  #
+  # The hash is frozen to prevent accidental modification of icon definitions.
   ICONS = {
     home: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px;"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9,22 9,12 15,12 15,22"></polyline></svg>',
 
@@ -25,12 +51,29 @@ module IconHelpers
     edit: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 6px;"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>'
   }.freeze
 
-  # Get an icon by name, returns the SVG string or empty string if not found
+  # Get an icon by name, returns the SVG string or empty string if not found.
+  #
+  # @param name [String, Symbol] The name of the icon to retrieve
+  # @return [String] SVG icon as HTML string, or empty string if icon not found
+  #
+  # @example
+  #   icon(:gigs)        # => "<svg>...</svg>"
+  #   icon('songs')      # => "<svg>...</svg>"
+  #   icon(:unknown)     # => ""
   def icon(name)
     ICONS[name.to_sym] || ''
   end
 
-  # Get an icon by name for breadcrumbs (includes margin)
+  # Get an icon by name for breadcrumbs context.
+  #
+  # Currently aliases to icon() but provides semantic distinction for breadcrumb usage.
+  # This method can be extended in the future if breadcrumb icons need special styling.
+  #
+  # @param name [String, Symbol] The name of the icon to retrieve
+  # @return [String] SVG icon as HTML string, or empty string if icon not found
+  #
+  # @example
+  #   breadcrumb_icon(:home)  # => "<svg>...</svg>" with breadcrumb styling
   def breadcrumb_icon(name)
     icon(name)
   end

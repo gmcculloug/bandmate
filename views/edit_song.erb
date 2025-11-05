@@ -12,15 +12,7 @@
     </div>
 </div>
 
-<% if defined?(@errors) && @errors.any? %>
-    <div class="errors">
-        <ul>
-            <% @errors.each do |error| %>
-                <li><%= error %></li>
-            <% end %>
-        </ul>
-    </div>
-<% end %>
+<%= erb :_errors %>
 
 <form method="POST" action="/songs/<%= @song.id %>" class="card" id="edit-song-form">
     <input type="hidden" name="_method" value="PUT">

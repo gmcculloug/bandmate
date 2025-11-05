@@ -1,14 +1,6 @@
 <h2><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -3px; margin-right: 8px;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg>Add New Song Catalog</h2>
 
-<% if defined?(@errors) && @errors.any? %>
-    <div class="errors">
-        <ul>
-            <% @errors.each do |error| %>
-                <li><%= error %></li>
-            <% end %>
-        </ul>
-    </div>
-<% end %>
+<%= erb :_errors %>
 
 <div style="margin-bottom: 20px; padding: 15px; background: #e6fffa; border-radius: 8px; border-left: 4px solid #38a169;">
     <p style="margin: 0; color: #2f855a; font-weight: 500;">
@@ -110,10 +102,7 @@
         <textarea id="song_catalog_lyrics" name="song_catalog[lyrics]" rows="8" placeholder="Song lyrics..."></textarea>
     </div>
 
-    <div class="actions">
-        <button type="submit" class="btn btn-success">Save Song Catalog</button>
-        <a href="/song_catalogs" class="btn">Cancel</a>
-    </div>
+    <%= erb :_form_actions, locals: { submit_text: 'Save Song Catalog', cancel_url: '/song_catalogs' } %>
 </form>
 
 <script>

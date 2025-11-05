@@ -6,15 +6,7 @@
     Edit Gig: <%= @gig.name %>
 </h2>
 
-<% if defined?(@errors) && @errors.any? %>
-    <div class="errors">
-        <ul>
-            <% @errors.each do |error| %>
-                <li><%= error %></li>
-            <% end %>
-        </ul>
-    </div>
-<% end %>
+<%= erb :_errors %>
 
 <form method="POST" action="/gigs/<%= @gig.id %>" class="card">
     <input type="hidden" name="_method" value="PUT">
@@ -90,10 +82,7 @@
         <textarea id="gig_notes" name="notes" rows="3" placeholder="Any notes about this set list (special instructions, equipment needs, etc.)"><%= @gig.notes %></textarea>
     </div>
 
-    <div class="actions">
-        <button type="submit" class="btn btn-success">Update Gig</button>
-        <a href="/gigs/<%= @gig.id %>" class="btn">Cancel</a>
-    </div>
+    <%= erb :_form_actions, locals: { submit_text: 'Update Gig', cancel_url: "/gigs/#{@gig.id}" } %>
 </form>
 
 
