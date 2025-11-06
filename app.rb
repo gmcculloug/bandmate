@@ -128,6 +128,12 @@ post '/test_auth' do
   end
 end
 
+# Health check endpoint for load balancers and monitoring
+get '/health' do
+  content_type :json
+  { status: 'ok', timestamp: Time.now.iso8601 }.to_json
+end
+
 # Application root route
 get '/' do
   if logged_in?
@@ -168,46 +174,22 @@ end
 if __FILE__ == $0
   puts "🎸 Bandmate is starting up..."
   puts ""
-  
-  # SSL certificate paths
-  ssl_cert_path = File.join(File.dirname(__FILE__), 'ssl', 'server.crt')
-  ssl_key_path = File.join(File.dirname(__FILE__), 'ssl', 'server.key')
-  
-  if File.exist?(ssl_cert_path) && File.exist?(ssl_key_path)
-    puts "🔒 Starting with HTTPS (SSL enabled)"
-    puts "Visit https://localhost:4567 to access the application"
-    puts ""
-    puts "⚠️  You'll see a security warning since this uses a self-signed certificate."
-    puts "   Click 'Advanced' and 'Proceed to localhost' to continue."
-    puts ""
-    
-    # Get local IP address for external access
-    require 'socket'
-    local_ip = Socket.ip_address_list.find { |addr| addr.ipv4? && !addr.ipv4_loopback? }&.ip_address
-    
-    if local_ip
-      puts "🌐 Your local IP address is: #{local_ip}"
-      puts "   Other devices can access the app at: https://#{local_ip}:4567"
-    end
-    
-    # Use Puma with SSL configuration file
-    exec("puma -C config/puma_ssl.rb")
-  else
-    puts "⚠️  SSL certificates not found. Starting with HTTP..."
-    puts "Visit http://localhost:4567 to access the application"
-    puts ""
-    
-    # Get local IP address for external access
-    require 'socket'
-    local_ip = Socket.ip_address_list.find { |addr| addr.ipv4? && !addr.ipv4_loopback? }&.ip_address
-    
-    if local_ip
-      puts "🌐 Your local IP address is: #{local_ip}"
-      puts "   Other devices can access the app at: http://#{local_ip}:4567"
-    end
-    
-    set :port, 4567
-    set :bind, '0.0.0.0'  # Bind to all interfaces
-    Sinatra::Application.run!
+  puts "📡 Starting HTTP server on port 4567"
+  puts "🔒 SSL termination handled by reverse proxy (nginx)"
+  puts ""
+
+  # Get local IP address for external access
+  require 'socket'
+  local_ip = Socket.ip_address_list.find { |addr| addr.ipv4? && !addr.ipv4_loopback? }&.ip_address
+
+  if local_ip
+    puts "🌐 Your local IP address is: #{local_ip}"
+    puts "   Internal access: http://#{local_ip}:4567"
+    puts "   External access: https://your-domain.com (via nginx)"
   end
+  puts ""
+
+  set :port, 4567
+  set :bind, '0.0.0.0'  # Bind to all interfaces
+  Sinatra::Application.run!
 end

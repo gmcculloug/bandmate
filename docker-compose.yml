@@ -12,20 +12,17 @@ services:
       - "${DATABASE_PORT}:${DATABASE_PORT}"
     restart: unless-stopped
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      test: ["CMD-SHELL", "pg_isready -U ${DATABASE_USERNAME} -d ${DATABASE_NAME}"]
       interval: 30s
       timeout: 10s
       retries: 5
   bandmate:
     image: bandmate
-    ports:
-      - "0.0.0.0:443:4567"  # HTTPS port (map host 8443 to container 4567)
-      - "0.0.0.0:4567:4567"  # Direct access (optional)
+    expose:
+      - "4567"  # Only expose to internal network, nginx will handle external access
     volumes:
       # Mount logs directory
       - ./logs:/app/logs
-      # Optional: Mount SSL certificates if you have custom ones
-      - ./ssl:/app/ssl:Z
     environment:
       - RACK_ENV=production
       - PORT=4567
@@ -41,7 +38,7 @@ services:
         condition: service_healthy
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-k", "-f", "https://localhost:4567/"]
+      test: ["CMD", "curl", "-f", "http://localhost:4567/health"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -50,22 +47,24 @@ services:
       sh -c "
         echo 'BANDMATE_ACCT_CREATION_SECRET: ${BANDMATE_ACCT_CREATION_SECRET}' &&
         echo 'Connecting to PostgreSQL at ${DATABASE_HOST}:${DATABASE_PORT}...' &&
-        echo 'Checking for SSL certificates...' &&
-        if [ ! -f /app/ssl/server.crt ] || [ ! -f /app/ssl/server.key ]; then
-          echo 'SSL certificates not found. Generating self-signed certificates...' &&
-          openssl req -x509 -newkey rsa:4096 -keyout /app/ssl/server.key -out /app/ssl/server.crt \
-            -days 365 -nodes \
-            -subj '/C=US/ST=State/L=City/O=Bandmate/OU=Development/CN=localhost' \
-            -addext "subjectAltName=IP:localhost"
-          echo 'SSL certificates generated successfully!'
-        else
-          echo 'SSL certificates found. Using existing certificates.'
-        fi &&
         (bundle exec rake db:migrate || echo 'Migration failed or already applied, continuing...') &&
         (bundle exec rake db:seed_songs || echo 'Seeding Songs failed, continuing...') &&
-        echo 'Starting Bandmate application with HTTPS...' &&
+        echo 'Starting Bandmate application (HTTP - SSL handled by nginx)...' &&
         ruby app.rb
       "
+
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./config/nginx.conf:/etc/nginx/nginx.conf:Z
+      - ./ssl:/etc/nginx/ssl:Z
+      - ./logs/nginx:/var/log/nginx:Z
+    depends_on:
+      - bandmate
+    restart: unless-stopped
 
 volumes:
   postgres_data:
