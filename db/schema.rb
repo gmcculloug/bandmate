@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2025_11_05_151239) do
+ActiveRecord::Schema[8.1].define(version: 2025_11_07_184637) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -47,6 +47,7 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_05_151239) do
     t.integer "set_number", default: 1, null: false
     t.integer "song_id", null: false
     t.datetime "updated_at", null: false
+    t.index ["gig_id", "set_number", "position"], name: "index_gig_songs_on_gig_id_and_set_number_and_position"
     t.index ["gig_id"], name: "index_gig_songs_on_gig_id"
     t.index ["position"], name: "index_gig_songs_on_position"
     t.index ["set_number"], name: "index_gig_songs_on_set_number"
@@ -63,8 +64,10 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_05_151239) do
     t.time "start_time"
     t.datetime "updated_at", null: false
     t.integer "venue_id"
+    t.index ["band_id", "performance_date"], name: "index_gigs_on_band_id_and_performance_date"
     t.index ["band_id"], name: "index_gigs_on_band_id"
     t.index ["name"], name: "index_gigs_on_name"
+    t.index ["performance_date"], name: "index_gigs_on_performance_date"
     t.index ["venue_id"], name: "index_gigs_on_venue_id"
   end
 
@@ -187,9 +190,11 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_05_151239) do
     t.string "role", default: "member", null: false
     t.datetime "updated_at", null: false
     t.bigint "user_id", null: false
+    t.index ["band_id", "role"], name: "index_user_bands_on_band_id_and_role"
     t.index ["band_id"], name: "index_user_bands_on_band_id"
     t.index ["role"], name: "index_user_bands_on_role"
     t.index ["user_id", "band_id"], name: "index_user_bands_on_user_id_and_band_id", unique: true
+    t.index ["user_id", "role"], name: "index_user_bands_on_user_id_and_role"
     t.index ["user_id"], name: "index_user_bands_on_user_id"
   end
 
@@ -219,6 +224,7 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_05_151239) do
     t.string "website"
     t.index ["archived"], name: "index_venues_on_archived"
     t.index ["archived_at"], name: "index_venues_on_archived_at"
+    t.index ["band_id", "name"], name: "index_venues_on_band_id_and_name"
     t.index ["band_id"], name: "index_venues_on_band_id"
     t.index ["name"], name: "index_venues_on_name"
   end
