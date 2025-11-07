@@ -148,6 +148,30 @@ class Routes::Practices < Sinatra::Base
     erb :show_practice
   end
 
+  get '/practices/:id/edit' do
+    require_login
+    return redirect '/practices' unless current_band
+
+    @practice = current_band.practices.find_by(id: params[:id])
+    return redirect '/practices' unless @practice
+
+    # Only the creator or band owner can edit
+    unless @practice.created_by_user == current_user || current_band.owned_by?(current_user)
+      redirect "/practices/#{@practice.id}"
+      return
+    end
+
+    # Set breadcrumbs
+    breadcrumb_label = @practice.title.present? ? "Edit #{@practice.title}" : "Edit Practice"
+    set_breadcrumbs(
+      breadcrumb_for_section('practices'),
+      { label: @practice.title.present? ? "#{@practice.title} #{@practice.formatted_week_range}" : "Practice #{@practice.formatted_week_range}", url: "/practices/#{@practice.id}" },
+      { label: 'Edit', icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 6px;"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>', url: nil }
+    )
+
+    erb :edit_practice
+  end
+
 
   post '/practices/:id/responses' do
     require_login
@@ -250,6 +274,68 @@ class Routes::Practices < Sinatra::Base
 
     @practice.update!(status: 'active')
     redirect "/practices/#{@practice.id}"
+  end
+
+  put '/practices/:id' do
+    require_login
+    return redirect '/practices' unless current_band
+
+    @practice = current_band.practices.find_by(id: params[:id])
+    return redirect '/practices' unless @practice
+
+    # Only the creator or band owner can edit
+    unless @practice.created_by_user == current_user || current_band.owned_by?(current_user)
+      redirect "/practices/#{@practice.id}"
+      return
+    end
+
+    # Parse the start and end dates
+    unless params[:week_start_date]
+      @error = "Week start date is required"
+      return erb :edit_practice
+    end
+
+    begin
+      start_date = Date.parse(params[:week_start_date])
+      # Adjust to Sunday if not already a Sunday
+      start_date = start_date.beginning_of_week(:sunday) unless start_date.sunday?
+      end_date = params[:end_date].present? ? Date.parse(params[:end_date]) : nil
+    rescue Date::Error
+      @error = "Invalid date format"
+      return erb :edit_practice
+    end
+
+    # Validate that end date is after start date (if provided)
+    if end_date && end_date < start_date
+      @error = "End date must be after start date"
+      # Set the form values so they're preserved in the error view
+      @practice.title = params[:title] if params[:title]
+      @practice.description = params[:description] if params[:description]
+      return erb :edit_practice
+    end
+
+    # Check if dates have changed - if so, we need to clear availability responses
+    dates_changed = (@practice.week_start_date != start_date) || (@practice.end_date != end_date)
+
+    # Update the practice
+    @practice.assign_attributes(
+      week_start_date: start_date,
+      end_date: end_date,
+      title: params[:title],
+      description: params[:description]
+    )
+
+    if @practice.save
+      # If dates changed, clear all availability responses
+      if dates_changed
+        @practice.practice_availabilities.destroy_all
+      end
+
+      redirect "/practices/#{@practice.id}"
+    else
+      @error = @practice.errors.full_messages.join(', ')
+      erb :edit_practice
+    end
   end
 
   delete '/practices/:id' do

@@ -39,6 +39,13 @@
             </form>
         <% end %>
         <% if @practice.created_by_user == current_user || current_band.owned_by?(current_user) %>
+            <a href="/practices/<%= @practice.id %>/edit" class="btn btn-primary" style="display: inline-block; text-decoration: none;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 6px;">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                </svg>
+                Edit
+            </a>
             <form method="POST" action="/practices/<%= @practice.id %>" style="display: inline;">
                 <input type="hidden" name="_method" value="DELETE">
                 <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure you want to delete this practice session? This cannot be undone.')">
@@ -367,27 +374,67 @@ function handleUserSelection(radioButton) {
     // Before hiding dropdowns, update display sections with any new notes
     updateDisplayWithCurrentNotes();
 
-    // Hide all user dropdown sections
-    document.querySelectorAll('.user-dropdown').forEach(section => {
-        section.style.display = 'none';
+    // For each user, decide whether to show dropdown or display
+    document.querySelectorAll('.user-dropdown, .user-display').forEach(section => {
+        const userId = section.getAttribute('data-user-id');
+        const isDropdown = section.classList.contains('user-dropdown');
+        const isSelectedUser = userId === selectedUserId;
+
+        if (isSelectedUser) {
+            // Selected user: show dropdown (voting options), hide display
+            section.style.display = isDropdown ? 'block' : 'none';
+        } else {
+            // All non-selected users: show display (response icons), hide dropdown
+            section.style.display = isDropdown ? 'none' : 'block';
+        }
     });
 
-    // Show all user display sections
-    document.querySelectorAll('.user-display').forEach(section => {
-        section.style.display = 'block';
-    });
-
-    // Show dropdown for selected user and hide display for selected user
-    document.querySelectorAll(`.user-dropdown[data-user-id="${selectedUserId}"]`).forEach(section => {
-        section.style.display = 'block';
-    });
-
-    document.querySelectorAll(`.user-display[data-user-id="${selectedUserId}"]`).forEach(section => {
-        section.style.display = 'none';
-    });
+    // Update cell backgrounds for the selected user to reflect their current availability
+    updateCellBackgroundsForUser(selectedUserId);
 
     // Recalculate best day when switching users
     calculateAndUpdateBestDay();
+}
+
+// Function to update cell backgrounds for a specific user based on their checked radio buttons
+function updateCellBackgroundsForUser(userId) {
+    // Find all availability cells for this user
+    document.querySelectorAll(`.user-dropdown[data-user-id="${userId}"]`).forEach(dropdown => {
+        const cell = dropdown.closest('.availability-cell');
+
+        // Find the checked radio button in this cell
+        const checkedRadio = dropdown.querySelector('input[type="radio"]:checked');
+
+        if (checkedRadio && cell) {
+            const value = checkedRadio.value;
+
+            // Remove existing background classes
+            cell.classList.remove('available-bg', 'maybe-bg', 'not-available-bg', 'no-response-bg');
+
+            // Add appropriate background class based on selection
+            switch(value) {
+                case 'available':
+                    cell.classList.add('available-bg');
+                    break;
+                case 'maybe':
+                    cell.classList.add('maybe-bg');
+                    break;
+                case 'not_available':
+                    cell.classList.add('not-available-bg');
+                    break;
+                default:
+                    cell.classList.add('no-response-bg');
+                    break;
+            }
+        }
+
+        // Force refresh all radio button labels in this dropdown
+        dropdown.querySelectorAll('.availability-option').forEach(label => {
+            label.style.display = 'none';
+            label.offsetHeight; // Force reflow
+            label.style.display = '';
+        });
+    });
 }
 
 // Function to update display sections with current textarea values
@@ -780,7 +827,8 @@ document.addEventListener('DOMContentLoaded', function() {
     display: flex;
     gap: 2px;
     justify-content: center;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
+    align-items: center;
 }
 
 .availability-radio {
@@ -863,8 +911,9 @@ document.addEventListener('DOMContentLoaded', function() {
 table th:not(:first-child),
 table td:not(:first-child) {
     padding: 8px 6px !important;
-    max-width: 120px;
+    max-width: 140px;
     width: auto;
+    min-width: 100px;
 }
 
 /* Default compact styling for availability options */
@@ -879,6 +928,7 @@ table td:not(:first-child) {
 
     .availability-options {
         gap: 1px;
+        flex-wrap: nowrap;
     }
 
     .availability-option {

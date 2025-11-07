@@ -163,6 +163,8 @@ RSpec.describe Practice, type: :model do
         user1 = create(:user)
         user2 = create(:user)
         practice.band.users << [user1, user2]
+        # Create practice availability for all band members including the owner
+        create(:practice_availability, practice: practice, user: practice.band.owner)
         create(:practice_availability, practice: practice, user: user1)
         create(:practice_availability, practice: practice, user: user2)
 
@@ -219,19 +221,20 @@ RSpec.describe Practice, type: :model do
         user2 = create(:user)
         practice.band.users << [user1, user2]
 
+        create(:practice_availability, practice: practice, user: practice.band.owner, day_of_week: 0, availability: 'not_available')
         create(:practice_availability, practice: practice, user: user1, day_of_week: 0, availability: 'available')
         create(:practice_availability, practice: practice, user: user2, day_of_week: 0, availability: 'maybe')
 
         summary = practice.availability_summary
         expect(summary['Sunday'][:available]).to eq(1)
         expect(summary['Sunday'][:maybe]).to eq(1)
-        expect(summary['Sunday'][:not_available]).to eq(0)
+        expect(summary['Sunday'][:not_available]).to eq(1)
         expect(summary['Sunday'][:no_response]).to eq(0)
 
         expect(summary['Monday'][:available]).to eq(0)
         expect(summary['Monday'][:maybe]).to eq(0)
         expect(summary['Monday'][:not_available]).to eq(0)
-        expect(summary['Monday'][:no_response]).to eq(2)
+        expect(summary['Monday'][:no_response]).to eq(3)
       end
 
       it 'includes suggested times in the summary' do
@@ -343,3 +346,4 @@ RSpec.describe Practice, type: :model do
     end
   end
 end
+

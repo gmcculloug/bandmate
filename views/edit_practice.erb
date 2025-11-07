@@ -1,0 +1,152 @@
+<h2>
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -4px; margin-right: 8px;">
+        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+    </svg>
+    Edit Practice Session
+</h2>
+
+<% if defined?(@error) && @error %>
+    <div class="errors">
+        <%= @error %>
+    </div>
+<% end %>
+
+<form method="POST" action="/practices/<%= @practice.id %>" class="card">
+    <input type="hidden" name="_method" value="PUT">
+
+    <div class="form-group">
+        <label for="practice_title">Practice Title (Optional)</label>
+        <input type="text" id="practice_title" name="title" placeholder="e.g., Weekly Practice, Pre-Gig Rehearsal" value="<%= @practice.title %>">
+    </div>
+
+    <div class="form-group">
+        <label style="margin-bottom: 10px; display: block;">Practice Dates *</label>
+        <div style="display: flex; gap: 20px; flex-wrap: wrap;">
+            <div style="flex: 1; min-width: 200px;">
+                <label for="practice_start_date" style="font-weight: 500; margin-bottom: 5px; display: block; cursor: pointer;" onclick="document.getElementById('practice_start_date').focus()">Start Date</label>
+                <div style="position: relative; cursor: pointer;" onclick="document.getElementById('practice_start_date').showPicker ? document.getElementById('practice_start_date').showPicker() : document.getElementById('practice_start_date').focus()">
+                    <input type="date" id="practice_start_date" name="week_start_date" required value="<%= @practice.week_start_date %>" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 6px; cursor: pointer;">
+                </div>
+            </div>
+            <div style="flex: 1; min-width: 200px;">
+                <label for="practice_end_date" style="font-weight: 500; margin-bottom: 5px; display: block; cursor: pointer;" onclick="document.getElementById('practice_end_date').focus()">End Date</label>
+                <div style="position: relative; cursor: pointer;" onclick="document.getElementById('practice_end_date').showPicker ? document.getElementById('practice_end_date').showPicker() : document.getElementById('practice_end_date').focus()">
+                    <input type="date" id="practice_end_date" name="end_date" required value="<%= @practice.end_date %>" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 6px; cursor: pointer;">
+                </div>
+            </div>
+        </div>
+        <div style="color: #718096; font-size: 0.9em; margin-top: 5px;">
+            Select the date range for scheduling availability.
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label for="practice_description">Description (Optional)</label>
+        <textarea id="practice_description" name="description" rows="3" placeholder="Add any details about the practice session, location, or what you'll be working on..."><%= @practice.description %></textarea>
+    </div>
+
+    <% if @practice.practice_availabilities.exists? %>
+        <div style="background: #fff4e6; border: 1px solid #fed7aa; padding: 20px; border-radius: 8px; margin: 20px 0;">
+            <h4 style="color: #c2410c; margin-bottom: 10px; display: flex; align-items: center;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 8px;">
+                    <path d="m21 16-4 4-4-4"></path>
+                    <path d="M14 12h6"></path>
+                    <circle cx="10" cy="12" r="8"></circle>
+                </svg>
+                Important Note:
+            </h4>
+            <p style="color: #9a3412; font-size: 0.9em; margin: 0; line-height: 1.6;">
+                This practice session already has member availability responses. If you change the dates, all existing availability responses will be cleared and members will need to respond again.
+            </p>
+        </div>
+    <% end %>
+
+    <div class="actions">
+        <button type="submit" class="btn btn-success">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 6px;">
+                <path d="M20 6L9 17l-5-5"></path>
+            </svg>
+            Update Practice Session
+        </button>
+        <a href="/practices/<%= @practice.id %>" class="btn">Cancel</a>
+    </div>
+</form>
+
+<script>
+// Validate end date is after start date
+function validateDates() {
+    const startDateInput = document.getElementById('practice_start_date');
+    const endDateInput = document.getElementById('practice_end_date');
+    const startDate = new Date(startDateInput.value);
+    const endDate = new Date(endDateInput.value);
+
+    // Remove any existing feedback
+    document.querySelectorAll('.date-feedback').forEach(el => el.remove());
+
+    if (startDateInput.value && endDateInput.value) {
+        if (endDate < startDate) {
+            const feedback = document.createElement('div');
+            feedback.className = 'date-feedback';
+            feedback.style.cssText = 'color: #e53e3e; font-size: 0.9em; margin-top: 5px; font-weight: 500;';
+            feedback.textContent = 'End date must be after start date';
+            endDateInput.parentNode.appendChild(feedback);
+            return false;
+        } else {
+            const daysDiff = Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24)) + 1;
+            const feedback = document.createElement('div');
+            feedback.className = 'date-feedback';
+            feedback.style.cssText = 'color: #38a169; font-size: 0.9em; margin-top: 5px; font-weight: 500;';
+            feedback.textContent = `Practice period: ${daysDiff} day${daysDiff !== 1 ? 's' : ''} (${startDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })} - ${endDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })})`;
+            endDateInput.parentNode.appendChild(feedback);
+            return true;
+        }
+    }
+    return true;
+}
+
+// Add event listeners to both date inputs
+document.getElementById('practice_start_date').addEventListener('change', validateDates);
+document.getElementById('practice_end_date').addEventListener('change', validateDates);
+
+// Form validation before submit
+document.querySelector('form').addEventListener('submit', function(e) {
+    if (!validateDates()) {
+        e.preventDefault();
+        alert('Please fix the date validation errors before submitting.');
+    }
+});
+
+// Run validation on page load
+document.addEventListener('DOMContentLoaded', function() {
+    validateDates();
+});
+</script>
+
+<style>
+/* Enhanced date picker styling */
+.date-container {
+    transition: all 0.2s ease;
+}
+
+.date-container:hover {
+    background-color: #f8fafc;
+    border-radius: 6px;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.date-container:hover input {
+    border-color: #667eea;
+}
+
+.date-container input:focus {
+    border-color: #667eea !important;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1) !important;
+    outline: none;
+}
+
+.date-container label {
+    user-select: none;
+}
+</style>
