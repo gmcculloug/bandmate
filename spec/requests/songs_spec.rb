@@ -5,7 +5,7 @@ RSpec.describe 'Songs API', type: :request do
   let(:band) { create(:band, owner: user) }
   
   before do
-    create(:user_band, user: user, band: band)
+    # UserBand relationship is automatically created by the band factory
   end
   describe 'GET /songs' do
     it 'returns a list of all songs' do
@@ -65,7 +65,7 @@ RSpec.describe 'Songs API', type: :request do
     it 'shows songs for the currently selected band' do
       band1 = create(:band, name: 'Band 1', owner: user)
       band2 = create(:band, name: 'Band 2')
-      create(:user_band, user: user, band: band1)
+      # UserBand relationship is automatically created by the band factory
 
       song1 = create(:song, title: 'Song 1', bands: [band1])
       song2 = create(:song, title: 'Song 2', bands: [band2])
@@ -81,7 +81,7 @@ RSpec.describe 'Songs API', type: :request do
     it 'combines search with the currently selected band' do
       band1 = create(:band, name: 'Band 1', owner: user)
       band2 = create(:band, name: 'Band 2')
-      create(:user_band, user: user, band: band1)
+      # UserBand relationship is automatically created by the band factory
 
       song1 = create(:song, title: 'Rock Song', artist: 'Rock Artist', bands: [band1])
       song2 = create(:song, title: 'Jazz Song', artist: 'Jazz Artist', bands: [band1])

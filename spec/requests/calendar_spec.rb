@@ -7,8 +7,7 @@ RSpec.describe 'Calendar API', type: :request do
   let(:other_user) { create(:user) }
   
   before do
-    create(:user_band, user: user, band: band)
-    create(:user_band, user: user, band: other_band)
+    # UserBand relationships for user as owner are automatically created by the band factory
     create(:user_band, user: other_user, band: band)
   end
   
@@ -70,7 +69,7 @@ RSpec.describe 'Calendar API', type: :request do
     it 'shows bandmate conflicts' do
       login_as(user, band)
       bandmate_band = create(:band, owner: other_user)
-      create(:user_band, user: other_user, band: bandmate_band)
+      # UserBand relationship is automatically created by the band factory
       conflict_gig = create(:gig, band: bandmate_band, performance_date: Date.current + 1.day)
       
       get '/calendar'

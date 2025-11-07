@@ -5,7 +5,7 @@ RSpec.describe 'Blackout Dates API', type: :request do
   let(:band) { create(:band, owner: user) }
   
   before do
-    create(:user_band, user: user, band: band)
+    # UserBand relationship is automatically created by the band factory
   end
   
   def login_as(user, band = nil)

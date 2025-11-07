@@ -3,7 +3,7 @@ class Band < ActiveRecord::Base
   has_and_belongs_to_many :songs, join_table: 'songs_bands'
   has_many :gigs
   has_many :venues
-  has_many :user_bands
+  has_many :user_bands, dependent: :destroy
   has_many :users, through: :user_bands
   has_many :owner_user_bands, -> { where(role: 'owner') }, class_name: 'UserBand'
   has_many :owners, through: :owner_user_bands, source: :user

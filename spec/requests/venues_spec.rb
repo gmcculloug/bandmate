@@ -6,8 +6,7 @@ RSpec.describe 'Venues API', type: :request do
   let(:other_band) { create(:band, owner: user) }
   
   before do
-    create(:user_band, user: user, band: band)
-    create(:user_band, user: user, band: other_band)
+    # UserBand relationships are automatically created by the band factory
   end
   
   def login_as(user, band)
@@ -332,9 +331,12 @@ RSpec.describe 'Venues API', type: :request do
       it 'displays copy form for venue with available target bands' do
         login_as(user, band)
         venue = create(:venue, name: 'Test Venue', band: band)
-        
+
+        # Force creation of other_band to ensure UserBand relationship is created
+        other_band # This triggers the lazy evaluation
+
         get "/venues/#{venue.id}/copy"
-        
+
         expect(last_response).to be_ok
         expect(last_response.body).to include('Copy Venue to Another Band')
         expect(last_response.body).to include('Test Venue')

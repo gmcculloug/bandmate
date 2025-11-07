@@ -5,17 +5,15 @@ RSpec.describe 'Bands API', type: :request do
   let(:band) { create(:band, owner: user) }
   
   before do
-    create(:user_band, user: user, band: band)
+    # UserBand relationship is automatically created by the band factory
   end
   describe 'GET /bands' do
     it 'returns a list of user bands' do
       login_as(user, band)
       band1 = create(:band, name: 'Band A', owner: user)
       band2 = create(:band, name: 'Band B', owner: user)
-      
-      # Associate the user with the new bands
-      user.bands << band1
-      user.bands << band2
+
+      # UserBand relationships are automatically created by the band factory
       
       get '/bands'
       
@@ -29,11 +27,8 @@ RSpec.describe 'Bands API', type: :request do
       band_c = create(:band, name: 'C Band', owner: user)
       band_a = create(:band, name: 'A Band', owner: user)
       band_b = create(:band, name: 'B Band', owner: user)
-      
-      # Associate the user with the new bands
-      user.bands << band_c
-      user.bands << band_a
-      user.bands << band_b
+
+      # UserBand relationships are automatically created by the band factory
       
       get '/bands'
       
@@ -131,7 +126,7 @@ RSpec.describe 'Bands API', type: :request do
     it 'displays a specific band' do
       login_as(user, band)
       test_band = create(:band, name: 'Test Band', notes: 'Test notes', owner: user)
-      user.bands << test_band
+      # UserBand relationship is automatically created by the band factory
       
       get "/bands/#{test_band.id}"
       
@@ -152,7 +147,7 @@ RSpec.describe 'Bands API', type: :request do
     it 'displays the edit form for a band' do
       login_as(user, band)
       edit_band = create(:band, name: 'Edit Band', notes: 'Edit notes', owner: user)
-      user.bands << edit_band
+      # UserBand relationship is automatically created by the band factory
       
       get "/bands/#{edit_band.id}/edit"
       
@@ -175,7 +170,7 @@ RSpec.describe 'Bands API', type: :request do
     it 'updates a band with valid attributes' do
       login_as(user, band)
       update_band = create(:band, name: 'Old Name', notes: 'Old notes', owner: user)
-      user.bands << update_band
+      # UserBand relationship is automatically created by the band factory
       update_params = { name: 'New Name', notes: 'New notes' }
       
       put "/bands/#{update_band.id}", band: update_params
@@ -189,7 +184,7 @@ RSpec.describe 'Bands API', type: :request do
     it 'displays errors for invalid attributes' do
       login_as(user, band)
       update_band = create(:band, name: 'Valid Name', owner: user)
-      user.bands << update_band
+      # UserBand relationship is automatically created by the band factory
       update_params = { name: '', notes: 'Valid notes' }
       
       put "/bands/#{update_band.id}", band: update_params
@@ -210,7 +205,7 @@ RSpec.describe 'Bands API', type: :request do
     it 'deletes a band' do
       login_as(user, band)
       delete_band = create(:band, name: 'Delete Band', owner: user)
-      user.bands << delete_band
+      # UserBand relationship is automatically created by the band factory
       
       expect {
         delete "/bands/#{delete_band.id}"
@@ -233,7 +228,7 @@ RSpec.describe 'Bands API', type: :request do
     let(:mock_service) { instance_double(GoogleCalendarService) }
 
     before do
-      create(:user_band, user: user, band: google_calendar_band)
+      # UserBand relationship is automatically created by the band factory
       allow(GoogleCalendarService).to receive(:new).with(google_calendar_band).and_return(mock_service)
     end
 
@@ -281,7 +276,7 @@ RSpec.describe 'Bands API', type: :request do
       it 'requires band membership' do
         other_user = create(:user)
         other_band = create(:band, owner: other_user)
-        create(:user_band, user: other_user, band: other_band)
+        # UserBand relationship is automatically created by the band factory
         login_as(other_user, other_band)
 
         expect {
@@ -332,7 +327,7 @@ RSpec.describe 'Bands API', type: :request do
       it 'requires band membership' do
         other_user = create(:user)
         other_band = create(:band, owner: other_user)
-        create(:user_band, user: other_user, band: other_band)
+        # UserBand relationship is automatically created by the band factory
         login_as(other_user, other_band)
 
         expect {
@@ -383,7 +378,7 @@ RSpec.describe 'Bands API', type: :request do
 
       it 'returns error when Google Calendar is not enabled' do
         disabled_band = create(:band, owner: user, google_calendar_enabled: false)
-        create(:user_band, user: user, band: disabled_band)
+        # UserBand relationship is automatically created by the band factory
         login_as(user, disabled_band)
 
         post "/bands/#{disabled_band.id}/sync_google_calendar"
@@ -397,7 +392,7 @@ RSpec.describe 'Bands API', type: :request do
       it 'requires band membership' do
         other_user = create(:user)
         other_band = create(:band, owner: other_user)
-        create(:user_band, user: other_user, band: other_band)
+        # UserBand relationship is automatically created by the band factory
         login_as(other_user, other_band)
 
         expect {

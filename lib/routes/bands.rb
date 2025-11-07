@@ -375,8 +375,9 @@ class Routes::Bands < Sinatra::Base
 
   post '/bands/:id/google_calendar_settings' do
     require_login
-    @band = user_bands.find(params[:id])
-    
+    @band = user_bands.includes(:user_bands, :owners).find(params[:id])
+    @user_bands_by_user_id = @band.user_bands.index_by(&:user_id)
+
     # Any band member can configure Google Calendar settings
     unless @band.users.include?(current_user)
       @google_calendar_error = "You must be a member of this band to configure Google Calendar settings"

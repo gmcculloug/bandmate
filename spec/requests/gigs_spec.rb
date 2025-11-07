@@ -5,7 +5,7 @@ RSpec.describe 'Gigs API', type: :request do
   let(:band) { create(:band, owner: user) }
   
   before do
-    create(:user_band, user: user, band: band)
+    # UserBand relationship is automatically created by the band factory
   end
   describe 'GET /gigs' do
     it 'returns a list of all gigs' do
@@ -383,7 +383,7 @@ RSpec.describe 'Gigs API', type: :request do
     let(:venue) { create(:venue, band: google_calendar_band) }
 
     before do
-      create(:user_band, user: user, band: google_calendar_band)
+      # UserBand relationship is automatically created by the band factory
     end
 
     describe 'POST /gigs with Google Calendar enabled' do
@@ -429,7 +429,7 @@ RSpec.describe 'Gigs API', type: :request do
 
       it 'does not sync when Google Calendar is disabled' do
         disabled_band = create(:band, owner: user, google_calendar_enabled: false)
-        create(:user_band, user: user, band: disabled_band)
+        # UserBand relationship is automatically created by the band factory
         disabled_venue = create(:venue, band: disabled_band)
         login_as(user, disabled_band)
 
