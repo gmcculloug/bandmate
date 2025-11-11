@@ -80,10 +80,13 @@
                 <!-- Other band gigs -->
                 <% if gigs[:other] && current_user.bands.count > 1 %>
                     <% gigs[:other].each do |gig| %>
-                        <div class="gig-event other-band" title="<%= gig.name %> with <%= gig.band.name %> at <%= gig.venue&.name || 'TBD' %>">
-                            <a href="/gigs/<%= gig.id %>" style="color: white; text-decoration: none;">
-                                <%= gig.band.name %>: <%= gig.name %>
-                            </a>
+                        <%
+                          time_info = gig.start_time ? gig.start_time.strftime('%l:%M %p').strip : 'Time TBD'
+                          tooltip_text = "#{gig.name} | #{gig.band.name} | #{gig.venue&.name || 'TBD'} | #{gig.performance_date.strftime('%B %d, %Y')} at #{time_info} | Switch to #{gig.band.name}'s profile to view details"
+                        %>
+                        <div class="gig-event other-band other-band-hover"
+                             title="<%= tooltip_text %>">
+                            <%= gig.band.name %>: <%= gig.name %>
                         </div>
                     <% end %>
                 <% end %>
@@ -297,12 +300,12 @@
     .calendar-grid {
         font-size: 0.7rem;
     }
-    
+
     .calendar-day {
         min-height: 60px;
         padding: 2px;
     }
-    
+
     .gig-event {
         font-size: 0.6rem;
         padding: 2px;
@@ -311,15 +314,95 @@
         box-sizing: border-box;
         line-height: 1.2;
     }
-    
+
     .calendar-header {
         padding: 4px 2px;
         font-size: 0.7rem;
     }
-    
+
     .day-number {
         font-size: 0.7rem;
         margin-bottom: 1px;
+    }
+}
+
+/* Enhanced hover tooltip for other band gigs */
+.other-band-hover {
+    position: relative;
+}
+
+.other-band-hover::after,
+.other-band-hover::before {
+    opacity: 0;
+    transition: opacity 0.05s ease-in-out;
+    transition-delay: 0.05s;
+}
+
+.other-band-hover:hover {
+    opacity: 0.9;
+    z-index: 100;
+}
+
+.other-band-hover:hover::after,
+.other-band-hover:hover::before {
+    opacity: 1;
+    transition-delay: 0s;
+}
+
+.other-band-hover[title]::after {
+    content: attr(title);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(45, 55, 72, 0.95);
+    color: white;
+    padding: 12px 20px;
+    border-radius: 8px;
+    font-size: 1.1rem;
+    line-height: 1.4;
+    white-space: nowrap;
+    z-index: 1000;
+    pointer-events: none;
+    margin-bottom: 6px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    max-width: 450px;
+    white-space: normal;
+    word-break: break-word;
+    text-align: center;
+    font-weight: 500;
+}
+
+.other-band-hover[title]::before {
+    content: '';
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 5px solid transparent;
+    border-top-color: rgba(45, 55, 72, 0.95);
+    z-index: 1000;
+    pointer-events: none;
+}
+
+@media (max-width: 768px) {
+    .other-band-hover[title]::after {
+        font-size: 1rem;
+        padding: 12px 16px;
+        max-width: 350px;
+        left: 0;
+        right: 0;
+        transform: none;
+        margin-left: auto;
+        margin-right: auto;
+        font-weight: 500;
+        border-radius: 8px;
+    }
+
+    .other-band-hover[title]::before {
+        left: 50%;
+        transform: translateX(-50%);
     }
 }
 </style>
@@ -444,11 +527,11 @@ let isDragging = false;
 let startDate = null;
 let currentSelection = [];
 
-// Prevent event bubbling for gig events so they don't trigger blackout toggle
+// Prevent event bubbling for clickable gig events so they don't trigger blackout toggle
 document.addEventListener('DOMContentLoaded', function() {
-    const gigEvents = document.querySelectorAll('.gig-event:not(.blackout)');
-    gigEvents.forEach(event => {
-        event.addEventListener('click', function(e) {
+    const currentBandGigs = document.querySelectorAll('.gig-event.current-band a');
+    currentBandGigs.forEach(gigLink => {
+        gigLink.addEventListener('click', function(e) {
             e.stopPropagation();
         });
     });
@@ -476,9 +559,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
 function startDragSelection(e) {
     e.preventDefault();
-    
-    // Don't start drag if clicking on a gig event
-    if (e.target.closest('.gig-event')) {
+
+    // Don't start drag if clicking on a clickable gig event (current band gigs)
+    if (e.target.closest('.gig-event.current-band')) {
         return;
     }
     
@@ -626,7 +709,7 @@ document.addEventListener('keydown', function(e) {
     if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
         return;
     }
-    
+
     if (e.key === 'ArrowLeft') {
         e.preventDefault();
         // Navigate to previous month

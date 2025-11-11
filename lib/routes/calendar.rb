@@ -60,19 +60,26 @@ class Routes::Calendar < Sinatra::Base
                           .order(:performance_date)
     
     # Get bandmate conflicts (other users in current band who have gigs with different bands)
+    # Exclude bands that are already shown in "Other Bands" to avoid redundancy
     @bandmate_conflicts = if current_band
       # Get all users in current band except current user
       bandmate_ids = current_band.users.where.not(id: current_user.id).pluck(:id)
-      
+
       # Get bands of those bandmates (excluding current band)
       bandmate_band_ids = UserBand.where(user_id: bandmate_ids)
                                  .where.not(band_id: current_band.id)
                                  .pluck(:band_id)
-      
-      # Get gigs from those bands for the full calendar range - simplified query
-      if bandmate_band_ids.any?
+
+      # Get band IDs that are already shown in "Other Bands" to avoid duplication
+      other_band_ids = @other_band_gigs.map(&:band_id).uniq
+
+      # Exclude bands that are already shown in "Other Bands" section
+      conflict_band_ids = bandmate_band_ids - other_band_ids
+
+      # Get gigs from those remaining bands for the full calendar range
+      if conflict_band_ids.any?
         Gig.joins(:band)
-           .where(bands: { id: bandmate_band_ids })
+           .where(bands: { id: conflict_band_ids })
            .where(performance_date: calendar_start..calendar_end)
            .includes(:band)
            .order(:performance_date)
