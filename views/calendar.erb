@@ -39,6 +39,14 @@
         <div style="width: 12px; height: 12px; background: #6b46c1; border-radius: 2px;"></div>
         <span>Blackouts</span>
     </div>
+    <div style="display: flex; align-items: center; gap: 3px;">
+        <div style="width: 12px; height: 12px; background: #48bb78; border-radius: 2px;"></div>
+        <span>Best Practice</span>
+    </div>
+    <div style="display: flex; align-items: center; gap: 3px;">
+        <div style="width: 12px; height: 12px; background: #2f855a; border-radius: 2px;"></div>
+        <span>(Unofficial) Best Practice</span>
+    </div>
 </div>
 
 <!-- Calendar Grid -->
@@ -105,11 +113,25 @@
                     <% gigs[:blackouts].each do |blackout| %>
                         <% user_text = blackout.user == current_user ? "You" : blackout.user.username %>
                         <% is_current_user = blackout.user == current_user %>
-                        <div class="gig-event blackout <%= 'user-blackout' if is_current_user %>" 
+                        <div class="gig-event blackout <%= 'user-blackout' if is_current_user %>"
                              title="<%= user_text %> - unavailable<%= blackout.reason.present? ? ': ' + blackout.reason : '' %>"
                              <%= 'data-user-blackout="true"' if is_current_user %>
                              onclick="event.stopPropagation();">
                             <%= user_text %> - unavailable
+                        </div>
+                    <% end %>
+                <% end %>
+
+                <!-- Best Practice dates -->
+                <% best_practices_for_date = @best_practice_dates.select { |bp| bp[:date] == date } %>
+                <% if best_practices_for_date.any? %>
+                    <% best_practices_for_date.each do |best_practice| %>
+                        <% is_finalized = best_practice[:practice].status == 'finalized' %>
+                        <% practice_text = is_finalized ? 'Practice' : '(Unofficial) Best Practice' %>
+                        <% css_class = is_finalized ? 'best-practice' : 'unofficial-practice' %>
+                        <div class="gig-event <%= css_class %>"
+                             title="<%= practice_text %> for <%= best_practice[:band].name %>">
+                            <%= best_practice[:band].name %> - <%= practice_text %>
                         </div>
                     <% end %>
                 <% end %>
@@ -218,6 +240,14 @@
 
 .gig-event.blackout {
     background: #6b46c1;
+}
+
+.gig-event.best-practice {
+    background: #48bb78;
+}
+
+.gig-event.unofficial-practice {
+    background: #2f855a;
 }
 
 .calendar-day:hover {

@@ -100,7 +100,25 @@ class Routes::Calendar < Sinatra::Base
       @blackout_dates = current_user.blackout_dates
                                     .where(blackout_date: calendar_start..calendar_end)
     end
-    
+
+    # Get final best practice dates for all user's bands
+    @best_practice_dates = []
+    current_user.bands.includes(:practices).each do |band|
+      # Get active and finalized practices for this band (finalized practices have calculated best dates)
+      practices = band.practices.where(status: ['active', 'finalized'])
+
+      practices.each do |practice|
+        best_date = practice.best_practice_date
+        if best_date && best_date >= calendar_start && best_date <= calendar_end
+          @best_practice_dates << {
+            date: best_date,
+            band: band,
+            practice: practice
+          }
+        end
+      end
+    end
+
     erb :calendar
   end
 

@@ -93,6 +93,34 @@ class Practice < ActiveRecord::Base
     practice_dates[best_day_index]&.strftime('%A')
   end
 
+  def best_practice_date
+    return nil unless practice_availabilities.any?
+
+    # Group by day_of_week and count available responses
+    day_scores = practice_availabilities
+      .where(availability: 'available')
+      .group(:day_of_week)
+      .count
+
+    # Add maybe responses with half weight
+    maybe_scores = practice_availabilities
+      .where(availability: 'maybe')
+      .group(:day_of_week)
+      .count
+
+    combined_scores = {}
+    practice_dates.each_with_index do |date, index|
+      day_index = index
+      combined_scores[day_index] = (day_scores[day_index] || 0) + (maybe_scores[day_index] || 0) * 0.5
+    end
+
+    # Return the date with highest score, or nil if no availability
+    return nil if combined_scores.values.all?(&:zero?)
+
+    best_day_index = combined_scores.max_by { |day, score| score }.first
+    practice_dates[best_day_index]
+  end
+
   def availability_summary
     summary = {}
     practice_dates.each_with_index do |date, index|
