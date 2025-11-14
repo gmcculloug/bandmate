@@ -1,61 +1,50 @@
-<div style="display: flex; align-items: center; gap: 10px; margin-bottom: 20px;">
-    <!-- Burger Menu Button -->
-    <button type="button" id="burger-menu" onclick="toggleAvailableSongs()" style="background: #667eea; color: white; border: none; border-radius: 6px; padding: 8px; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-        <div class="burger-icon">
-            <span></span>
-            <span></span>
-            <span></span>
-        </div>
-    </button>
-    <h2 style="margin: 0;">Manage Songs: <%= @gig.name %></h2>
-</div>
+<div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 20px;">
+    <div style="display: flex; align-items: center; gap: 10px;">
+        <!-- Burger Menu Button -->
+        <button type="button" id="burger-menu" onclick="toggleAvailableSongs()" style="background: #667eea; color: white; border: none; border-radius: 6px; padding: 8px; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+            <div class="burger-icon">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </button>
+        <h2 style="margin: 0;">Manage Songs: <%= @gig.name %></h2>
+    </div>
 
-<div class="card" style="margin-bottom: 20px; background: #f8f9fa; border: 1px solid #dee2e6;">
-    <div style="padding: 12px 16px;">
-        <div style="font-size: 0.9rem; color: #495057; line-height: 1.4;">
-            <div style="margin-bottom: 6px;">
-                <span style="color: #2c5aa0; font-weight: 600;">💡 Quick Actions:</span>
-            </div>
-            <div style="margin-bottom: 4px;">
-                • <strong>Double-click</strong> a song in Available Songs to add it to the selected set
-            </div>
-            <div>
-                • <strong>Double-click</strong> a song in any set to move it back to Available Songs
-            </div>
-        </div>
+    <div class="actions" style="display: flex; gap: 10px;">
+        <button type="button" class="btn btn-success" onclick="saveSongChanges()">Save</button>
+        <a href="/gigs/<%= @gig.id %>" class="btn">Cancel</a>
     </div>
 </div>
 
-<div class="card" style="margin-bottom: 20px;">
-    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
-        <div style="display: flex; align-items: center; gap: 20px; flex-wrap: wrap;">
-            <div>
-                <label for="num_sets" style="font-weight: bold; margin-right: 10px;">Number of Sets:</label>
-                <select id="num_sets" style="padding: 8px; border: 1px solid #d1d5db; border-radius: 4px;">
-                    <option value="1">1</option>
-                    <option value="2" selected>2</option>
-                    <option value="3">3</option>
-                </select>
-            </div>
-            
-            <div style="padding: 8px 15px; background: #f7fafc; border-radius: 6px; border: 1px solid #e2e8f0;">
-                <span style="font-weight: bold; color: #4a5568;">Total Time:</span>
-                <span id="total-time" style="color: #2d3748; margin-left: 8px;">0:00</span>
-            </div>
-        </div>
-        
-        <div class="actions">
-            <button type="button" class="btn btn-success" onclick="saveSongChanges()">Save Changes</button>
-            <a href="/gigs/<%= @gig.id %>" class="btn">Cancel</a>
-        </div>
-    </div>
+<div style="margin-bottom: 20px;">
+    <p style="margin: 0; font-size: 0.85rem; color: #6b7280; line-height: 1.4;">
+        <span style="color: #4f46e5; font-weight: 500;">💡 Quick Actions:</span>
+        <strong>Double-click</strong> a song in Available Songs to add it to the selected set • <strong>Double-click</strong> a song in any set to move it back to Available Songs
+    </p>
 </div>
 
 
-<div id="main-container" style="display: grid; grid-template-columns: 300px 1fr; gap: 20px; min-height: 600px;">
+
+<div id="main-container" class="grid-layout" style="grid-template-columns: 300px 1fr; gap: 20px;">
     <!-- Available Songs Column -->
     <div class="card" id="available-songs-column">
         <div style="margin-bottom: 15px;">
+            <div style="display: flex; align-items: center; gap: 15px; flex-wrap: wrap; margin-bottom: 12px;">
+                <div>
+                    <label for="num_sets" style="font-weight: bold; margin-right: 8px; font-size: 0.9rem;">Number of Sets:</label>
+                    <select id="num_sets" style="padding: 6px; border: 1px solid #d1d5db; border-radius: 4px; font-size: 0.9rem;">
+                        <option value="1">1</option>
+                        <option value="2" selected>2</option>
+                        <option value="3">3</option>
+                    </select>
+                </div>
+
+                <div style="padding: 6px 12px; background: #f7fafc; border-radius: 4px; border: 1px solid #e2e8f0;">
+                    <span style="font-weight: bold; color: #4a5568; font-size: 0.85rem;">Total Time:</span>
+                    <span id="total-time" style="color: #2d3748; margin-left: 6px; font-size: 0.85rem;">0:00</span>
+                </div>
+            </div>
             <h3 style="margin: 0;">Available Songs (<span id="available-count"><%= @available_songs.count %></span>)</h3>
             <div id="selected-set-indicator" style="margin-top: 8px; padding: 6px 10px; background: #e3f2fd; border: 1px solid #90caf9; border-radius: 4px; font-size: 0.85rem; color: #1565c0;">
                 <strong>Adding to:</strong> <span id="selected-set-name">Set 1</span>
@@ -68,7 +57,7 @@
                 <button type="button" id="clear-filter" onclick="clearSongFilter()" style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: none; border: none; color: #9ca3af; cursor: pointer; font-size: 16px; padding: 0; width: 20px; height: 20px; display: none; align-items: center; justify-content: center;">×</button>
             </div>
             
-            <div id="available-songs" style="max-height: 500px; overflow-y: scroll; border: 1px solid #e2e8f0; border-radius: 6px; padding: 10px;">
+            <div id="available-songs" style="overflow-y: scroll; border: 1px solid #e2e8f0; border-radius: 6px; padding: 10px;">
             <% @available_songs.each do |song| %>
                 <div class="song-item available-song" data-song-id="<%= song.id %>" draggable="true" style="margin-bottom: 8px; padding: 10px; background: #f7fafc; border: 1px solid #e2e8f0; border-radius: 6px; cursor: grab; transition: all 0.2s ease;">
                     <div style="font-weight: bold; color: #2d3748; font-size: 0.9rem;">
@@ -159,7 +148,7 @@ function generateSets() {
                     <span class="set-time" style="color: #2d3748; margin-left: 6px;">0:00</span>
                 </div>
             </div>
-            <div class="set-songs" data-set="${i}" style="min-height: 400px; max-height: 500px; overflow-y: scroll; border: 1px solid #e2e8f0; border-radius: 6px; padding: 10px;">
+            <div class="set-songs" data-set="${i}" style="overflow-y: scroll; border: 1px solid #e2e8f0; border-radius: 6px; padding: 10px;">
                 <div class="drop-zone-text" style="text-align: center; color: #a0aec0; padding: 20px; font-style: italic;">Drop songs here</div>
             </div>
         `;
@@ -970,33 +959,107 @@ function toggleClearButton(filterValue) {
     opacity: 0;
 }
 
+/* Responsive height adjustments */
+#main-container {
+    display: flex;
+    flex-direction: column;
+}
+
+#main-container.grid-layout {
+    display: grid;
+    height: calc(100vh - 120px);
+    min-height: 500px; /* Prevent layout from becoming unusable */
+}
+
+.card {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+#available-songs-column {
+    height: 100%;
+}
+
+#available-songs-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+#available-songs {
+    flex: 1;
+    min-height: 300px; /* Ensure minimum usable height for scrolling */
+    max-height: calc(100vh - 320px); /* Dynamic max height */
+}
+
+.set-column {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.set-songs {
+    flex: 1;
+    min-height: 300px; /* Ensure minimum usable height for scrolling */
+    max-height: calc(100vh - 250px); /* Dynamic max height */
+}
+
 @media (max-width: 768px) {
     #main-container {
         grid-template-columns: 1fr;
+        height: calc(100vh - 140px); /* Adjust for mobile */
     }
-    
+
     #sets-container {
         grid-template-columns: 1fr !important;
     }
-    
+
     /* On mobile, the available songs column takes full width when shown */
     #available-songs-column {
         width: 100%;
         position: relative;
     }
-    
+
     /* Ensure animations still work on mobile */
     #available-songs-column.sliding-out {
         transform: translateX(-100%);
         opacity: 0;
     }
+
+    /* Mobile scrolling adjustments */
+    #available-songs {
+        min-height: 250px; /* Smaller minimum for mobile */
+        max-height: calc(100vh - 360px);
+    }
+
+    .set-songs {
+        min-height: 250px; /* Smaller minimum for mobile */
+        max-height: calc(100vh - 290px);
+    }
 }
 
-/* Force scroll bars to always be visible */
+/* Force scroll bars to always be visible and ensure proper overflow */
 #available-songs,
 .set-songs {
+    overflow-y: auto !important; /* Ensure scrolling is always enabled */
     scrollbar-width: thin; /* Firefox */
     -ms-overflow-style: scrollbar; /* IE/Edge */
+}
+
+/* Ensure containers remain scrollable even at minimum heights */
+@media (max-height: 600px) {
+    #main-container.grid-layout {
+        min-height: 400px; /* Smaller minimum for very short screens */
+    }
+
+    #available-songs {
+        min-height: 200px; /* Even smaller minimum for very short screens */
+    }
+
+    .set-songs {
+        min-height: 200px; /* Even smaller minimum for very short screens */
+    }
 }
 
 /* Webkit browsers (Chrome, Safari) */
