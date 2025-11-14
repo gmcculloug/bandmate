@@ -22,7 +22,7 @@ services:
       - "4567"  # Only expose to internal network, nginx will handle external access
     volumes:
       # Mount logs directory
-      - ./logs:/app/logs
+      - ./logs:/app/logs:Z
     environment:
       - RACK_ENV=production
       - PORT=4567
