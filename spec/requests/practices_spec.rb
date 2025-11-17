@@ -58,7 +58,7 @@ RSpec.describe 'Practice Routes', type: :request do
         get '/practices/new'
         expect(last_response.body).to include('Schedule Practice Session')
         expect(last_response.body).to include('practice_title')
-        expect(last_response.body).to include('week_start_date')
+        expect(last_response.body).to include('start_date')
       end
     end
 
@@ -75,7 +75,8 @@ RSpec.describe 'Practice Routes', type: :request do
     let(:valid_params) do
       {
         title: 'Weekly Practice',
-        week_start_date: Date.current.beginning_of_week(:sunday).to_s,
+        start_date: Date.current.to_s,
+        end_date: (Date.current + 6.days).to_s,
         description: 'Practice session for upcoming gig'
       }
     end
@@ -96,26 +97,27 @@ RSpec.describe 'Practice Routes', type: :request do
         expect(last_response.location).to include("/practices/#{practice.id}")
       end
 
-      it 'adjusts week_start_date to Sunday' do
-        # Use a Wednesday date
-        wednesday = Date.current.beginning_of_week(:sunday) + 3.days
-        post '/practices',valid_params.merge(week_start_date: wednesday.to_s)
+      it 'creates practice with custom date range' do
+        # Use a custom date range
+        start_date = Date.current + 1.week
+        end_date = start_date + 4.days
+        post '/practices', valid_params.merge(start_date: start_date.to_s, end_date: end_date.to_s)
 
         practice = Practice.last
-        expect(practice.week_start_date.wday).to eq(0) # Sunday
-        expect(practice.week_start_date).to eq(wednesday.beginning_of_week(:sunday))
+        expect(practice.start_date).to eq(start_date)
+        expect(practice.end_date).to eq(end_date)
       end
 
       it 'handles invalid date format' do
-        post '/practices',valid_params.merge(week_start_date: 'invalid-date')
+        post '/practices', valid_params.merge(start_date: 'invalid-date')
         expect(last_response.body).to include('Invalid date format')
       end
 
-      it 'does not create practice with duplicate week for same band' do
-        create(:practice, band: band, week_start_date: Date.current.beginning_of_week(:sunday))
+      it 'does not create practice with overlapping dates for same band' do
+        create(:practice, band: band, start_date: Date.current, end_date: Date.current + 6.days)
 
-        post '/practices',valid_params
-        expect(last_response.body).to include('Week start date already has a practice scheduled for this week')
+        post '/practices', valid_params
+        expect(last_response.body).to include('Practice dates overlap with an existing practice session')
       end
     end
 
@@ -178,13 +180,14 @@ RSpec.describe 'Practice Routes', type: :request do
 
   describe 'POST /practices/:id/availability' do
     let(:availability_params) do
+      start_date = practice.start_date
       {
-        'availability_0' => 'available',
-        'availability_1' => 'maybe',
-        'availability_2' => 'not_available',
-        'notes_0' => 'Available all day',
-        'notes_1' => 'Only after 7pm',
-        'notes_2' => 'Out of town'
+        "availability_#{start_date}" => 'available',
+        "availability_#{start_date + 1.day}" => 'maybe',
+        "availability_#{start_date + 2.days}" => 'not_available',
+        "notes_#{start_date}" => 'Available all day',
+        "notes_#{start_date + 1.day}" => 'Only after 7pm',
+        "notes_#{start_date + 2.days}" => 'Out of town'
       }
     end
 
@@ -196,24 +199,28 @@ RSpec.describe 'Practice Routes', type: :request do
           post "/practices/#{practice.id}/availability", params: availability_params
         }.to change(PracticeAvailability, :count).by(3)
 
-        availabilities = practice.practice_availabilities.where(user: user).order(:day_of_week)
+        start_date = practice.start_date
+        availabilities = practice.practice_availabilities.where(user: user).order(:specific_date)
         expect(availabilities[0].availability).to eq('available')
         expect(availabilities[0].notes).to eq('Available all day')
+        expect(availabilities[0].specific_date).to eq(start_date)
         expect(availabilities[1].availability).to eq('maybe')
         expect(availabilities[1].notes).to eq('Only after 7pm')
+        expect(availabilities[1].specific_date).to eq(start_date + 1.day)
         expect(availabilities[2].availability).to eq('not_available')
         expect(availabilities[2].notes).to eq('Out of town')
+        expect(availabilities[2].specific_date).to eq(start_date + 2.days)
       end
 
       it 'replaces existing availability entries' do
         # Create existing availability
-        create(:practice_availability, practice: practice, user: user, day_of_week: 0, availability: 'not_available')
+        create(:practice_availability, practice: practice, user: user, specific_date: practice.start_date, availability: 'not_available')
 
         expect {
           post "/practices/#{practice.id}/availability", params: availability_params
         }.to change(PracticeAvailability, :count).by(2) # net change: -1 + 3 = 2
 
-        availability = practice.practice_availabilities.find_by(user: user, day_of_week: 0)
+        availability = practice.practice_availabilities.find_by(user: user, specific_date: practice.start_date)
         expect(availability.availability).to eq('available')
       end
 
@@ -224,7 +231,7 @@ RSpec.describe 'Practice Routes', type: :request do
           post "/practices/#{practice.id}/availability", params: params_with_empty
         }.to change(PracticeAvailability, :count).by(3) # only 3, not 4
 
-        expect(practice.practice_availabilities.where(user: user, day_of_week: 3)).to be_empty
+        expect(practice.practice_availabilities.where(user: user, specific_date: practice.start_date + 3.days)).to be_empty
       end
 
       it 'redirects to practice show page' do
@@ -305,9 +312,9 @@ RSpec.describe 'Practice Routes', type: :request do
         get "/practices/#{practice.id}/edit"
         expect(last_response.body).to include('Edit Practice Session')
         expect(last_response.body).to include('practice_title')
-        expect(last_response.body).to include('week_start_date')
+        expect(last_response.body).to include('start_date')
         expect(last_response.body).to include(practice.title)
-        expect(last_response.body).to include(practice.week_start_date.to_s)
+        expect(last_response.body).to include(practice.start_date.to_s)
       end
 
       it 'shows warning when practice has availability responses' do
@@ -361,8 +368,8 @@ RSpec.describe 'Practice Routes', type: :request do
     let(:update_params) do
       {
         title: 'Updated Practice',
-        week_start_date: (Date.current + 1.week).beginning_of_week(:sunday).to_s,
-        end_date: (Date.current + 1.week).end_of_week(:sunday).to_s,
+        start_date: (Date.current + 1.week).to_s,
+        end_date: (Date.current + 1.week + 6.days).to_s,
         description: 'Updated description'
       }
     end
@@ -380,20 +387,21 @@ RSpec.describe 'Practice Routes', type: :request do
         expect(last_response.location).to include("/practices/#{practice.id}")
       end
 
-      it 'adjusts week_start_date to Sunday' do
-        # Use a Wednesday date
-        wednesday = (Date.current + 1.week).beginning_of_week(:sunday) + 3.days
-        put "/practices/#{practice.id}", update_params.merge(week_start_date: wednesday.to_s)
+      it 'updates practice with custom date range' do
+        # Use a custom date range
+        start_date = Date.current + 1.week
+        end_date = start_date + 4.days  # 5-day practice period
+        put "/practices/#{practice.id}", update_params.merge(start_date: start_date.to_s, end_date: end_date.to_s)
 
         practice.reload
-        expect(practice.week_start_date.wday).to eq(0) # Sunday
-        expect(practice.week_start_date).to eq(wednesday.beginning_of_week(:sunday))
+        expect(practice.start_date).to eq(start_date)
+        expect(practice.end_date).to eq(end_date)
       end
 
       it 'clears availability responses when dates change' do
         # Create some availability responses
-        create(:practice_availability, practice: practice, user: user, day_of_week: 0)
-        create(:practice_availability, practice: practice, user: user, day_of_week: 1)
+        create(:practice_availability, practice: practice, user: user, specific_date: practice.start_date)
+        create(:practice_availability, practice: practice, user: user, specific_date: practice.start_date + 1.day)
 
         expect {
           put "/practices/#{practice.id}", update_params
@@ -402,10 +410,10 @@ RSpec.describe 'Practice Routes', type: :request do
 
       it 'does not clear availability responses when dates stay the same' do
         # Create some availability responses
-        create(:practice_availability, practice: practice, user: user, day_of_week: 0)
+        create(:practice_availability, practice: practice, user: user, specific_date: practice.start_date)
 
         same_date_params = update_params.merge(
-          week_start_date: practice.week_start_date.to_s,
+          start_date: practice.start_date.to_s,
           end_date: practice.end_date.to_s
         )
 
@@ -415,17 +423,17 @@ RSpec.describe 'Practice Routes', type: :request do
       end
 
       it 'handles invalid date format' do
-        put "/practices/#{practice.id}", update_params.merge(week_start_date: 'invalid-date')
+        put "/practices/#{practice.id}", update_params.merge(start_date: 'invalid-date')
         expect(last_response.body).to include('Invalid date format')
       end
 
       it 'handles end date before start date' do
         put "/practices/#{practice.id}", update_params.merge(
-          week_start_date: '2024-01-15',  # Monday
-          end_date: '2024-01-10'          # Previous Wednesday
+          start_date: '2024-01-15',      # Monday
+          end_date: '2024-01-10'         # Previous Wednesday
         )
         expect(last_response.status).to eq(200)
-        expect(last_response.body).to include('End date must be after start date')
+        expect(last_response.body).to include('End date must be after or equal to start date')
       end
     end
 

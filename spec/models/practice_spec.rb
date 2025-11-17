@@ -7,10 +7,16 @@ RSpec.describe Practice, type: :model do
       expect(practice).to be_valid
     end
 
-    it 'is invalid without a week_start_date' do
-      practice = build(:practice, week_start_date: nil)
+    it 'is invalid without a start_date' do
+      practice = build(:practice, start_date: nil)
       expect(practice).not_to be_valid
-      expect(practice.errors[:week_start_date]).to include("can't be blank")
+      expect(practice.errors[:start_date]).to include("can't be blank")
+    end
+
+    it 'is invalid without an end_date' do
+      practice = build(:practice, end_date: nil)
+      expect(practice).not_to be_valid
+      expect(practice.errors[:end_date]).to include("can't be blank")
     end
 
     it 'is invalid without a status' do
@@ -32,26 +38,25 @@ RSpec.describe Practice, type: :model do
       end
     end
 
-    it 'is invalid if week_start_date is not a Sunday' do
-      monday = Date.current.beginning_of_week(:sunday) + 1.day
-      practice = build(:practice, week_start_date: monday)
+    it 'is invalid if end_date is before start_date' do
+      practice = build(:practice, start_date: Date.current, end_date: Date.current - 1.day)
       expect(practice).not_to be_valid
-      expect(practice.errors[:week_start_date]).to include("must be a Sunday")
+      expect(practice.errors[:end_date]).to include("must be after start date")
     end
 
-    it 'is invalid with duplicate week_start_date for the same band' do
+    it 'is invalid with overlapping practice dates for the same band' do
       band = create(:band)
-      create(:practice, band: band, week_start_date: Date.current.beginning_of_week(:sunday))
-      practice = build(:practice, band: band, week_start_date: Date.current.beginning_of_week(:sunday))
+      create(:practice, band: band, start_date: Date.current, end_date: Date.current + 6.days)
+      practice = build(:practice, band: band, start_date: Date.current + 3.days, end_date: Date.current + 9.days)
       expect(practice).not_to be_valid
-      expect(practice.errors[:week_start_date]).to include("already has a practice scheduled for this week")
+      expect(practice.errors[:base]).to include("Practice dates overlap with an existing practice session")
     end
 
-    it 'allows same week_start_date for different bands' do
+    it 'allows overlapping practice dates for different bands' do
       band1 = create(:band)
       band2 = create(:band)
-      create(:practice, band: band1, week_start_date: Date.current.beginning_of_week(:sunday))
-      practice = build(:practice, band: band2, week_start_date: Date.current.beginning_of_week(:sunday))
+      create(:practice, band: band1, start_date: Date.current, end_date: Date.current + 6.days)
+      practice = build(:practice, band: band2, start_date: Date.current + 3.days, end_date: Date.current + 9.days)
       expect(practice).to be_valid
     end
   end
@@ -71,8 +76,8 @@ RSpec.describe Practice, type: :model do
 
     it 'has many practice_availabilities' do
       practice = create(:practice)
-      availability1 = create(:practice_availability, practice: practice)
-      availability2 = create(:practice_availability, practice: practice, day_of_week: 1)
+      availability1 = create(:practice_availability, practice: practice, specific_date: practice.start_date)
+      availability2 = create(:practice_availability, practice: practice, specific_date: practice.end_date)
       expect(practice.practice_availabilities).to include(availability1, availability2)
     end
 
@@ -96,27 +101,28 @@ RSpec.describe Practice, type: :model do
       expect(Practice.active).not_to include(@finalized_practice, @cancelled_practice)
     end
 
-    it 'returns practices for a specific week' do
-      week_date = Date.current.beginning_of_week(:sunday)
-      practice_this_week = create(:practice, week_start_date: week_date)
-      practice_next_week = create(:practice, week_start_date: week_date + 1.week)
+    it 'returns practices for a specific date range' do
+      start_date = Date.current
+      end_date = Date.current + 6.days
+      practice_this_week = create(:practice, start_date: start_date, end_date: end_date)
+      practice_next_week = create(:practice, start_date: start_date + 1.week, end_date: end_date + 1.week)
 
-      expect(Practice.for_week(week_date)).to include(practice_this_week)
-      expect(Practice.for_week(week_date)).not_to include(practice_next_week)
+      expect(Practice.for_date_range(start_date, end_date)).to include(practice_this_week)
+      expect(Practice.for_date_range(start_date, end_date)).not_to include(practice_next_week)
     end
   end
 
   describe 'instance methods' do
-    let(:practice) { create(:practice, week_start_date: Date.parse('2024-01-07')) } # A Sunday
+    let(:practice) { create(:practice, start_date: Date.parse('2024-01-07'), end_date: Date.parse('2024-01-13')) }
 
     describe '#week_end_date' do
-      it 'returns the Saturday of the practice week' do
+      it 'returns the end date of the practice period' do
         expect(practice.week_end_date).to eq(Date.parse('2024-01-13'))
       end
     end
 
     describe '#week_dates' do
-      it 'returns an array of all dates in the practice week' do
+      it 'returns an array of all dates in the practice period' do
         dates = practice.week_dates
         expect(dates.size).to eq(7)
         expect(dates.first).to eq(Date.parse('2024-01-07'))
@@ -131,7 +137,7 @@ RSpec.describe Practice, type: :model do
     end
 
     describe '#formatted_week_range' do
-      it 'returns a formatted week range string' do
+      it 'returns a formatted date range string' do
         expect(practice.formatted_week_range).to eq("Jan 07 - Jan 13, 2024")
       end
     end
@@ -150,9 +156,9 @@ RSpec.describe Practice, type: :model do
       it 'returns the count of unique users who responded' do
         user1 = create(:user)
         user2 = create(:user)
-        create(:practice_availability, practice: practice, user: user1, day_of_week: 0)
-        create(:practice_availability, practice: practice, user: user1, day_of_week: 1)
-        create(:practice_availability, practice: practice, user: user2, day_of_week: 0)
+        create(:practice_availability, practice: practice, user: user1, specific_date: practice.start_date)
+        create(:practice_availability, practice: practice, user: user1, specific_date: practice.start_date + 1.day)
+        create(:practice_availability, practice: practice, user: user2, specific_date: practice.start_date)
 
         expect(practice.response_count).to eq(2)
       end
@@ -189,27 +195,32 @@ RSpec.describe Practice, type: :model do
       it 'returns the day with most available responses' do
         user1 = create(:user)
         user2 = create(:user)
-        create(:practice_availability, practice: practice, user: user1, day_of_week: 1, availability: 'available')
-        create(:practice_availability, practice: practice, user: user2, day_of_week: 1, availability: 'available')
-        create(:practice_availability, practice: practice, user: user1, day_of_week: 2, availability: 'available')
+        monday = practice.start_date + 1.day # Monday from our test start date (Sunday)
+        tuesday = practice.start_date + 2.days # Tuesday
+        create(:practice_availability, practice: practice, user: user1, specific_date: monday, availability: 'available')
+        create(:practice_availability, practice: practice, user: user2, specific_date: monday, availability: 'available')
+        create(:practice_availability, practice: practice, user: user1, specific_date: tuesday, availability: 'available')
 
-        expect(practice.best_day).to eq('Monday') # day_of_week 1
+        expect(practice.best_day).to eq('Monday')
       end
 
       it 'considers maybe responses with half weight' do
         user1 = create(:user)
         user2 = create(:user)
         user3 = create(:user)
-        create(:practice_availability, practice: practice, user: user1, day_of_week: 1, availability: 'available')
-        create(:practice_availability, practice: practice, user: user2, day_of_week: 2, availability: 'maybe')
-        create(:practice_availability, practice: practice, user: user3, day_of_week: 2, availability: 'maybe')
+        monday = practice.start_date + 1.day # Monday from our test start date (Sunday)
+        tuesday = practice.start_date + 2.days # Tuesday
+        create(:practice_availability, practice: practice, user: user1, specific_date: monday, availability: 'available')
+        create(:practice_availability, practice: practice, user: user2, specific_date: tuesday, availability: 'maybe')
+        create(:practice_availability, practice: practice, user: user3, specific_date: tuesday, availability: 'maybe')
 
         expect(practice.best_day).to eq('Monday') # 1 available (weight 1) > 2 maybe (weight 0.5 each = 1 total)
       end
 
       it 'returns nil when all responses are not_available' do
         user1 = create(:user)
-        create(:practice_availability, practice: practice, user: user1, day_of_week: 1, availability: 'not_available')
+        monday = practice.start_date + 1.day
+        create(:practice_availability, practice: practice, user: user1, specific_date: monday, availability: 'not_available')
 
         expect(practice.best_day).to be_nil
       end
@@ -220,10 +231,11 @@ RSpec.describe Practice, type: :model do
         user1 = create(:user)
         user2 = create(:user)
         practice.band.users << [user1, user2]
+        sunday = practice.start_date # Sunday in our test data
 
-        create(:practice_availability, practice: practice, user: practice.band.owner, day_of_week: 0, availability: 'not_available')
-        create(:practice_availability, practice: practice, user: user1, day_of_week: 0, availability: 'available')
-        create(:practice_availability, practice: practice, user: user2, day_of_week: 0, availability: 'maybe')
+        create(:practice_availability, practice: practice, user: practice.band.owner, specific_date: sunday, availability: 'not_available')
+        create(:practice_availability, practice: practice, user: user1, specific_date: sunday, availability: 'available')
+        create(:practice_availability, practice: practice, user: user2, specific_date: sunday, availability: 'maybe')
 
         summary = practice.availability_summary
         expect(summary['Sunday'][:available]).to eq(1)
@@ -240,11 +252,12 @@ RSpec.describe Practice, type: :model do
       it 'includes suggested times in the summary' do
         user1 = create(:user)
         practice.band.users << user1
+        sunday = practice.start_date # Sunday in our test data
 
         create(:practice_availability,
                practice: practice,
                user: user1,
-               day_of_week: 0,
+               specific_date: sunday,
                availability: 'available',
                suggested_start_time: Time.parse('14:00 UTC'),
                suggested_end_time: Time.parse('16:00 UTC'))
@@ -260,20 +273,21 @@ RSpec.describe Practice, type: :model do
       it 'returns availability records with suggested times for a specific day' do
         user1 = create(:user)
         user2 = create(:user)
+        monday = practice.start_date + 1.day # Monday from our test start date (Sunday)
 
         availability_with_times = create(:practice_availability,
                                        practice: practice,
                                        user: user1,
-                                       day_of_week: 1,
+                                       specific_date: monday,
                                        suggested_start_time: Time.parse('14:00 UTC'),
                                        suggested_end_time: Time.parse('16:00 UTC'))
 
         availability_without_times = create(:practice_availability,
                                           practice: practice,
                                           user: user2,
-                                          day_of_week: 1)
+                                          specific_date: monday)
 
-        result = practice.suggested_times_for_day(1)
+        result = practice.suggested_times_for_day(monday)
         expect(result).to include(availability_with_times)
         expect(result).not_to include(availability_without_times)
       end
@@ -281,26 +295,28 @@ RSpec.describe Practice, type: :model do
 
     describe '#most_popular_time_for_day' do
       it 'returns nil when no time suggestions exist' do
-        expect(practice.most_popular_time_for_day(1)).to be_nil
+        monday = practice.start_date + 1.day
+        expect(practice.most_popular_time_for_day(monday)).to be_nil
       end
 
       it 'returns the most common time suggestion for a day' do
         user1 = create(:user)
         user2 = create(:user)
         user3 = create(:user)
+        monday = practice.start_date + 1.day # Monday from our test start date (Sunday)
 
         # Two users suggest the same time
         create(:practice_availability,
                practice: practice,
                user: user1,
-               day_of_week: 1,
+               specific_date: monday,
                suggested_start_time: Time.parse('14:00 UTC'),
                suggested_end_time: Time.parse('16:00 UTC'))
 
         create(:practice_availability,
                practice: practice,
                user: user2,
-               day_of_week: 1,
+               specific_date: monday,
                suggested_start_time: Time.parse('14:00 UTC'),
                suggested_end_time: Time.parse('16:00 UTC'))
 
@@ -308,11 +324,11 @@ RSpec.describe Practice, type: :model do
         create(:practice_availability,
                practice: practice,
                user: user3,
-               day_of_week: 1,
+               specific_date: monday,
                suggested_start_time: Time.parse('18:00 UTC'),
                suggested_end_time: Time.parse('20:00 UTC'))
 
-        result = practice.most_popular_time_for_day(1)
+        result = practice.most_popular_time_for_day(monday)
         expect(result[:start_time]).to eq('14:00')
         expect(result[:end_time]).to eq('16:00')
         expect(result[:count]).to eq(2)
@@ -322,22 +338,23 @@ RSpec.describe Practice, type: :model do
       it 'handles ties by returning the first encountered time' do
         user1 = create(:user)
         user2 = create(:user)
+        monday = practice.start_date + 1.day # Monday from our test start date (Sunday)
 
         create(:practice_availability,
                practice: practice,
                user: user1,
-               day_of_week: 1,
+               specific_date: monday,
                suggested_start_time: Time.parse('14:00 UTC'),
                suggested_end_time: Time.parse('16:00 UTC'))
 
         create(:practice_availability,
                practice: practice,
                user: user2,
-               day_of_week: 1,
+               specific_date: monday,
                suggested_start_time: Time.parse('18:00 UTC'),
                suggested_end_time: Time.parse('20:00 UTC'))
 
-        result = practice.most_popular_time_for_day(1)
+        result = practice.most_popular_time_for_day(monday)
         expect(result[:count]).to eq(1)
         expect(result[:total_suggestions]).to eq(2)
         # Should return one of the times (implementation returns max_by which is deterministic)
