@@ -175,8 +175,6 @@ if __FILE__ == $0
   puts "🎸 Bandmate is starting up..."
   puts ""
   puts "📡 Starting HTTP server on port 4567"
-  puts "🔒 SSL termination handled by reverse proxy (nginx)"
-  puts ""
 
   # Get local IP address for external access
   require 'socket'
@@ -185,7 +183,6 @@ if __FILE__ == $0
   if local_ip
     puts "🌐 Your local IP address is: #{local_ip}"
     puts "   Internal access: http://#{local_ip}:4567"
-    puts "   External access: https://your-domain.com (via nginx)"
   end
   puts ""
 
