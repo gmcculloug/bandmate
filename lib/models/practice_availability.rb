@@ -2,18 +2,22 @@ class PracticeAvailability < ActiveRecord::Base
   belongs_to :practice
   belongs_to :user
 
-  validates :day_of_week, presence: true, inclusion: { in: 0..6 }
+  validates :specific_date, presence: true
   validates :availability, presence: true, inclusion: { in: %w[available not_available maybe] }
-  validates :day_of_week, uniqueness: { scope: [:practice_id, :user_id],
-                                        message: "already has availability set for this day" }
+  validates :specific_date, uniqueness: { scope: [:practice_id, :user_id],
+                                        message: "already has availability set for this date" }
 
   scope :available, -> { where(availability: 'available') }
   scope :not_available, -> { where(availability: 'not_available') }
   scope :maybe, -> { where(availability: 'maybe') }
-  scope :for_day, ->(day) { where(day_of_week: day) }
+  scope :for_date, ->(date) { where(specific_date: date) }
 
   def day_name
-    %w[Sunday Monday Tuesday Wednesday Thursday Friday Saturday][day_of_week]
+    specific_date.strftime('%A')
+  end
+
+  def formatted_date
+    specific_date.strftime('%B %d, %Y')
   end
 
   def availability_class

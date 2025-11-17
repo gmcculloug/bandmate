@@ -99,7 +99,8 @@ FactoryBot.define do
   factory :practice do
     association :band
     association :created_by_user, factory: :user
-    week_start_date { Date.current.beginning_of_week(:sunday) }
+    start_date { Date.current }
+    end_date { Date.current + 6.days }
     title { "Weekly Practice" }
     description { "Let's practice our upcoming setlist" }
     status { "active" }
@@ -108,7 +109,7 @@ FactoryBot.define do
   factory :practice_availability do
     association :practice
     association :user
-    day_of_week { 0 }
+    specific_date { Date.current }
     availability { 'available' }
     notes { "Available in the evening" }
   end

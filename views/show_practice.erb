@@ -95,21 +95,21 @@
 
 <!-- Popular Time Suggestions -->
 <%
-  # Calculate popular times for each day that has suggestions
-  popular_times_by_day = {}
-  @practice.practice_dates.each_with_index do |date, day_index|
-    popular_time = @practice.most_popular_time_for_day(day_index)
+  # Calculate popular times for each date that has suggestions
+  popular_times_by_date = {}
+  @practice.practice_dates.each do |date|
+    popular_time = @practice.most_popular_time_for_date(date)
     if popular_time && popular_time[:count] > 0
-      popular_times_by_day[day_index] = popular_time.merge(date: date)
+      popular_times_by_date[date] = popular_time.merge(date: date)
     end
   end
 %>
 
-<% if popular_times_by_day.any? %>
+<% if popular_times_by_date.any? %>
     <div class="card" style="margin-bottom: 30px;">
         <h3 style="color: #2d3748; margin-bottom: 20px;">Popular Time Suggestions</h3>
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
-            <% popular_times_by_day.each do |day_index, time_info| %>
+            <% popular_times_by_date.each do |date, time_info| %>
                 <div style="border: 1px solid #e2e8f0; border-radius: 8px; padding: 15px; text-align: center;">
                     <h4 style="color: #4a5568; margin-bottom: 8px; font-size: 0.9em;">
                         <%= time_info[:date].strftime('%A') %>
@@ -158,7 +158,7 @@
                         sorted_members = @band_members.sort_by { |member| member == current_user ? 0 : 1 }
                         %>
                         <% sorted_members.each do |member| %>
-                            <% member_availabilities = @practice.practice_availabilities.where(user: member).index_by(&:day_of_week) %>
+                            <% member_availabilities = @practice.practice_availabilities.where(user: member).index_by(&:specific_date) %>
                             <tr style="border-bottom: 1px solid #f1f5f9;">
                                 <td style="padding: 12px; font-weight: 500;">
                                     <div style="display: flex; align-items: center; gap: 8px;">
@@ -176,7 +176,7 @@
                                     </div>
                                 </td>
                                 <% @practice.practice_dates.each_with_index do |date, day_index| %>
-                                    <% availability = member_availabilities[day_index] %>
+                                    <% availability = member_availabilities[date] %>
                                     <td style="text-align: center;" class="availability-cell"
                                         data-current="<%= availability&.availability || '' %>"
                                         data-user-id="<%= member.id %>">
@@ -185,49 +185,49 @@
                                              style="display: <%= member == current_user ? 'block' : 'none' %>;">
                                             <div class="availability-options">
                                                 <input type="radio"
-                                                       name="user_<%= member.id %>_day_<%= day_index %>"
+                                                       name="user_<%= member.id %>_date_<%= date.strftime('%Y-%m-%d') %>"
                                                        value=""
-                                                       id="user_<%= member.id %>_day_<%= day_index %>_none"
+                                                       id="user_<%= member.id %>_date_<%= date.strftime('%Y-%m-%d') %>_none"
                                                        class="availability-radio"
                                                        <%= 'checked' if availability.nil? %>
                                                        onchange="updateCellBackgroundAndSave(this)">
-                                                <label for="user_<%= member.id %>_day_<%= day_index %>_none"
+                                                <label for="user_<%= member.id %>_date_<%= date.strftime('%Y-%m-%d') %>_none"
                                                        class="availability-option no-response-option">—</label>
 
                                                 <input type="radio"
-                                                       name="user_<%= member.id %>_day_<%= day_index %>"
+                                                       name="user_<%= member.id %>_date_<%= date.strftime('%Y-%m-%d') %>"
                                                        value="available"
-                                                       id="user_<%= member.id %>_day_<%= day_index %>_available"
+                                                       id="user_<%= member.id %>_date_<%= date.strftime('%Y-%m-%d') %>_available"
                                                        class="availability-radio"
                                                        <%= 'checked' if availability&.availability == 'available' %>
                                                        onchange="updateCellBackgroundAndSave(this)">
-                                                <label for="user_<%= member.id %>_day_<%= day_index %>_available"
+                                                <label for="user_<%= member.id %>_date_<%= date.strftime('%Y-%m-%d') %>_available"
                                                        class="availability-option available-option">✓</label>
 
                                                 <input type="radio"
-                                                       name="user_<%= member.id %>_day_<%= day_index %>"
+                                                       name="user_<%= member.id %>_date_<%= date.strftime('%Y-%m-%d') %>"
                                                        value="maybe"
-                                                       id="user_<%= member.id %>_day_<%= day_index %>_maybe"
+                                                       id="user_<%= member.id %>_date_<%= date.strftime('%Y-%m-%d') %>_maybe"
                                                        class="availability-radio"
                                                        <%= 'checked' if availability&.availability == 'maybe' %>
                                                        onchange="updateCellBackgroundAndSave(this)">
-                                                <label for="user_<%= member.id %>_day_<%= day_index %>_maybe"
+                                                <label for="user_<%= member.id %>_date_<%= date.strftime('%Y-%m-%d') %>_maybe"
                                                        class="availability-option maybe-option">?</label>
 
                                                 <input type="radio"
-                                                       name="user_<%= member.id %>_day_<%= day_index %>"
+                                                       name="user_<%= member.id %>_date_<%= date.strftime('%Y-%m-%d') %>"
                                                        value="not_available"
-                                                       id="user_<%= member.id %>_day_<%= day_index %>_not_available"
+                                                       id="user_<%= member.id %>_date_<%= date.strftime('%Y-%m-%d') %>_not_available"
                                                        class="availability-radio"
                                                        <%= 'checked' if availability&.availability == 'not_available' %>
                                                        onchange="updateCellBackgroundAndSave(this)">
-                                                <label for="user_<%= member.id %>_day_<%= day_index %>_not_available"
+                                                <label for="user_<%= member.id %>_date_<%= date.strftime('%Y-%m-%d') %>_not_available"
                                                        class="availability-option not-available-option">✗</label>
                                             </div>
 
                                             <!-- Notes input for selected user -->
                                             <div style="margin-top: 6px;">
-                                                <textarea name="user_<%= member.id %>_notes_<%= day_index %>" rows="2"
+                                                <textarea name="user_<%= member.id %>_notes_<%= date.strftime('%Y-%m-%d') %>" rows="2"
                                                           style="width: 100%; padding: 4px; border: 1px solid #e2e8f0; border-radius: 3px; font-size: 0.7em; resize: vertical;"
                                                           placeholder="Notes..."
                                                           onchange="autoSaveUserInput()"><%= availability&.notes %></textarea>
@@ -306,7 +306,7 @@
                     sorted_members = @band_members.sort_by { |member| member == current_user ? 0 : 1 }
                     %>
                     <% sorted_members.each do |member| %>
-                        <% member_availabilities = @practice.practice_availabilities.where(user: member).index_by(&:day_of_week) %>
+                        <% member_availabilities = @practice.practice_availabilities.where(user: member).index_by(&:specific_date) %>
                         <tr style="border-bottom: 1px solid #f1f5f9;">
                             <td style="padding: 12px; font-weight: 500;">
                                 <%= member.username %>
@@ -315,7 +315,7 @@
                                 <% end %>
                             </td>
                             <% @practice.practice_dates.each_with_index do |date, day_index| %>
-                                <% availability = member_availabilities[day_index] %>
+                                <% availability = member_availabilities[date] %>
                                 <td style="text-align: center;">
                                     <% if availability %>
                                         <div style="display: flex; flex-direction: column; align-items: center; gap: 2px;">
@@ -521,17 +521,25 @@ function calculateAndUpdateBestDay() {
     // Count availability responses for each day
     const availabilityRadios = document.querySelectorAll('.availability-radio:checked');
     availabilityRadios.forEach(radio => {
-        // Extract day index from radio name (format: user_X_day_Y)
-        const nameMatch = radio.name.match(/user_\d+_day_(\d+)/);
+        // Extract date from radio name (format: user_X_date_YYYY-MM-DD)
+        const nameMatch = radio.name.match(/user_\d+_date_(\d{4}-\d{2}-\d{2})/);
         if (!nameMatch) return;
 
-        const dayIndex = parseInt(nameMatch[1]);
-        const availability = radio.value;
+        // Find the corresponding day index by the cell position
+        const radioCell = radio.closest('td');
+        if (!radioCell) return;
 
-        if (availability === 'available') {
-            dayScores[dayIndex].score += 1.0;
-        } else if (availability === 'maybe') {
-            dayScores[dayIndex].score += 0.5;
+        // Get the column index (subtract 1 for the member name column)
+        const cellIndex = Array.from(radioCell.parentNode.cells).indexOf(radioCell) - 1;
+
+        // Make sure this cell index corresponds to a valid day
+        if (cellIndex >= 0 && cellIndex in dayScores) {
+            const availability = radio.value;
+            if (availability === 'available') {
+                dayScores[cellIndex].score += 1.0;
+            } else if (availability === 'maybe') {
+                dayScores[cellIndex].score += 0.5;
+            }
         }
         // 'not_available' and empty values add 0 points
     });
@@ -579,6 +587,9 @@ function autoSaveForm() {
 
             // Submit the form via fetch to avoid page reload
             const formData = new FormData(form);
+            // Add auto_save parameter to indicate this is an auto-save request
+            formData.append('auto_save', 'true');
+
             fetch(form.action, {
                 method: 'POST',
                 body: formData

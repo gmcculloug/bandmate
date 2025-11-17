@@ -19,23 +19,19 @@
     </div>
 
     <div class="form-group">
-        <label style="margin-bottom: 10px; display: block;">Practice Dates *</label>
-        <div style="display: flex; gap: 20px; flex-wrap: wrap;">
-            <div style="flex: 1; min-width: 200px;">
-                <label for="practice_start_date" style="font-weight: 500; margin-bottom: 5px; display: block; cursor: pointer;" onclick="document.getElementById('practice_start_date').focus()">Start Date</label>
-                <div style="position: relative; cursor: pointer;" onclick="document.getElementById('practice_start_date').showPicker ? document.getElementById('practice_start_date').showPicker() : document.getElementById('practice_start_date').focus()">
-                    <input type="date" id="practice_start_date" name="week_start_date" required value="<%= @practice&.week_start_date %>" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 6px; cursor: pointer;">
-                </div>
-            </div>
-            <div style="flex: 1; min-width: 200px;">
-                <label for="practice_end_date" style="font-weight: 500; margin-bottom: 5px; display: block; cursor: pointer;" onclick="document.getElementById('practice_end_date').focus()">End Date</label>
-                <div style="position: relative; cursor: pointer;" onclick="document.getElementById('practice_end_date').showPicker ? document.getElementById('practice_end_date').showPicker() : document.getElementById('practice_end_date').focus()">
-                    <input type="date" id="practice_end_date" name="end_date" required value="<%= @practice&.end_date %>" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 6px; cursor: pointer;">
-                </div>
-            </div>
+        <label for="practice_date_range" style="margin-bottom: 10px; display: block;">Practice Dates *</label>
+        <div style="position: relative;">
+            <input type="text" id="practice_date_range" name="date_range"
+                   placeholder="Click to select date range or single day..."
+                   readonly required
+                   style="width: 100%; padding: 12px; border: 1px solid #e2e8f0; border-radius: 6px; cursor: pointer; background: white; font-size: 16px;">
+            <!-- Hidden inputs for form submission -->
+            <input type="hidden" id="practice_start_date" name="start_date" value="<%= @practice&.start_date %>">
+            <input type="hidden" id="practice_end_date" name="end_date" value="<%= @practice&.end_date %>">
         </div>
+        <div id="date_feedback" style="display: none; margin-top: 8px; font-size: 0.9em; padding: 8px 12px; border-radius: 4px;"></div>
         <div style="color: #718096; font-size: 0.9em; margin-top: 5px;">
-            Select the date range for scheduling availability.
+            Select a single day or drag to select a date range for scheduling availability.
         </div>
     </div>
 
@@ -72,117 +68,174 @@
 </form>
 
 <script>
-// Validate end date is after start date
-function validateDates() {
-    const startDateInput = document.getElementById('practice_start_date');
-    const endDateInput = document.getElementById('practice_end_date');
-    const startDate = new Date(startDateInput.value);
-    const endDate = new Date(endDateInput.value);
+// Calculate days difference reliably, avoiding timezone issues
+function calculateDaysDifference(startDate, endDate) {
+    // Use UTC time to ensure consistent calculation across timezones
+    const startUTC = Date.UTC(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
+    const endUTC = Date.UTC(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
 
-    // Remove any existing feedback
-    document.querySelectorAll('.date-feedback').forEach(el => el.remove());
-
-    if (startDateInput.value && endDateInput.value) {
-        if (endDate < startDate) {
-            const feedback = document.createElement('div');
-            feedback.className = 'date-feedback';
-            feedback.style.cssText = 'color: #e53e3e; font-size: 0.9em; margin-top: 5px; font-weight: 500;';
-            feedback.textContent = 'End date must be after start date';
-            endDateInput.parentNode.appendChild(feedback);
-            return false;
-        } else {
-            const daysDiff = Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24)) + 1;
-            const feedback = document.createElement('div');
-            feedback.className = 'date-feedback';
-            feedback.style.cssText = 'color: #38a169; font-size: 0.9em; margin-top: 5px; font-weight: 500;';
-            feedback.textContent = `Practice period: ${daysDiff} day${daysDiff !== 1 ? 's' : ''} (${startDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })} - ${endDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })})`;
-            endDateInput.parentNode.appendChild(feedback);
-            return true;
-        }
-    }
-    return true;
+    // Calculate difference in days, adding 1 to include both start and end dates
+    const daysDiff = Math.floor((endUTC - startUTC) / (1000 * 60 * 60 * 24)) + 1;
+    return daysDiff;
 }
 
-// Add event listeners to both date inputs
-document.getElementById('practice_start_date').addEventListener('change', validateDates);
-document.getElementById('practice_end_date').addEventListener('change', validateDates);
+// Initialize Flatpickr when DOM is loaded
+document.addEventListener('DOMContentLoaded', function() {
+    const startInput = document.getElementById('practice_start_date');
+    const endInput = document.getElementById('practice_end_date');
+    const feedback = document.getElementById('date_feedback');
 
-// Auto-populate end date when start date is selected (end of that week - Sunday)
-document.getElementById('practice_start_date').addEventListener('change', function() {
-    const endDateInput = document.getElementById('practice_end_date');
-    if (!endDateInput.value && this.value) {
-        const startDate = new Date(this.value);
-        const endDate = new Date(startDate);
-
-        // Calculate days to add to reach Sunday (end of week)
-        // getDay(): 0=Sunday, 1=Monday, 2=Tuesday, etc.
-        const dayOfWeek = startDate.getDay();
-        const daysToSunday = (7 - dayOfWeek) % 7; // Days until next Sunday (0 if already Sunday)
-
-        endDate.setDate(startDate.getDate() + daysToSunday);
-        endDateInput.value = endDate.toISOString().split('T')[0];
-        validateDates();
-    }
-});
-
-// Set default dates if no values
-window.addEventListener('DOMContentLoaded', function() {
-    const startDateInput = document.getElementById('practice_start_date');
-    const endDateInput = document.getElementById('practice_end_date');
-
-    if (!startDateInput.value) {
-        const today = new Date();
-        const tomorrow = new Date(today);
-        tomorrow.setDate(today.getDate() + 1);
-        startDateInput.value = tomorrow.toISOString().split('T')[0];
-
-        if (!endDateInput.value) {
-            const endDate = new Date(tomorrow);
-
-            // Calculate days to add to reach Sunday (end of week)
-            const dayOfWeek = tomorrow.getDay();
-            const daysToSunday = (7 - dayOfWeek) % 7; // Days until next Sunday (0 if already Sunday)
-
-            endDate.setDate(tomorrow.getDate() + daysToSunday);
-            endDateInput.value = endDate.toISOString().split('T')[0];
+    // Set initial values if they exist
+    let initialDates = [];
+    if (startInput.value && endInput.value) {
+        initialDates = [startInput.value];
+        if (startInput.value !== endInput.value) {
+            initialDates.push(endInput.value);
         }
-        validateDates();
+    } else {
+        // Default to tomorrow
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        initialDates = [tomorrow];
     }
+
+    // Initialize Flatpickr range picker
+    const fp = flatpickr("#practice_date_range", {
+        mode: "range",
+        dateFormat: "M j, Y",
+        defaultDate: initialDates,
+        minDate: "today",
+        enableTime: false,
+
+        // Custom behavior for single day selection
+        onDayCreate: function(dObj, dStr, fp, dayElem) {
+            // Add double-click behavior for better single-day selection
+            dayElem.addEventListener('dblclick', function(e) {
+                e.preventDefault();
+                fp.setDate([dayElem.dateObj, dayElem.dateObj], true);
+            });
+        },
+
+        onChange: function(selectedDates, dateStr, instance) {
+            if (selectedDates.length === 0) {
+                // No dates selected
+                feedback.style.display = 'none';
+                startInput.value = '';
+                endInput.value = '';
+
+            } else if (selectedDates.length === 1) {
+                // Single date selected - waiting for second date or treat as single day
+                feedback.style.cssText = 'display: block; color: #3182ce; background: #ebf8ff; border: 1px solid #90cdf4;';
+                feedback.textContent = 'Select another date for a range, or double-click to confirm single day';
+
+                // Set as single day temporarily
+                const dateStr = selectedDates[0].toISOString().split('T')[0];
+                startInput.value = dateStr;
+                endInput.value = dateStr;
+
+            } else if (selectedDates.length === 2) {
+                // Range selected or single day confirmed
+                const startDate = selectedDates[0];
+                const endDate = selectedDates[1];
+                const isSameDay = startDate.getTime() === endDate.getTime();
+
+                startInput.value = startDate.toISOString().split('T')[0];
+                endInput.value = endDate.toISOString().split('T')[0];
+
+                if (isSameDay) {
+                    feedback.style.cssText = 'display: block; color: #38a169; background: #f0fff4; border: 1px solid #9ae6b4;';
+                    feedback.textContent = `Single day confirmed: ${startDate.toDateString()}`;
+                } else {
+                    const daysDiff = calculateDaysDifference(startDate, endDate);
+                    feedback.style.cssText = 'display: block; color: #38a169; background: #f0fff4; border: 1px solid #9ae6b4;';
+                    feedback.textContent = `Practice period: ${daysDiff} day${daysDiff > 1 ? 's' : ''} (${startDate.toDateString()} to ${endDate.toDateString()})`;
+                }
+            }
+        }
+    });
 });
 
 // Form validation before submit
 document.querySelector('form').addEventListener('submit', function(e) {
-    if (!validateDates()) {
+    const startInput = document.getElementById('practice_start_date');
+    const endInput = document.getElementById('practice_end_date');
+
+    if (!startInput.value || !endInput.value) {
         e.preventDefault();
-        alert('Please fix the date validation errors before submitting.');
+        alert('Please select practice dates before submitting.');
     }
 });
 </script>
 
 <style>
-/* Enhanced date picker styling */
-.date-container {
-    transition: all 0.2s ease;
-}
-
-.date-container:hover {
-    background-color: #f8fafc;
-    border-radius: 6px;
-    transform: translateY(-1px);
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-}
-
-.date-container:hover input {
-    border-color: #667eea;
-}
-
-.date-container input:focus {
+/* Flatpickr date range picker styling */
+#practice_date_range:focus {
     border-color: #667eea !important;
     box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1) !important;
     outline: none;
 }
 
-.date-container label {
-    user-select: none;
+/* Style the Flatpickr calendar to match your design */
+.flatpickr-calendar {
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1) !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 8px !important;
+    overflow: hidden;
+}
+
+.flatpickr-calendar .flatpickr-month {
+    background: #667eea !important;
+    color: white !important;
+}
+
+.flatpickr-calendar .flatpickr-weekday {
+    background: #4a5568 !important;
+    color: white !important;
+}
+
+/* Range selection styling */
+.flatpickr-day.selected:first-child,
+.flatpickr-day.selected:last-child {
+    background: #667eea !important;
+    border-color: #667eea !important;
+    color: white !important;
+}
+
+.flatpickr-day.inRange {
+    background: #e0e7ff !important;
+    border-color: #c7d2fe !important;
+    color: #4f46e5 !important;
+    box-shadow: none !important;
+}
+
+.flatpickr-day.startRange,
+.flatpickr-day.endRange {
+    background: #667eea !important;
+    border-color: #667eea !important;
+    color: white !important;
+}
+
+/* Hover effects */
+.flatpickr-day:hover {
+    background: #f0f9ff !important;
+    border-color: #3b82f6 !important;
+}
+
+.flatpickr-day.selected:hover,
+.flatpickr-day.startRange:hover,
+.flatpickr-day.endRange:hover {
+    background: #4f46e5 !important;
+    border-color: #4f46e5 !important;
+}
+
+/* Previous/Next month navigation */
+.flatpickr-prev-month,
+.flatpickr-next-month {
+    fill: white !important;
+}
+
+.flatpickr-prev-month:hover,
+.flatpickr-next-month:hover {
+    fill: #e0e7ff !important;
 }
 </style>

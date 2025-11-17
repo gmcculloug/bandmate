@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2025_11_07_184637) do
+ActiveRecord::Schema[8.1].define(version: 2025_11_17_011524) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -88,15 +88,15 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_07_184637) do
   create_table "practice_availabilities", force: :cascade do |t|
     t.string "availability", null: false
     t.datetime "created_at", null: false
-    t.integer "day_of_week", null: false
     t.text "notes"
     t.bigint "practice_id", null: false
+    t.date "specific_date"
     t.time "suggested_end_time"
     t.time "suggested_start_time"
     t.datetime "updated_at", null: false
     t.bigint "user_id", null: false
     t.index ["availability"], name: "index_practice_availabilities_on_availability"
-    t.index ["practice_id", "user_id", "day_of_week"], name: "index_practice_availabilities_unique", unique: true
+    t.index ["practice_id", "user_id", "specific_date"], name: "index_practice_availabilities_on_practice_user_date", unique: true
     t.index ["practice_id"], name: "index_practice_availabilities_on_practice_id"
     t.index ["user_id"], name: "index_practice_availabilities_on_user_id"
   end
@@ -107,15 +107,15 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_07_184637) do
     t.bigint "created_by_user_id", null: false
     t.text "description"
     t.date "end_date"
+    t.date "start_date", null: false
     t.string "status", default: "active"
     t.string "title"
     t.datetime "updated_at", null: false
-    t.date "week_start_date", null: false
-    t.index ["band_id", "week_start_date"], name: "index_practices_on_band_id_and_week_start_date"
+    t.index ["band_id", "start_date"], name: "index_practices_on_band_id_and_start_date"
     t.index ["band_id"], name: "index_practices_on_band_id"
     t.index ["created_by_user_id"], name: "index_practices_on_created_by_user_id"
+    t.index ["start_date"], name: "index_practices_on_start_date"
     t.index ["status"], name: "index_practices_on_status"
-    t.index ["week_start_date"], name: "index_practices_on_week_start_date"
   end
 
   create_table "sessions", force: :cascade do |t|

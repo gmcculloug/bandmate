@@ -3,24 +3,23 @@ class Practice < ActiveRecord::Base
   belongs_to :created_by_user, class_name: 'User'
   has_many :practice_availabilities, dependent: :destroy
 
-  validates :week_start_date, presence: true
+  validates :start_date, presence: true
+  validates :end_date, presence: true
   validates :status, presence: true, inclusion: { in: %w[active finalized cancelled] }
 
-  validate :week_start_date_must_be_sunday
-  validate :unique_week_for_band
   validate :end_date_after_start_date
   validate :no_overlapping_practices
 
   scope :active, -> { where(status: 'active') }
-  scope :for_week, ->(date) { where(week_start_date: date.beginning_of_week(:sunday)) }
+  scope :for_date_range, ->(start_date, end_date) { where('start_date <= ? AND end_date >= ?', end_date, start_date) }
 
-  # For backward compatibility - use end_date if available, otherwise calculate
+  # For backward compatibility - now just returns end_date
   def week_end_date
-    end_date || week_start_date + 6.days
+    end_date
   end
 
   def practice_dates
-    (week_start_date..week_end_date).to_a
+    (start_date..end_date).to_a
   end
 
   # Return day names for the practice period
@@ -29,14 +28,14 @@ class Practice < ActiveRecord::Base
   end
 
   def formatted_date_range
-    if week_start_date.year == week_end_date.year
-      if week_start_date.month == week_end_date.month
-        "#{week_start_date.strftime('%b %d')} - #{week_end_date.strftime('%b %d, %Y')}"
+    if start_date.year == end_date.year
+      if start_date.month == end_date.month
+        "#{start_date.strftime('%b %d')} - #{end_date.strftime('%b %d, %Y')}"
       else
-        "#{week_start_date.strftime('%b %d')} - #{week_end_date.strftime('%b %d, %Y')}"
+        "#{start_date.strftime('%b %d')} - #{end_date.strftime('%b %d, %Y')}"
       end
     else
-      "#{week_start_date.strftime('%b %d, %Y')} - #{week_end_date.strftime('%b %d, %Y')}"
+      "#{start_date.strftime('%b %d, %Y')} - #{end_date.strftime('%b %d, %Y')}"
     end
   end
 
@@ -68,64 +67,62 @@ class Practice < ActiveRecord::Base
   def best_day
     return nil unless practice_availabilities.any?
 
-    # Group by day_of_week and count available responses
-    day_scores = practice_availabilities
+    # Group by specific_date and count available responses
+    date_scores = practice_availabilities
       .where(availability: 'available')
-      .group(:day_of_week)
+      .group(:specific_date)
       .count
 
     # Add maybe responses with half weight
     maybe_scores = practice_availabilities
       .where(availability: 'maybe')
-      .group(:day_of_week)
+      .group(:specific_date)
       .count
 
     combined_scores = {}
-    practice_dates.each_with_index do |date, index|
-      day_index = index
-      combined_scores[day_index] = (day_scores[day_index] || 0) + (maybe_scores[day_index] || 0) * 0.5
+    practice_dates.each do |date|
+      combined_scores[date] = (date_scores[date] || 0) + (maybe_scores[date] || 0) * 0.5
     end
 
     # Return the day with highest score, or nil if no availability
     return nil if combined_scores.values.all?(&:zero?)
 
-    best_day_index = combined_scores.max_by { |day, score| score }.first
-    practice_dates[best_day_index]&.strftime('%A')
+    best_date = combined_scores.max_by { |date, score| score }.first
+    best_date&.strftime('%A')
   end
 
   def best_practice_date
     return nil unless practice_availabilities.any?
 
-    # Group by day_of_week and count available responses
-    day_scores = practice_availabilities
+    # Group by specific_date and count available responses
+    date_scores = practice_availabilities
       .where(availability: 'available')
-      .group(:day_of_week)
+      .group(:specific_date)
       .count
 
     # Add maybe responses with half weight
     maybe_scores = practice_availabilities
       .where(availability: 'maybe')
-      .group(:day_of_week)
+      .group(:specific_date)
       .count
 
     combined_scores = {}
-    practice_dates.each_with_index do |date, index|
-      day_index = index
-      combined_scores[day_index] = (day_scores[day_index] || 0) + (maybe_scores[day_index] || 0) * 0.5
+    practice_dates.each do |date|
+      combined_scores[date] = (date_scores[date] || 0) + (maybe_scores[date] || 0) * 0.5
     end
 
     # Return the date with highest score, or nil if no availability
     return nil if combined_scores.values.all?(&:zero?)
 
-    best_day_index = combined_scores.max_by { |day, score| score }.first
-    practice_dates[best_day_index]
+    best_date = combined_scores.max_by { |date, score| score }.first
+    best_date
   end
 
   def availability_summary
     summary = {}
-    practice_dates.each_with_index do |date, index|
+    practice_dates.each do |date|
       day_name = date.strftime('%A')
-      availabilities = practice_availabilities.where(day_of_week: index)
+      availabilities = practice_availabilities.where(specific_date: date)
 
       summary[day_name] = {
         available: availabilities.where(availability: 'available').count,
@@ -139,15 +136,15 @@ class Practice < ActiveRecord::Base
     summary
   end
 
-  def suggested_times_for_day(day_index)
+  def suggested_times_for_date(date)
     practice_availabilities
-      .where(day_of_week: day_index)
+      .where(specific_date: date)
       .where.not(suggested_start_time: nil, suggested_end_time: nil)
       .includes(:user)
   end
 
-  def most_popular_time_for_day(day_index)
-    suggestions = suggested_times_for_day(day_index)
+  def most_popular_time_for_date(date)
+    suggestions = suggested_times_for_date(date)
     return nil if suggestions.empty?
 
     # Group by start time and count occurrences
@@ -168,45 +165,58 @@ class Practice < ActiveRecord::Base
     }
   end
 
+  # Legacy methods for backward compatibility
+  alias_method :suggested_times_for_day, :suggested_times_for_date
+  alias_method :most_popular_time_for_day, :most_popular_time_for_date
+
+  # Get dates that have at least one available or maybe response
+  def possible_dates
+    return [] unless practice_availabilities.any?
+
+    dates_with_responses = practice_availabilities
+      .where(availability: ['available', 'maybe'])
+      .select(:specific_date)
+      .distinct
+      .pluck(:specific_date)
+      .sort
+
+    dates_with_responses.map { |date| date.strftime('%A') }.uniq
+  end
+
+  # Get formatted string of possible dates for display
+  def possible_dates_display
+    dates = possible_dates
+    return nil if dates.empty?
+
+    case dates.length
+    when 1
+      dates.first
+    when 2
+      "#{dates.first}, #{dates.last}"
+    else
+      "#{dates[0..-2].join(', ')}, #{dates.last}"
+    end
+  end
+
   private
 
-  def week_start_date_must_be_sunday
-    return unless week_start_date
-
-    unless week_start_date.sunday?
-      errors.add(:week_start_date, "must be a Sunday")
-    end
-  end
-
-  def unique_week_for_band
-    return unless week_start_date && band_id
-
-    existing = band.practices.where(week_start_date: week_start_date)
-    existing = existing.where.not(id: id) if persisted?
-
-    if existing.exists?
-      errors.add(:week_start_date, "already has a practice scheduled for this week")
-    end
-  end
-
   def end_date_after_start_date
-    return unless week_start_date && end_date
+    return unless start_date && end_date
 
-    if end_date < week_start_date
+    if end_date < start_date
       errors.add(:end_date, "must be after start date")
     end
   end
 
   def no_overlapping_practices
-    return unless week_start_date && band_id
+    return unless start_date && end_date && band_id
 
-    current_end_date = end_date || week_start_date + 6.days
     overlapping = band.practices.where.not(id: id)
       .where(
-        "(week_start_date BETWEEN ? AND ?) OR (COALESCE(end_date, week_start_date + INTERVAL '6 days') BETWEEN ? AND ?) OR (week_start_date <= ? AND COALESCE(end_date, week_start_date + INTERVAL '6 days') >= ?)",
-        week_start_date, current_end_date,
-        week_start_date, current_end_date,
-        week_start_date, current_end_date
+        "(start_date BETWEEN ? AND ?) OR (end_date BETWEEN ? AND ?) OR (start_date <= ? AND end_date >= ?)",
+        start_date, end_date,
+        start_date, end_date,
+        start_date, end_date
       )
 
     if overlapping.exists?

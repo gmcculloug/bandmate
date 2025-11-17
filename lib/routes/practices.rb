@@ -33,11 +33,11 @@ class Routes::Practices < Sinatra::Base
     @practices = current_band.practices.includes(:created_by_user)
     today = Date.current
 
-    # Active practices: end_date (or calculated end date) is today or in the future
-    @active_practices = @practices.where('COALESCE(end_date, week_start_date + INTERVAL \'6 days\') >= ?', today).order(week_start_date: :asc)
+    # Active practices: end_date is today or in the future
+    @active_practices = @practices.where('end_date >= ?', today).order(start_date: :asc)
 
     # Count of archived practices for display
-    @archived_practices_count = @practices.where('COALESCE(end_date, week_start_date + INTERVAL \'6 days\') < ?', today).count
+    @archived_practices_count = @practices.where('end_date < ?', today).count
 
     erb :practices
   end
@@ -64,8 +64,8 @@ class Routes::Practices < Sinatra::Base
     @practices = current_band.practices.includes(:created_by_user)
     today = Date.current
 
-    # Archived practices: end_date (or calculated end date) is in the past
-    @archived_practices = @practices.where('COALESCE(end_date, week_start_date + INTERVAL \'6 days\') < ?', today).order(week_start_date: :asc)
+    # Archived practices: end_date is in the past
+    @archived_practices = @practices.where('end_date < ?', today).order(start_date: :asc)
 
     erb :past_practices
   end
@@ -89,29 +89,32 @@ class Routes::Practices < Sinatra::Base
     return redirect '/practices' unless current_band
 
     # Parse the start and end dates
-    unless params[:week_start_date]
-      @error = "Week start date is required"
+    unless params[:start_date]
+      @error = "Start date is required"
+      return erb :new_practice
+    end
+
+    unless params[:end_date]
+      @error = "End date is required"
       return erb :new_practice
     end
 
     begin
-      start_date = Date.parse(params[:week_start_date])
-      # Adjust to Sunday if not already a Sunday
-      start_date = start_date.beginning_of_week(:sunday) unless start_date.sunday?
-      end_date = params[:end_date].present? ? Date.parse(params[:end_date]) : nil
+      start_date = Date.parse(params[:start_date])
+      end_date = Date.parse(params[:end_date])
     rescue Date::Error
       @error = "Invalid date format"
       return erb :new_practice
     end
 
-    # Validate that end date is after start date (if provided)
-    if end_date && end_date < start_date
-      @error = "End date must be after start date"
+    # Validate that end date is after or equal to start date
+    if end_date < start_date
+      @error = "End date must be after or equal to start date"
       return erb :new_practice
     end
 
     @practice = current_band.practices.new(
-      week_start_date: start_date,
+      start_date: start_date,
       end_date: end_date,
       title: params[:title],
       description: params[:description],
@@ -141,7 +144,7 @@ class Routes::Practices < Sinatra::Base
     )
 
     @band_members = current_band.users.order(:username)
-    @current_user_availabilities = @practice.practice_availabilities.where(user: current_user).index_by(&:day_of_week)
+    @current_user_availabilities = @practice.practice_availabilities.where(user: current_user).index_by(&:specific_date)
     @availability_summary = @practice.availability_summary
     @best_day = @practice.best_day
 
@@ -185,18 +188,19 @@ class Routes::Practices < Sinatra::Base
 
     # Process availability data for all users from the responses form
     current_band.users.each do |user|
-      @practice.practice_dates.each_with_index do |date, day_index|
-        availability_param = params["user_#{user.id}_day_#{day_index}"]
+      @practice.practice_dates.each do |date|
+        date_key = date.strftime('%Y-%m-%d')
+        availability_param = params["user_#{user.id}_date_#{date_key}"]
 
         # Skip if no availability is set or if it's empty
         next unless availability_param && !availability_param.empty?
 
         # Get notes data for this specific user
-        notes_param = params["user_#{user.id}_notes_#{day_index}"]
+        notes_param = params["user_#{user.id}_notes_#{date_key}"]
 
         @practice.practice_availabilities.create!(
           user: user,
-          day_of_week: day_index,
+          specific_date: date,
           availability: availability_param,
           notes: notes_param,
           suggested_start_time: nil,
@@ -205,7 +209,13 @@ class Routes::Practices < Sinatra::Base
       end
     end
 
-    redirect "/practices/#{@practice.id}"
+    # Check if this is an auto-save request (AJAX/fetch)
+    if request.xhr? || params[:auto_save] == 'true'
+      content_type :json
+      { success: true, message: 'Availability saved successfully' }.to_json
+    else
+      redirect "/practices/#{@practice.id}"
+    end
   end
 
   post '/practices/:id/availability' do
@@ -223,19 +233,28 @@ class Routes::Practices < Sinatra::Base
     availability_params = params[:params] || params
 
     availability_params.each do |key, value|
-      # Look for availability_X parameters
-      if key.match(/^availability_(\d+)$/) && value.present?
-        day_index = $1.to_i
-        notes_param = availability_params["notes_#{day_index}"]
+      # Look for availability_YYYY-MM-DD parameters
+      if key.match(/^availability_(.+)$/) && value.present?
+        date_key = $1
+        begin
+          specific_date = Date.parse(date_key)
+          # Validate the date is within the practice period
+          next unless @practice.practice_dates.include?(specific_date)
 
-        @practice.practice_availabilities.create!(
-          user: current_user,
-          day_of_week: day_index,
-          availability: value,
-          notes: notes_param,
-          suggested_start_time: nil,
-          suggested_end_time: nil
-        )
+          notes_param = availability_params["notes_#{date_key}"]
+
+          @practice.practice_availabilities.create!(
+            user: current_user,
+            specific_date: specific_date,
+            availability: value,
+            notes: notes_param,
+            suggested_start_time: nil,
+            suggested_end_time: nil
+          )
+        rescue Date::Error
+          # Skip invalid date formats
+          next
+        end
       end
     end
 
@@ -290,24 +309,27 @@ class Routes::Practices < Sinatra::Base
     end
 
     # Parse the start and end dates
-    unless params[:week_start_date]
-      @error = "Week start date is required"
+    unless params[:start_date]
+      @error = "Start date is required"
+      return erb :edit_practice
+    end
+
+    unless params[:end_date]
+      @error = "End date is required"
       return erb :edit_practice
     end
 
     begin
-      start_date = Date.parse(params[:week_start_date])
-      # Adjust to Sunday if not already a Sunday
-      start_date = start_date.beginning_of_week(:sunday) unless start_date.sunday?
-      end_date = params[:end_date].present? ? Date.parse(params[:end_date]) : nil
+      start_date = Date.parse(params[:start_date])
+      end_date = Date.parse(params[:end_date])
     rescue Date::Error
       @error = "Invalid date format"
       return erb :edit_practice
     end
 
-    # Validate that end date is after start date (if provided)
-    if end_date && end_date < start_date
-      @error = "End date must be after start date"
+    # Validate that end date is after or equal to start date
+    if end_date < start_date
+      @error = "End date must be after or equal to start date"
       # Set the form values so they're preserved in the error view
       @practice.title = params[:title] if params[:title]
       @practice.description = params[:description] if params[:description]
@@ -315,11 +337,11 @@ class Routes::Practices < Sinatra::Base
     end
 
     # Check if dates have changed - if so, we need to clear availability responses
-    dates_changed = (@practice.week_start_date != start_date) || (@practice.end_date != end_date)
+    dates_changed = (@practice.start_date != start_date) || (@practice.end_date != end_date)
 
     # Update the practice
     @practice.assign_attributes(
-      week_start_date: start_date,
+      start_date: start_date,
       end_date: end_date,
       title: params[:title],
       description: params[:description]
