@@ -86,9 +86,63 @@ This project implements a custom migration system (not Rails migrations):
 - Use factories for test data creation
 - Clean database state between tests
 
+### Timezone Handling
+**CRITICAL ARCHITECTURAL DECISION**: This application implements proper timezone handling for all time-based data.
+
+**Core Principle**: Always store times in UTC in the database and display in the user's timezone.
+
+#### Implementation Rules:
+1. **Database Storage**: All timestamp columns must store times in UTC
+   - Use `timestamp` or `datetime` column types (never `time` for user-facing times)
+   - Convert user input to UTC before saving to database
+   - Example: `parsed_time.utc` when storing
+
+2. **User Display**: Always convert stored UTC times to user's timezone for display
+   - Use `timezone_aware_start_time(user_timezone)` methods in models
+   - Pass user timezone to formatting methods: `formatted_time_range(current_user.user_timezone)`
+   - Handle invalid timezones gracefully with UTC fallback
+
+3. **User Timezone Storage**:
+   - Users table has `timezone` column (defaults to 'UTC')
+   - Validate timezone against `ActiveSupport::TimeZone.all.map(&:name)`
+   - Use `user.user_timezone` helper method
+
+4. **Model Methods**: Create timezone-aware methods for time display
+   ```ruby
+   def timezone_aware_start_time(user_timezone = nil)
+     user_tz = user_timezone || 'UTC'
+     start_time.in_time_zone('UTC').in_time_zone(user_tz)
+   end
+   ```
+
+5. **Route Processing**: Parse user input in their timezone, store as UTC
+   ```ruby
+   parsed_time = Time.parse(params[:time]).in_time_zone(user_timezone)
+   model.time_field = parsed_time.utc
+   ```
+
+6. **View Updates**: Always pass user timezone to time display methods
+   ```erb
+   <%= practice.formatted_time_range(current_user.user_timezone) %>
+   ```
+
+#### Why This Matters:
+- Ensures consistent time storage across all users regardless of location
+- Prevents timezone-related bugs and data corruption
+- Enables proper scheduling for distributed teams
+- Maintains data integrity when users change timezones
+
+#### Examples:
+- Practice scheduling times are stored in UTC, displayed in user's local time
+- All datetime comparisons work correctly regardless of user timezone
+- Users see times in their familiar local format
+
+**Remember**: When adding any time-related features, follow this pattern without exception.
+
 ### Adding New Features
 1. Create migration if database changes needed
 2. Update models with validations and associations
 3. Add routes and views
 4. Write comprehensive tests
 5. Ensure mobile responsiveness
+6. **If time-related**: Follow timezone handling rules above

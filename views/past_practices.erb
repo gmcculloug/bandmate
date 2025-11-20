@@ -18,10 +18,22 @@
                 <div class="set-list-info">
                     <h3 style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
                         <span style="flex: 1; min-width: 200px;">
-                            <span style="font-weight: normal; color: #718096; font-size: 0.9em;">
-                                <%= practice.formatted_week_range %> -
-                            </span>
-                            <%= practice.title.present? ? practice.title : "Practice" %>
+                            <div>
+                                <%= practice.title.present? ? practice.title : "Practice Session" %>
+                            </div>
+                            <div style="font-weight: normal; color: #718096; font-size: 0.9em; margin-top: 2px;">
+                                <%= practice.formatted_week_range %>
+                                <% if practice.days_of_week_for_period.length <= 2 %>
+                                    (<%= practice.days_of_week_for_period.join(', ') %>)
+                                <% elsif practice.days_of_week_for_period.length == 7 %>
+                                    (All week)
+                                <% else %>
+                                    (<%= practice.days_of_week_for_period.length %> days)
+                                <% end %>
+                                <% if practice.start_time %>
+                                    • <%= practice.formatted_time_range(current_user.user_timezone) %>
+                                <% end %>
+                            </div>
                         </span>
                         <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
                             <span style="background: <%= practice.status == 'finalized' ? 'rgba(56, 161, 105, 0.1)' : 'rgba(226, 232, 240, 0.8)' %>; color: <%= practice.status == 'finalized' ? '#38a169' : '#718096' %>; padding: 4px 8px; border-radius: 12px; font-size: 0.8em; font-weight: 500; text-transform: capitalize;">

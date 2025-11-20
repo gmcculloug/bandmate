@@ -6,6 +6,7 @@ class Practice < ActiveRecord::Base
   validates :start_date, presence: true
   validates :end_date, presence: true
   validates :status, presence: true, inclusion: { in: %w[active finalized cancelled] }
+  validates :duration, numericality: { greater_than: 0, allow_nil: true }
 
   validate :end_date_after_start_date
   validate :no_overlapping_practices
@@ -42,6 +43,74 @@ class Practice < ActiveRecord::Base
   # Legacy method name for backward compatibility
   alias_method :week_dates, :practice_dates
   alias_method :formatted_week_range, :formatted_date_range
+
+  # Helper methods for start_time and duration
+  def end_time
+    return nil unless start_time && duration
+    start_time + (duration * 60) # duration is in minutes, convert to seconds
+  end
+
+  def formatted_time_range(user_timezone = nil)
+    return nil unless start_time
+
+    # Convert from UTC to user timezone for display
+    display_start_time = timezone_aware_start_time(user_timezone)
+    display_end_time = timezone_aware_end_time(user_timezone)
+
+    if duration && duration > 0 && display_end_time
+      "#{display_start_time.strftime('%I:%M %p')} - #{display_end_time.strftime('%I:%M %p')}"
+    else
+      display_start_time.strftime('%I:%M %p')
+    end
+  end
+
+  def duration_in_hours
+    return nil unless duration
+    (duration / 60.0).round(1)
+  end
+
+  # Get start time in user's timezone
+  def timezone_aware_start_time(user_timezone = nil)
+    return nil unless start_time
+
+    user_tz = user_timezone || 'UTC'
+
+    # start_time is stored in UTC, convert to user timezone
+    begin
+      # Ensure the stored time is treated as UTC
+      utc_time = start_time.in_time_zone('UTC')
+      utc_time.in_time_zone(user_tz)
+    rescue TZInfo::InvalidTimezoneIdentifier
+      # Fallback to UTC if invalid timezone
+      start_time.in_time_zone('UTC')
+    end
+  end
+
+  # Get end time in user's timezone
+  def timezone_aware_end_time(user_timezone = nil)
+    return nil unless start_time && duration
+
+    start_in_tz = timezone_aware_start_time(user_timezone)
+    start_in_tz + (duration * 60) # duration is in minutes
+  end
+
+  # Set start time from user input (in their timezone) and store as UTC
+  def set_start_time_from_user_input(time_str, user_timezone = 'UTC')
+    return unless time_str
+
+    user_tz = user_timezone || 'UTC'
+
+    begin
+      # Parse the time string in user's timezone
+      parsed_time = Time.parse(time_str).in_time_zone(user_tz)
+
+      # Convert to UTC for storage
+      self.start_time = parsed_time.utc
+    rescue ArgumentError, TZInfo::InvalidTimezoneIdentifier => e
+      # Handle parse errors
+      raise ArgumentError, "Invalid time format or timezone: #{e.message}"
+    end
+  end
 
   # For backward compatibility - return all days for the practice period
   def days_of_week

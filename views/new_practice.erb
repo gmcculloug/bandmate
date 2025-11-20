@@ -40,6 +40,34 @@
         <textarea id="practice_description" name="description" rows="3" placeholder="Add any details about the practice session, location, or what you'll be working on..."><%= @practice&.description %></textarea>
     </div>
 
+    <div class="form-group">
+        <label for="practice_start_time">Practice Time</label>
+        <div class="modern-time-control">
+            <div class="preset-times">
+                <button type="button" class="time-preset-btn" data-time="18:00">6:00 PM</button>
+                <button type="button" class="time-preset-btn" data-time="19:00">7:00 PM</button>
+                <button type="button" class="time-preset-btn" data-time="20:00">8:00 PM</button>
+                <button type="button" class="time-preset-btn" data-time="21:00">9:00 PM</button>
+            </div>
+            <div class="time-input-row">
+                <input type="text" id="practice_start_time" name="start_time" placeholder="Select practice time..." readonly>
+                <select id="practice_duration" name="duration" class="duration-selector">
+                    <option value="">Duration</option>
+                    <option value="60">1 hour</option>
+                    <option value="90">1.5 hours</option>
+                    <option value="120">2 hours</option>
+                    <option value="150">2.5 hours</option>
+                    <option value="180">3 hours</option>
+                    <option value="240">4 hours</option>
+                </select>
+            </div>
+            <div class="duration-info" id="duration-info" style="display: none;"></div>
+        </div>
+        <div style="color: #718096; font-size: 0.9em; margin-top: 5px;">
+            Select when practice starts and how long it lasts (both optional)
+        </div>
+    </div>
+
     <div style="background: #f7fafc; padding: 20px; border-radius: 8px; margin: 20px 0;">
         <h4 style="color: #4a5568; margin-bottom: 10px; display: flex; align-items: center;">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 8px;">
@@ -81,6 +109,136 @@ function calculateDaysDifference(startDate, endDate) {
 
 // Initialize Flatpickr when DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
+    const startTimeInput = document.getElementById('practice_start_time');
+    const durationSelect = document.getElementById('practice_duration');
+    const durationInfo = document.getElementById('duration-info');
+    const presetTimeBtns = document.querySelectorAll('.time-preset-btn');
+    let startTimePicker;
+
+    // Initialize Flatpickr for time input
+    startTimePicker = flatpickr(startTimeInput, {
+        enableTime: true,
+        noCalendar: true,
+        dateFormat: "h:i K",
+        time_24hr: false,
+        minuteIncrement: 15,
+        onChange: function(selectedDates, dateStr) {
+            // Update data-time attribute in real-time
+            if (selectedDates.length > 0) {
+                const date = selectedDates[0];
+                const hours = date.getHours().toString().padStart(2, '0');
+                const minutes = date.getMinutes().toString().padStart(2, '0');
+                startTimeInput.setAttribute('data-time', `${hours}:${minutes}`);
+
+                // Recalculate end time immediately if duration is selected
+                if (durationSelect.value && durationSelect.value !== '') {
+                    calculateEndTime();
+                }
+            }
+        },
+        onClose: function(selectedDates, dateStr) {
+            // Store as 24-hour format for form submission
+            if (selectedDates.length > 0) {
+                const date = selectedDates[0];
+                const hours = date.getHours().toString().padStart(2, '0');
+                const minutes = date.getMinutes().toString().padStart(2, '0');
+                startTimeInput.setAttribute('data-time', `${hours}:${minutes}`);
+            }
+
+            updatePresetButtons();
+
+            // Always recalculate end time if duration is selected
+            if (durationSelect.value && durationSelect.value !== '') {
+                calculateEndTime();
+            }
+        }
+    });
+
+    // Preset time buttons
+    presetTimeBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            const time24 = this.dataset.time;
+            const [hours, minutes] = time24.split(':');
+
+            // Set time in Flatpickr
+            const date = new Date();
+            date.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+            startTimePicker.setDate(date);
+
+            // Store 24-hour format
+            startTimeInput.setAttribute('data-time', time24);
+
+            // Update button states
+            presetTimeBtns.forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+
+            // Calculate end time if duration is selected
+            if (durationSelect.value) {
+                calculateEndTime();
+            }
+        });
+    });
+
+    // Duration selection
+    durationSelect.addEventListener('change', function() {
+        if (this.value === '') {
+            durationInfo.style.display = 'none';
+        } else {
+            durationInfo.style.display = 'block';
+            calculateEndTime();
+        }
+    });
+
+    // Form submission - convert display values to 24-hour format
+    document.querySelector('form').addEventListener('submit', function() {
+        const startTime24 = startTimeInput.getAttribute('data-time');
+
+        if (startTime24) {
+            startTimeInput.name = 'start_time';
+            startTimeInput.value = startTime24;
+        }
+    });
+
+    function updatePresetButtons() {
+        const currentTime = startTimeInput.getAttribute('data-time');
+        presetTimeBtns.forEach(btn => {
+            if (btn.dataset.time === currentTime) {
+                btn.classList.add('active');
+            } else {
+                btn.classList.remove('active');
+            }
+        });
+    }
+
+    function calculateEndTime() {
+        const startTime24 = startTimeInput.getAttribute('data-time');
+        const duration = parseInt(durationSelect.value);
+
+        if (startTime24 && duration) {
+            const [hours, minutes] = startTime24.split(':');
+            const startDate = new Date();
+            startDate.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+
+            const endDate = new Date(startDate.getTime() + duration * 60000);
+            const endHours = endDate.getHours().toString().padStart(2, '0');
+            const endMinutes = endDate.getMinutes().toString().padStart(2, '0');
+            const endTime24 = `${endHours}:${endMinutes}`;
+
+            // Update duration display
+            const endTime12h = formatTime12Hour(endTime24);
+            durationInfo.textContent = `Ends at ${endTime12h}`;
+        }
+    }
+
+    function formatTime12Hour(time24) {
+        const [hours, minutes] = time24.split(':');
+        const hour = parseInt(hours);
+        const ampm = hour >= 12 ? 'PM' : 'AM';
+        const hour12 = hour % 12 || 12;
+        return `${hour12}:${minutes} ${ampm}`;
+    }
+
+    // Original calendar logic
     const startInput = document.getElementById('practice_start_date');
     const endInput = document.getElementById('practice_end_date');
     const feedback = document.getElementById('date_feedback');

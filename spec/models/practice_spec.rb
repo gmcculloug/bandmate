@@ -59,6 +59,30 @@ RSpec.describe Practice, type: :model do
       practice = build(:practice, band: band2, start_date: Date.current + 3.days, end_date: Date.current + 9.days)
       expect(practice).to be_valid
     end
+
+    describe 'duration validation' do
+      it 'is valid with a positive duration' do
+        practice = build(:practice, duration: 90)
+        expect(practice).to be_valid
+      end
+
+      it 'is valid with no duration' do
+        practice = build(:practice, duration: nil)
+        expect(practice).to be_valid
+      end
+
+      it 'is invalid with a zero duration' do
+        practice = build(:practice, duration: 0)
+        expect(practice).not_to be_valid
+        expect(practice.errors[:duration]).to include("must be greater than 0")
+      end
+
+      it 'is invalid with a negative duration' do
+        practice = build(:practice, duration: -30)
+        expect(practice).not_to be_valid
+        expect(practice.errors[:duration]).to include("must be greater than 0")
+      end
+    end
   end
 
   describe 'associations' do
@@ -359,6 +383,66 @@ RSpec.describe Practice, type: :model do
         expect(result[:total_suggestions]).to eq(2)
         # Should return one of the times (implementation returns max_by which is deterministic)
         expect(['14:00', '18:00']).to include(result[:start_time])
+      end
+    end
+
+    describe 'start_time and duration methods' do
+      describe '#end_time' do
+        it 'returns nil when start_time is nil' do
+          practice = build(:practice, start_time: nil, duration: 90)
+          expect(practice.end_time).to be_nil
+        end
+
+        it 'returns nil when duration is nil' do
+          practice = build(:practice, start_time: Time.parse('14:00'), duration: nil)
+          expect(practice.end_time).to be_nil
+        end
+
+        it 'calculates end_time correctly when both start_time and duration are present' do
+          practice = build(:practice, start_time: Time.parse('14:00'), duration: 90)
+          expected_end_time = Time.parse('14:00') + (90 * 60)
+          expect(practice.end_time).to eq(expected_end_time)
+        end
+      end
+
+      describe '#formatted_time_range' do
+        it 'returns nil when start_time is nil' do
+          practice = build(:practice, start_time: nil, duration: 90)
+          expect(practice.formatted_time_range).to be_nil
+        end
+
+        it 'returns only start time when duration is nil or zero' do
+          # Create time explicitly in UTC to avoid system timezone issues
+          utc_time = Time.parse('2023-12-01 14:00:00 UTC')
+          practice = build(:practice, start_time: utc_time, duration: nil)
+          # Pass UTC timezone explicitly to get predictable behavior
+          expect(practice.formatted_time_range('UTC')).to eq('02:00 PM')
+        end
+
+        it 'returns time range when both start_time and duration are present' do
+          # Create time explicitly in UTC to avoid system timezone issues
+          utc_time = Time.parse('2023-12-01 14:00:00 UTC')
+          practice = build(:practice, start_time: utc_time, duration: 90)
+          # Pass UTC timezone explicitly to get predictable behavior
+          expect(practice.formatted_time_range('UTC')).to eq('02:00 PM - 03:30 PM')
+        end
+      end
+
+      describe '#duration_in_hours' do
+        it 'returns nil when duration is nil' do
+          practice = build(:practice, duration: nil)
+          expect(practice.duration_in_hours).to be_nil
+        end
+
+        it 'converts minutes to hours correctly' do
+          practice = build(:practice, duration: 90)
+          expect(practice.duration_in_hours).to eq(1.5)
+        end
+
+        it 'rounds to 1 decimal place' do
+          practice = build(:practice, duration: 75)
+          expect(practice.duration_in_hours).to eq(1.3)
+        end
       end
     end
   end

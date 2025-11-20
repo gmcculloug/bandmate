@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2025_11_17_011524) do
+ActiveRecord::Schema[8.1].define(version: 2025_11_20_160006) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -106,8 +106,10 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_17_011524) do
     t.datetime "created_at", null: false
     t.bigint "created_by_user_id", null: false
     t.text "description"
+    t.integer "duration", comment: "Duration in minutes"
     t.date "end_date"
     t.date "start_date", null: false
+    t.datetime "start_time", precision: nil
     t.string "status", default: "active"
     t.string "title"
     t.datetime "updated_at", null: false
@@ -203,10 +205,12 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_17_011524) do
     t.string "email"
     t.integer "last_selected_band_id"
     t.string "password_digest", null: false
+    t.string "timezone", default: "UTC"
     t.datetime "updated_at", null: false
     t.string "username", null: false
     t.index ["email"], name: "index_users_on_email", unique: true
     t.index ["last_selected_band_id"], name: "index_users_on_last_selected_band_id"
+    t.index ["timezone"], name: "index_users_on_timezone"
     t.index ["username"], name: "index_users_on_username", unique: true
   end
 

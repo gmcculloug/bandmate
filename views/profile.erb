@@ -29,6 +29,38 @@
                 <small>Optional - for account recovery and notifications</small>
             </div>
 
+            <div class="form-group">
+                <label for="timezone">Timezone:</label>
+                <select id="timezone" name="user[timezone]" required>
+                    <% common_timezones = [
+                        'America/New_York', 'America/Chicago', 'America/Denver', 'America/Los_Angeles',
+                        'America/Phoenix', 'America/Anchorage', 'Pacific/Honolulu',
+                        'Europe/London', 'Europe/Paris', 'Europe/Berlin', 'Europe/Rome',
+                        'Asia/Tokyo', 'Asia/Shanghai', 'Asia/Kolkata', 'Australia/Sydney',
+                        'UTC'
+                    ] %>
+
+                    <optgroup label="Common Timezones">
+                        <% common_timezones.each do |tz| %>
+                            <option value="<%= tz %>" <%= 'selected' if current_user.user_timezone == tz %>>
+                                <%= tz.gsub('_', ' ') %> (<%= Time.now.in_time_zone(tz).strftime('%Z %:z') %>)
+                            </option>
+                        <% end %>
+                    </optgroup>
+
+                    <optgroup label="All Timezones">
+                        <% ActiveSupport::TimeZone.all.each do |tz| %>
+                            <% unless common_timezones.include?(tz.name) %>
+                                <option value="<%= tz.name %>" <%= 'selected' if current_user.user_timezone == tz.name %>>
+                                    <%= tz.name.gsub('_', ' ') %> (<%= tz.formatted_offset %>)
+                                </option>
+                            <% end %>
+                        <% end %>
+                    </optgroup>
+                </select>
+                <small>All practice times will be displayed in your selected timezone</small>
+            </div>
+
             <div class="actions">
                 <button type="submit" class="btn btn-success">Update Profile</button>
             </div>

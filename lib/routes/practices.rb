@@ -113,11 +113,37 @@ class Routes::Practices < Sinatra::Base
       return erb :new_practice
     end
 
+    # Parse start_time if provided - now timezone aware
+    start_time = nil
+    if params[:start_time] && !params[:start_time].empty?
+      begin
+        user_timezone = current_user.user_timezone
+        # Parse time in user's timezone and convert to UTC for storage
+        parsed_time = Time.parse(params[:start_time]).in_time_zone(user_timezone)
+        start_time = parsed_time.utc
+      rescue ArgumentError, TZInfo::InvalidTimezoneIdentifier
+        @error = "Invalid start time format"
+        return erb :new_practice
+      end
+    end
+
+    # Parse duration if provided
+    duration = nil
+    if params[:duration] && !params[:duration].empty?
+      duration = params[:duration].to_i
+      if duration <= 0
+        @error = "Duration must be a positive number"
+        return erb :new_practice
+      end
+    end
+
     @practice = current_band.practices.new(
       start_date: start_date,
       end_date: end_date,
       title: params[:title],
       description: params[:description],
+      start_time: start_time,
+      duration: duration,
       created_by_user: current_user
     )
 
@@ -336,6 +362,34 @@ class Routes::Practices < Sinatra::Base
       return erb :edit_practice
     end
 
+    # Parse start_time if provided - now timezone aware
+    start_time = nil
+    if params[:start_time] && !params[:start_time].empty?
+      begin
+        user_timezone = current_user.user_timezone
+        # Parse time in user's timezone and convert to UTC for storage
+        parsed_time = Time.parse(params[:start_time]).in_time_zone(user_timezone)
+        start_time = parsed_time.utc
+      rescue ArgumentError, TZInfo::InvalidTimezoneIdentifier
+        @error = "Invalid start time format"
+        @practice.title = params[:title] if params[:title]
+        @practice.description = params[:description] if params[:description]
+        return erb :edit_practice
+      end
+    end
+
+    # Parse duration if provided
+    duration = nil
+    if params[:duration] && !params[:duration].empty?
+      duration = params[:duration].to_i
+      if duration <= 0
+        @error = "Duration must be a positive number"
+        @practice.title = params[:title] if params[:title]
+        @practice.description = params[:description] if params[:description]
+        return erb :edit_practice
+      end
+    end
+
     # Check if dates have changed - if so, we need to clear availability responses
     dates_changed = (@practice.start_date != start_date) || (@practice.end_date != end_date)
 
@@ -344,7 +398,9 @@ class Routes::Practices < Sinatra::Base
       start_date: start_date,
       end_date: end_date,
       title: params[:title],
-      description: params[:description]
+      description: params[:description],
+      start_time: start_time,
+      duration: duration
     )
 
     if @practice.save
