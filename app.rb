@@ -41,7 +41,31 @@ require_relative 'lib/routes/api'
 enable :sessions
 enable :static
 use Rack::MethodOverride
-set :session_secret, ENV['SESSION_SECRET'] || 'your_secret_key_here_that_is_very_long_and_secure_at_least_64_chars'
+
+# Session secret configuration with production security requirements
+if ENV['RACK_ENV'] == 'production' || ENV['APP_ENV'] == 'production'
+  # In production, SESSION_SECRET must be set and strong
+  session_secret = ENV['SESSION_SECRET']
+
+  if session_secret.nil? || session_secret.empty?
+    puts "ERROR: SESSION_SECRET environment variable must be set in production"
+    puts "Generate a strong secret with: openssl rand -hex 64"
+    exit 1
+  end
+
+  if session_secret.length < 32
+    puts "ERROR: SESSION_SECRET must be at least 32 characters long"
+    puts "Current length: #{session_secret.length} characters"
+    puts "Generate a strong secret with: openssl rand -hex 64"
+    exit 1
+  end
+
+  set :session_secret, session_secret
+else
+  # In development/test, allow fallback for convenience
+  set :session_secret, ENV['SESSION_SECRET'] || 'development_secret_key_not_for_production_use'
+end
+
 set :public_folder, File.dirname(__FILE__) + '/public'
 
 # Include application helpers

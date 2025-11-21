@@ -52,6 +52,20 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Production: Uses `DATABASE_URL` environment variable or individual PostgreSQL connection env vars
 - Environment variables: `DATABASE_HOST`, `DATABASE_PORT`, `DATABASE_NAME`, `DATABASE_USERNAME`, `DATABASE_PASSWORD`
 
+### Security Configuration
+**CRITICAL**: The application requires proper security configuration for production deployment.
+
+#### Session Security
+- **SESSION_SECRET**: **REQUIRED** in production environments
+- Must be at least 32 characters long for security
+- Generate with: `openssl rand -hex 64`
+- Application will fail to start in production if not set or too short
+- Development/test environments have fallback values for convenience
+
+#### Environment Variables
+- `SESSION_SECRET`: Strong session encryption key (production requirement)
+- `BANDMATE_ACCT_CREATION_SECRET`: Controls user registration access
+
 ### Custom Migration System
 This project implements a custom migration system (not Rails migrations):
 - Migrations in `db/migrate/` with timestamp_name.rb format
