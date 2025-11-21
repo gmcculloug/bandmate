@@ -31,8 +31,13 @@
                     <div class="set-list-info">
                         <h3 style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
                             <span style="flex: 1; min-width: 200px;">
-                                <div>
-                                    <%= practice.title.present? ? practice.title : "Practice Session" %>
+                                <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                                    <span><%= practice.title.present? ? practice.title : "Practice Session" %></span>
+                                    <% if practice.best_day && practice.best_practice_date && practice.start_time %>
+                                        <span style="background: rgba(56, 161, 105, 0.1); color: #38a169; padding: 4px 8px; border-radius: 12px; font-size: 0.9em; font-weight: 500;">
+                                            <%= practice.status == 'finalized' ? 'Selected' : 'Best' %>: <%= practice.best_day %> <%= practice.best_practice_date.strftime('%b %d') %> @ <%= practice.formatted_time_range(current_user.user_timezone) %>
+                                        </span>
+                                    <% end %>
                                 </div>
                                 <div style="font-weight: normal; color: #718096; font-size: 0.9em; margin-top: 2px;">
                                     <%= practice.formatted_week_range %>
@@ -43,20 +48,10 @@
                                     <% else %>
                                         (<%= practice.days_of_week_for_period.length %> days)
                                     <% end %>
-                                    <% if practice.start_time %>
-                                        • <%= practice.formatted_time_range(current_user.user_timezone) %>
-                                    <% end %>
+                                    : <%= practice.response_count %>/<%= practice.total_band_members %> responded
                                 </div>
                             </span>
                             <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-                                <span style="background: rgba(102, 126, 234, 0.1); color: #667eea; padding: 4px 8px; border-radius: 12px; font-size: 0.8em; font-weight: 500;">
-                                    <%= practice.response_count %>/<%= practice.total_band_members %> responded
-                                </span>
-                                <% if practice.best_day %>
-                                    <span style="background: rgba(56, 161, 105, 0.1); color: #38a169; padding: 4px 8px; border-radius: 12px; font-size: 0.8em; font-weight: 500;">
-                                        <%= practice.status == 'finalized' ? 'Selected' : 'Best' %>: <%= practice.best_day %>
-                                    </span>
-                                <% end %>
                                 <% if practice.status == 'active' && practice.possible_dates_display %>
                                     <span style="background: rgba(102, 126, 234, 0.1); color: #667eea; padding: 4px 8px; border-radius: 12px; font-size: 0.8em; font-weight: 500;">
                                         Possible: <%= practice.possible_dates_display %>
@@ -69,9 +64,6 @@
                                 <%= practice.description %>
                             </p>
                         <% end %>
-                        <p style="color: #718096; margin: 5px 0 0 0; font-size: 0.8em;">
-                            Created by <%= practice.created_by_user.username %>
-                        </p>
                     </div>
                 </div>
             <% end %>
