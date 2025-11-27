@@ -401,6 +401,27 @@ function setupEventListeners() {
         applyAvailableSongsFilter(this.value);
         toggleClearButton(this.value);
     });
+
+    // Handle Enter key in song filter input
+    document.getElementById('song-filter').addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+
+            if (this.value.trim() !== '') {
+                // Get all visible available songs
+                const visibleSongs = Array.from(document.querySelectorAll('.available-song'))
+                    .filter(song => song.style.display !== 'none');
+
+                // If exactly one song is visible, add it to the selected set
+                if (visibleSongs.length === 1) {
+                    addSongToSelectedSet(visibleSongs[0]);
+
+                    // Clear the filter after adding the song
+                    clearSongFilter();
+                }
+            }
+        }
+    });
     
     // Note: Drag events for available songs are set up in updateAvailableSongs() when songs are created
 
@@ -418,6 +439,26 @@ function setupEventListeners() {
             if (songFilter && songFilter.value.trim() !== '') {
                 e.preventDefault();
                 clearSongFilter();
+                return;
+            }
+        }
+
+        // Handle Enter key to add single filtered song to selected set
+        if (e.key === 'Enter') {
+            if (songFilter && songFilter.value.trim() !== '') {
+                e.preventDefault();
+
+                // Get all visible available songs
+                const visibleSongs = Array.from(document.querySelectorAll('.available-song'))
+                    .filter(song => song.style.display !== 'none');
+
+                // If exactly one song is visible, add it to the selected set
+                if (visibleSongs.length === 1) {
+                    addSongToSelectedSet(visibleSongs[0]);
+
+                    // Clear the filter after adding the song
+                    clearSongFilter();
+                }
                 return;
             }
         }

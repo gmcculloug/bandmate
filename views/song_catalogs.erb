@@ -67,7 +67,7 @@ function clearSearch() {
     // Focus will be restored by the DOMContentLoaded handler when the page reloads
 }
 
-// Focus the search input when page loads
+// Focus the search input when page loads and add global keyboard handling
 document.addEventListener('DOMContentLoaded', function() {
     const searchInput = document.getElementById('search-input');
     if (searchInput) {
@@ -75,7 +75,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const urlParams = new URLSearchParams(window.location.search);
         const hasSearchTerm = searchInput.value.trim() !== '';
         const wasCleared = !urlParams.has('search') && document.referrer.includes('search=');
-        
+
         if (hasSearchTerm || wasCleared) {
             // Small delay to ensure the page is fully loaded
             setTimeout(function() {
@@ -85,6 +85,65 @@ document.addEventListener('DOMContentLoaded', function() {
             }, 100);
         }
     }
+
+    // Global keyboard event handler
+    document.addEventListener('keydown', function(e) {
+        const activeElement = document.activeElement;
+        const isTypingInInput = activeElement.tagName === 'INPUT' ||
+                                activeElement.tagName === 'TEXTAREA' ||
+                                activeElement.isContentEditable;
+        const hasModifier = e.altKey || e.ctrlKey || e.metaKey;
+
+        // Handle ESC key to clear search
+        if (e.key === 'Escape') {
+            if (searchInput && searchInput.value.trim() !== '') {
+                e.preventDefault();
+                clearSearch();
+                return;
+            }
+        }
+
+        // Global text input handling - direct text to search box
+        if (!isTypingInInput && !hasModifier && searchInput) {
+            // Check if it's a printable character or backspace/delete
+            const isPrintableChar = e.key.length === 1;
+            const isBackspace = e.key === 'Backspace';
+            const isDelete = e.key === 'Delete';
+
+            if (isPrintableChar) {
+                e.preventDefault();
+                searchInput.focus();
+
+                // Clear existing content and add the new character
+                searchInput.value = e.key;
+
+                // Move cursor to end
+                searchInput.setSelectionRange(searchInput.value.length, searchInput.value.length);
+
+                // Trigger input event to start search
+                const inputEvent = new Event('input');
+                searchInput.dispatchEvent(inputEvent);
+            } else if ((isBackspace || isDelete) && searchInput.value.trim() !== '') {
+                e.preventDefault();
+                searchInput.focus();
+
+                if (isBackspace) {
+                    // Remove last character
+                    searchInput.value = searchInput.value.slice(0, -1);
+                } else if (isDelete) {
+                    // Clear all content
+                    searchInput.value = '';
+                }
+
+                // Move cursor to end
+                searchInput.setSelectionRange(searchInput.value.length, searchInput.value.length);
+
+                // Trigger input event
+                const inputEvent = new Event('input');
+                searchInput.dispatchEvent(inputEvent);
+            }
+        }
+    });
 });
 </script>
 
