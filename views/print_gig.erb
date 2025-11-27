@@ -485,11 +485,24 @@
                         </h2>
 
                         <% gig_songs_by_set[current_set].each_with_index do |gig_song, index| %>
+                          <%
+                            # Check for incoming transition (from previous song)
+                            has_incoming = index > 0 && gig_songs_by_set[current_set][index - 1].has_transition
+
+                            # Check for outgoing transition (to next song)
+                            has_outgoing = gig_song.has_transition && index < gig_songs_by_set[current_set].length - 1
+                          %>
                           <div class="song-item">
                             <div class="song-info">
                               <div class="song-title-and-notes">
                                 <div class="song-title">
+                                  <% if has_incoming %>
+                                    <span style="color: #333; font-size: 0.8em; margin-right: 0.3em; font-weight: bold;">➤</span>
+                                  <% end %>
                                   <%= gig_song.song.title %>
+                                  <% if has_outgoing %>
+                                    <span style="color: #333; font-size: 0.8em; margin-left: 0.3em; font-weight: bold;">➤</span>
+                                  <% end %>
                                 </div>
                                 <% if gig_song.song.notes.present? %>
                                   <div class="song-notes">

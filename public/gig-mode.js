@@ -215,12 +215,22 @@ class GigMode {
         const setData = this.gigData.sets[this.currentSet];
         if (!setData) return;
 
-        songList.innerHTML = setData.songs.map((song, index) => `
+        songList.innerHTML = setData.songs.map((song, index) => {
+            // Check for incoming transition (from previous song)
+            const hasIncoming = index > 0 && setData.songs[index - 1].transition_data?.has_transition;
+
+            // Check for outgoing transition (to next song)
+            const hasOutgoing = song.transition_data?.has_transition && index < setData.songs.length - 1;
+
+            const incomingArrow = hasIncoming ? '<span class="transition-arrow incoming" title="incoming transition">➤</span> ' : '';
+            const outgoingArrow = hasOutgoing ? ' <span class="transition-arrow outgoing" title="transition">➤</span>' : '';
+
+            return `
             <div class="song-item" data-song-id="${song.id}" data-position="${index}">
                 <div class="song-header">
                     <h3 class="song-title">
                         <span class="song-count">${song.position}.</span>
-                        ${this.escapeHtml(song.title)}
+                        ${incomingArrow}${this.escapeHtml(song.title)}${outgoingArrow}
                     </h3>
                     <div class="song-meta">
                         <div class="song-key">${this.escapeHtml(song.key || 'N/A')}</div>

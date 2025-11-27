@@ -177,7 +177,8 @@ class Routes::Gigs < Sinatra::Base
           title: gig_song.song.title,
           artist: gig_song.song.artist || "",
           key: gig_song.song.key || "",
-          duration: gig_song.song.duration || ""
+          duration: gig_song.song.duration || "",
+          transition_data: gig_song.transition_data
         }
       }
     }.to_json
@@ -292,26 +293,42 @@ class Routes::Gigs < Sinatra::Base
   post '/gigs/:id/update_songs' do
     require_login
     gig = filter_by_current_band(Gig).find(params[:id])
-    
+
     # Clear existing songs
     gig.gig_songs.destroy_all
-    
+
     # Process each set
     sets_data = params[:sets] || {}
+    transitions_data = params[:transitions] || {}
+
     sets_data.each do |set_number, songs|
       songs.each_with_index do |song_id, position|
         next if song_id.blank?
-        
+
         song = filter_by_current_band(Song).find(song_id)
+
+        # Get transition data for this song if it exists
+        transition_attrs = {}
+        if transitions_data[set_number] && transitions_data[set_number][song_id]
+          transition_data = transitions_data[set_number][song_id]
+          transition_attrs = {
+            has_transition: transition_data[:has_transition] == 'true',
+            transition_type: transition_data[:transition_type].presence,
+            transition_notes: transition_data[:transition_notes].presence,
+            transition_timing: transition_data[:transition_timing].presence&.to_i
+          }
+        end
+
         GigSong.create!(
           gig: gig,
           song: song,
           set_number: set_number.to_i,
-          position: position + 1
+          position: position + 1,
+          **transition_attrs
         )
       end
     end
-    
+
     content_type :json
     { success: true }.to_json
   end
@@ -433,6 +450,44 @@ class Routes::Gigs < Sinatra::Base
       { error: 'Gig not found' }.to_json
     rescue => e
       { error: 'Failed to copy songs to target gig' }.to_json
+    end
+  end
+
+  post '/gigs/:id/toggle_transition' do
+    require_login
+    content_type :json
+
+    begin
+      gig = filter_by_current_band(Gig).find(params[:id])
+
+      # Parse request body
+      request_body = JSON.parse(request.body.read)
+      song_id = request_body['song_id']
+      set_number = request_body['set_number'].to_i
+
+      # Find the gig song
+      gig_song = gig.gig_songs.find_by(song_id: song_id, set_number: set_number)
+
+      unless gig_song
+        return { error: 'Song not found in this gig and set' }.to_json
+      end
+
+      # Toggle the transition
+      gig_song.toggle_transition!
+
+      # Return the updated transition data
+      {
+        success: true,
+        song_id: song_id,
+        set_number: set_number,
+        transition_data: gig_song.transition_data
+      }.to_json
+    rescue ActiveRecord::RecordNotFound => e
+      { error: 'Gig not found' }.to_json
+    rescue JSON::ParserError => e
+      { error: 'Invalid JSON in request' }.to_json
+    rescue => e
+      { error: 'Failed to toggle transition' }.to_json
     end
   end
 end

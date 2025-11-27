@@ -178,14 +178,26 @@
                   tooltip_parts << "Duration: #{gig_song.song.duration}" if gig_song.song.duration.present?
                   tooltip_parts << "Year: #{gig_song.song.year}" if gig_song.song.year.present?
                   tooltip_content = tooltip_parts.join("&#10;")
+
+                  # Check for incoming transition (from previous song)
+                  has_incoming = index > 0 && gig_songs_by_set[set_number][index - 1].has_transition
+
+                  # Check for outgoing transition (to next song)
+                  has_outgoing = gig_song.has_transition && index < gig_songs_by_set[set_number].length - 1
                 %>
                 <div class="song-card" style="margin-bottom: 4px; padding: 8px 12px; border: 1px solid #e2e8f0; border-radius: 4px; cursor: pointer;" onclick="window.location.href='/songs/<%= gig_song.song.id %>?from_gig=<%= @gig.id %>'" data-tooltip="<%= tooltip_content %>">
                   <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px; white-space: nowrap;">
                     <div style="flex: 1; min-width: 0; display: flex; align-items: center; gap: 8px; overflow: hidden;">
                       <div style="font-weight: 600; font-size: 1rem; overflow: hidden; text-overflow: ellipsis; min-width: 0; flex: 1;">
+                        <% if has_incoming %>
+                          <span class="transition-arrow active" style="color: #2d3748; font-size: 0.8em; margin-right: 8px; opacity: 1; font-weight: bold;" title="incoming transition">➤</span>
+                        <% end %>
                         <%= gig_song.song.title %>
                         <% if gig_song.song.notes.present? %>
                           <span style="color: #718096; font-weight: normal; font-size: 0.9rem;"> • <%= gig_song.song.notes %></span>
+                        <% end %>
+                        <% if has_outgoing %>
+                          <span class="transition-arrow active" style="color: #2d3748; font-size: 0.8em; margin-left: 8px; opacity: 1; font-weight: bold;" title="transition">➤</span>
                         <% end %>
                       </div>
                       <div style="font-size: 0.85rem; color: #4a5568; flex-shrink: 0; flex-grow: 0;">

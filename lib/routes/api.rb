@@ -311,7 +311,8 @@ class Routes::Api < Sinatra::Base
               url: song.url,
               year: song.year,
               album: song.album,
-              genre: song.genre
+              genre: song.genre,
+              transition_data: gig_song.transition_data
             }
           end
         }

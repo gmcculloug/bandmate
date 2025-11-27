@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2025_11_20_160006) do
+ActiveRecord::Schema[8.1].define(version: 2025_11_27_165114) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -43,9 +43,13 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_20_160006) do
   create_table "gig_songs", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "gig_id", null: false
+    t.boolean "has_transition", default: false
     t.integer "position", null: false
     t.integer "set_number", default: 1, null: false
     t.integer "song_id", null: false
+    t.text "transition_notes"
+    t.integer "transition_timing"
+    t.string "transition_type"
     t.datetime "updated_at", null: false
     t.index ["gig_id", "set_number", "position"], name: "index_gig_songs_on_gig_id_and_set_number_and_position"
     t.index ["gig_id"], name: "index_gig_songs_on_gig_id"
@@ -83,6 +87,19 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_20_160006) do
     t.index ["gig_id"], name: "index_google_calendar_events_on_gig_id"
     t.index ["google_event_id"], name: "index_google_calendar_events_on_google_event_id"
     t.index ["last_synced_at"], name: "index_google_calendar_events_on_last_synced_at"
+  end
+
+  create_table "login_attempts", force: :cascade do |t|
+    t.datetime "attempted_at", precision: nil, default: -> { "CURRENT_TIMESTAMP" }, null: false
+    t.datetime "created_at", null: false
+    t.string "ip_address"
+    t.boolean "successful", default: false
+    t.datetime "updated_at", null: false
+    t.text "user_agent"
+    t.string "username", null: false
+    t.index ["attempted_at"], name: "index_login_attempts_on_attempted_at"
+    t.index ["ip_address", "attempted_at"], name: "index_login_attempts_on_ip_address_and_attempted_at"
+    t.index ["username", "attempted_at"], name: "index_login_attempts_on_username_and_attempted_at"
   end
 
   create_table "practice_availabilities", force: :cascade do |t|
@@ -203,14 +220,19 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_20_160006) do
   create_table "users", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "email"
+    t.integer "failed_attempts_count", default: 0, null: false
+    t.datetime "last_failed_attempt_at", precision: nil
     t.integer "last_selected_band_id"
+    t.datetime "locked_at", precision: nil
     t.string "password_digest", null: false
     t.string "timezone", default: "UTC"
     t.datetime "updated_at", null: false
     t.string "username", null: false
     t.index ["email"], name: "index_users_on_email", unique: true
     t.index ["last_selected_band_id"], name: "index_users_on_last_selected_band_id"
+    t.index ["locked_at"], name: "index_users_on_locked_at"
     t.index ["timezone"], name: "index_users_on_timezone"
+    t.index ["username", "locked_at"], name: "index_users_on_username_and_locked_at"
     t.index ["username"], name: "index_users_on_username", unique: true
   end
 

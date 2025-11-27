@@ -900,6 +900,46 @@ body {
   }
 }
 
+/* Transition Arrows */
+.transition-arrow {
+  color: var(--text-muted);
+  font-size: calc(0.85rem * var(--font-size-multiplier));
+  margin-left: 0.5rem;
+  opacity: 0.6;
+  transition: all 0.2s ease;
+  display: inline-block;
+  font-weight: 600;
+}
+
+.transition-arrow.active {
+  color: var(--accent-color);
+  opacity: 1;
+  font-weight: 700;
+}
+
+.transition-arrow.incoming {
+  margin-left: 0;
+  margin-right: 0.5rem;
+}
+
+.transition-arrow.outgoing {
+  margin-left: 0.5rem;
+  margin-right: 0;
+}
+
+/* Theme-specific arrow colors */
+.theme-light .transition-arrow.active {
+  color: var(--accent-color);
+}
+
+.theme-amber .transition-arrow.active {
+  color: var(--accent-color);
+}
+
+.theme-dark .transition-arrow.active {
+  color: var(--accent-color);
+}
+
 /* Reduced motion accessibility */
 @media (prefers-reduced-motion: reduce) {
   *,

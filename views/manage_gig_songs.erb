@@ -162,7 +162,7 @@ function generateSets() {
         if (setContainer && parseInt(setNumber) <= currentSets) {
             setContainer.innerHTML = ''; // Clear drop zone text
             setsSongs[setNumber].forEach(song => {
-                addSongToSet(setContainer, song);
+                addSongToSet(setContainer, song, song.transition_data);
             });
             updateSetCount(setNumber);
         }
@@ -172,22 +172,62 @@ function generateSets() {
     setupSetSelectionListeners();
 }
 
+// Helper function to check if song is the last in the set
+function isLastSongInSet(setContainer, songId) {
+    const setNumber = setContainer.dataset.set;
+    if (!setsSongs[setNumber]) return true;
+
+    const songsInSet = setsSongs[setNumber];
+    const songIndex = songsInSet.findIndex(s => s.id === songId);
+    return songIndex === songsInSet.length - 1;
+}
+
+// Helper function to check if song has an incoming transition from previous song
+function hasIncomingTransition(setContainer, songId) {
+    const setNumber = setContainer.dataset.set;
+    if (!setsSongs[setNumber]) return false;
+
+    const songsInSet = setsSongs[setNumber];
+    const songIndex = songsInSet.findIndex(s => s.id === songId);
+
+    // If this is the first song in the set, it can't have an incoming transition
+    if (songIndex <= 0) return false;
+
+    // Check if the previous song has a transition
+    const prevSong = songsInSet[songIndex - 1];
+    return prevSong?.transition_data?.has_transition === true;
+}
+
 // Add song to set
-function addSongToSet(setContainer, song) {
+function addSongToSet(setContainer, song, transitionData = null) {
     const songDiv = document.createElement('div');
     songDiv.className = 'song-item set-song';
     songDiv.dataset.songId = song.id;
+    songDiv.dataset.hasTransition = (transitionData?.has_transition) ? 'true' : 'false';
     songDiv.draggable = true;
     songDiv.style.cssText = 'margin-bottom: 8px; padding: 10px; background: #edf2f7; border: 1px solid #cbd5e0; border-radius: 6px; cursor: grab; transition: all 0.2s ease;';
-    
+
     let keyHtml = song.key ? `<span style="background: #667eea; color: white; padding: 2px 6px; border-radius: 10px; font-size: 0.7rem; margin-left: 8px;">${song.key}</span>` : '';
-    
+
+    // Add incoming transition arrow if this song has a transition coming into it
+    let incomingArrow = '';
+    if (hasIncomingTransition(setContainer, song.id)) {
+        incomingArrow = `<span class="incoming-transition-arrow active" title="incoming transition" onclick="togglePreviousTransition('${song.id}', '${setContainer.dataset.set}')">➤</span> `;
+    }
+
+    // Add outgoing transition arrow if this is not the last song in the set
+    let outgoingArrow = '';
+    if (!isLastSongInSet(setContainer, song.id)) {
+        const arrowClass = (transitionData?.has_transition) ? 'active' : '';
+        outgoingArrow = ` <span class="transition-arrow ${arrowClass}" title="transition" onclick="toggleTransition('${song.id}', '${setContainer.dataset.set}')">➤</span>`;
+    }
+
     songDiv.innerHTML = `
-        <div style="font-weight: bold; color: #2d3748; font-size: 0.9rem;">${song.title}${keyHtml}</div>
+        <div style="font-weight: bold; color: #2d3748; font-size: 0.9rem;">${incomingArrow}${song.title}${keyHtml}${outgoingArrow}</div>
         <button type="button" onclick="removeSongFromSet(this)" style="position: absolute; top: 5px; right: 5px; background: #f56565; color: white; border: none; border-radius: 50%; width: 20px; height: 20px; font-size: 12px; cursor: pointer;">×</button>
     `;
     songDiv.style.position = 'relative';
-    
+
     setContainer.appendChild(songDiv);
     setupSongDragEvents(songDiv);
 }
@@ -213,6 +253,56 @@ function removeSongFromSet(button) {
     
     // Add back to available songs
     updateAvailableSongs();
+}
+
+// Toggle transition state for the previous song (when clicking incoming arrow)
+function togglePreviousTransition(songId, setNumber) {
+    const songsInSet = setsSongs[setNumber];
+    if (!songsInSet) return;
+
+    const songIndex = songsInSet.findIndex(s => s.id === songId);
+    if (songIndex <= 0) return; // No previous song
+
+    const prevSong = songsInSet[songIndex - 1];
+    toggleTransition(prevSong.id, setNumber);
+}
+
+// Toggle transition state for a song
+function toggleTransition(songId, setNumber) {
+    fetch(`/gigs/<%= @gig.id %>/toggle_transition`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            song_id: songId,
+            set_number: parseInt(setNumber)
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Update the song data in setsSongs
+            const songsInSet = setsSongs[setNumber];
+            if (songsInSet) {
+                const songIndex = songsInSet.findIndex(song => song.id === songId);
+                if (songIndex !== -1) {
+                    // Update the transition data for this song
+                    songsInSet[songIndex].transition_data = data.transition_data;
+                }
+            }
+
+            // Rebuild the set to reflect the updated transition state
+            rebuildSet(setNumber);
+        } else {
+            console.error('Failed to toggle transition:', data.error);
+            alert('Failed to toggle transition. Please try again.');
+        }
+    })
+    .catch(error => {
+        console.error('Error toggling transition:', error);
+        alert('Error toggling transition. Please try again.');
+    });
 }
 
 // Update available songs (rebuild list in alphabetical order)
@@ -545,8 +635,8 @@ function addSongToSelectedSet(songElement) {
         dropZoneText.remove();
     }
 
-    // Add the song to the DOM
-    addSongToSet(setContainer, songData);
+    // Rebuild the entire set to ensure all transition arrows are properly updated
+    rebuildSet(setNumber);
 
     // Scroll to show the newly added song
     setTimeout(() => {
@@ -787,17 +877,17 @@ function createDropIndicator() {
 function rebuildSet(setNumber) {
     const setContainer = document.querySelector(`[data-set="${setNumber}"]`);
     if (!setContainer) return;
-    
+
     // Clear existing songs
     setContainer.querySelectorAll('.set-song').forEach(song => song.remove());
-    
+
     // Add songs in correct order
     if (setsSongs[setNumber]) {
         setsSongs[setNumber].forEach(song => {
-            addSongToSet(setContainer, song);
+            addSongToSet(setContainer, song, song.transition_data);
         });
     }
-    
+
     updateSetCount(setNumber); // This now also updates set time
     updateTotalTime();
 }
@@ -805,20 +895,28 @@ function rebuildSet(setNumber) {
 // Save song changes
 function saveSongChanges() {
     const formData = new FormData();
-    
-    // Add sets data
+
+    // Add sets data with transition information
     Object.keys(setsSongs).forEach(setNumber => {
         setsSongs[setNumber].forEach((song, index) => {
             formData.append(`sets[${setNumber}][]`, song.id);
+
+            // Include transition data for this song
+            if (song.transition_data) {
+                formData.append(`transitions[${setNumber}][${song.id}][has_transition]`, song.transition_data.has_transition || false);
+                formData.append(`transitions[${setNumber}][${song.id}][transition_type]`, song.transition_data.transition_type || '');
+                formData.append(`transitions[${setNumber}][${song.id}][transition_notes]`, song.transition_data.transition_notes || '');
+                formData.append(`transitions[${setNumber}][${song.id}][transition_timing]`, song.transition_data.transition_timing || '');
+            }
         });
     });
-    
+
     // Show saving indicator
     const button = event.target;
     const originalText = button.textContent;
     button.textContent = 'Saving...';
     button.disabled = true;
-    
+
     fetch('/gigs/<%= @gig.id %>/update_songs', {
         method: 'POST',
         body: formData
@@ -981,6 +1079,50 @@ function toggleClearButton(filterValue) {
 /* Set header styling for clickable selection */
 .set-header:hover {
     background-color: #f0f9ff !important;
+}
+
+/* Transition arrow styling */
+.transition-arrow {
+    color: #a0aec0; /* Soft grey */
+    font-size: 0.9em;
+    margin-left: 8px;
+    cursor: pointer;
+    opacity: 0.7;
+    transition: all 0.2s ease;
+    display: inline-block;
+}
+
+.transition-arrow.active {
+    color: #2d3748; /* Dark/black when active */
+    opacity: 1;
+    font-weight: bold;
+}
+
+.transition-arrow:hover {
+    opacity: 1;
+    transform: scale(1.1);
+}
+
+/* Incoming transition arrow styling */
+.incoming-transition-arrow {
+    color: #a0aec0; /* Soft grey */
+    font-size: 0.9em;
+    margin-right: 8px;
+    cursor: pointer;
+    opacity: 0.7;
+    transition: all 0.2s ease;
+    display: inline-block;
+}
+
+.incoming-transition-arrow.active {
+    color: #2d3748; /* Dark/black when active */
+    opacity: 1;
+    font-weight: bold;
+}
+
+.incoming-transition-arrow:hover {
+    opacity: 1;
+    transform: scale(1.1);
 }
 
 /* Contain animations within the white border */
