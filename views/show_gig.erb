@@ -190,14 +190,14 @@
                     <div style="flex: 1; min-width: 0; display: flex; align-items: center; gap: 8px; overflow: hidden;">
                       <div style="font-weight: 600; font-size: 1rem; overflow: hidden; text-overflow: ellipsis; min-width: 0; flex: 1;">
                         <% if has_incoming %>
-                          <span class="transition-arrow active" style="color: #2d3748; font-size: 0.8em; margin-right: 8px; opacity: 1; font-weight: bold;" title="incoming transition">➤</span>
+                          <span class="transition-arrow active" style="color: #2d3748; font-size: 1em; margin-right: 8px; opacity: 1; font-weight: bold;" title="incoming transition">➔</span>
                         <% end %>
                         <%= gig_song.song.title %>
                         <% if gig_song.song.notes.present? %>
                           <span style="color: #718096; font-weight: normal; font-size: 0.9rem;"> • <%= gig_song.song.notes %></span>
                         <% end %>
                         <% if has_outgoing %>
-                          <span class="transition-arrow active" style="color: #2d3748; font-size: 0.8em; margin-left: 8px; opacity: 1; font-weight: bold;" title="transition">➤</span>
+                          <span class="transition-arrow active" style="color: #2d3748; font-size: 1em; margin-left: 8px; opacity: 1; font-weight: bold;" title="transition">➔</span>
                         <% end %>
                       </div>
                       <div style="font-size: 0.85rem; color: #4a5568; flex-shrink: 0; flex-grow: 0;">

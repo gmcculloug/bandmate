@@ -222,8 +222,8 @@ class GigMode {
             // Check for outgoing transition (to next song)
             const hasOutgoing = song.transition_data?.has_transition && index < setData.songs.length - 1;
 
-            const incomingArrow = hasIncoming ? '<span class="transition-arrow incoming" title="incoming transition">➤</span> ' : '';
-            const outgoingArrow = hasOutgoing ? ' <span class="transition-arrow outgoing" title="transition">➤</span>' : '';
+            const incomingArrow = hasIncoming ? '<span class="transition-arrow incoming" title="incoming transition">➔</span> ' : '';
+            const outgoingArrow = hasOutgoing ? ' <span class="transition-arrow outgoing" title="transition">➔</span>' : '';
 
             return `
             <div class="song-item" data-song-id="${song.id}" data-position="${index}">

@@ -212,14 +212,14 @@ function addSongToSet(setContainer, song, transitionData = null) {
     // Add incoming transition arrow if this song has a transition coming into it
     let incomingArrow = '';
     if (hasIncomingTransition(setContainer, song.id)) {
-        incomingArrow = `<span class="incoming-transition-arrow active" title="incoming transition" onclick="togglePreviousTransition('${song.id}', '${setContainer.dataset.set}')">➤</span> `;
+        incomingArrow = `<span class="incoming-transition-arrow active" style="font-size: 1em;" title="incoming transition" onclick="togglePreviousTransition('${song.id}', '${setContainer.dataset.set}')">➔</span> `;
     }
 
     // Add outgoing transition arrow if this is not the last song in the set
     let outgoingArrow = '';
     if (!isLastSongInSet(setContainer, song.id)) {
         const arrowClass = (transitionData?.has_transition) ? 'active' : '';
-        outgoingArrow = ` <span class="transition-arrow ${arrowClass}" title="transition" onclick="toggleTransition('${song.id}', '${setContainer.dataset.set}')">➤</span>`;
+        outgoingArrow = ` <span class="transition-arrow ${arrowClass}" style="font-size: 1em;" title="transition" onclick="toggleTransition('${song.id}', '${setContainer.dataset.set}')">➔</span>`;
     }
 
     songDiv.innerHTML = `
@@ -238,19 +238,48 @@ function removeSongFromSet(button) {
     const setContainer = songDiv.closest('.set-songs');
     const setNumber = setContainer.dataset.set;
     const songId = songDiv.dataset.songId;
-    
-    // Remove from setsSongs data
+
+    // Handle transition cleanup before removing the song
     if (setsSongs[setNumber]) {
+        const songIndex = setsSongs[setNumber].findIndex(song => song.id === songId);
+
+        if (songIndex !== -1) {
+            const songBeingRemoved = setsSongs[setNumber][songIndex];
+
+            // If the song being removed has an outgoing transition, clear it
+            if (songBeingRemoved.transition_data?.has_transition) {
+                songBeingRemoved.transition_data.has_transition = false;
+                songBeingRemoved.transition_data.transition_type = '';
+                songBeingRemoved.transition_data.transition_notes = '';
+                songBeingRemoved.transition_data.transition_timing = '';
+            }
+
+            // If there's a previous song that has a transition to this song, clear it
+            if (songIndex > 0) {
+                const prevSong = setsSongs[setNumber][songIndex - 1];
+                if (prevSong.transition_data?.has_transition) {
+                    prevSong.transition_data.has_transition = false;
+                    prevSong.transition_data.transition_type = '';
+                    prevSong.transition_data.transition_notes = '';
+                    prevSong.transition_data.transition_timing = '';
+                }
+            }
+        }
+
+        // Remove from setsSongs data
         setsSongs[setNumber] = setsSongs[setNumber].filter(song => song.id !== songId);
     }
-    
+
     // Remove from DOM
     songDiv.remove();
-    
+
+    // Rebuild the set to update transition arrows properly
+    rebuildSet(setNumber);
+
     // Update count and total time
     updateSetCount(setNumber);
     updateTotalTime();
-    
+
     // Add back to available songs
     updateAvailableSongs();
 }
@@ -626,8 +655,19 @@ function addSongToSelectedSet(songElement) {
         setsSongs[setNumber] = [];
     }
 
+    // Initialize transition data for the new song
+    const songWithTransitionData = {
+        ...songData,
+        transition_data: {
+            has_transition: false,
+            transition_type: '',
+            transition_notes: '',
+            transition_timing: ''
+        }
+    };
+
     // Add song to the end of the set
-    setsSongs[setNumber].push(songData);
+    setsSongs[setNumber].push(songWithTransitionData);
 
     // Clear drop zone text if this is the first song
     const dropZoneText = setContainer.querySelector('.drop-zone-text');
@@ -826,8 +866,19 @@ function setupSetDropZones() {
                         }
                     }
                     
+                    // Initialize transition data if the song doesn't have it (new song from available songs)
+                    const songWithTransitionData = songData.transition_data ? songData : {
+                        ...songData,
+                        transition_data: {
+                            has_transition: false,
+                            transition_type: '',
+                            transition_notes: '',
+                            transition_timing: ''
+                        }
+                    };
+
                     // Insert at precise position
-                    setsSongs[setNumber].splice(insertPosition, 0, songData);
+                    setsSongs[setNumber].splice(insertPosition, 0, songWithTransitionData);
                     
                     // Clear drop zone text if this is the first song
                     const dropZoneText = this.querySelector('.drop-zone-text');

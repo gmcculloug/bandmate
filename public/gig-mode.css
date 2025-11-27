@@ -903,7 +903,7 @@ body {
 /* Transition Arrows */
 .transition-arrow {
   color: var(--text-muted);
-  font-size: calc(0.85rem * var(--font-size-multiplier));
+  font-size: calc(1rem * var(--font-size-multiplier));
   margin-left: 0.5rem;
   opacity: 0.6;
   transition: all 0.2s ease;
