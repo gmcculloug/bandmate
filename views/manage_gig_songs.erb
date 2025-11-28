@@ -11,9 +11,16 @@
         <h2 style="margin: 0;">Manage Songs: <%= @gig.name %></h2>
     </div>
 
-    <div class="actions" style="display: flex; gap: 10px;">
-        <button type="button" class="btn btn-success" onclick="saveSongChanges()">Save</button>
-        <a href="/gigs/<%= @gig.id %>" class="btn">Cancel</a>
+    <div class="actions" style="display: flex; gap: 15px; align-items: center;">
+        <div id="save-status" class="save-status" style="font-size: 0.9rem; color: #4a5568; display: none;">
+            Saving...
+        </div>
+        <button type="button" id="undo-button" class="btn btn-secondary" onclick="undoLastCommand()" disabled
+                style="display: flex; align-items: center; gap: 6px; padding: 8px 12px;">
+            <span style="font-size: 1.1rem;">↶</span>
+            <span>Undo</span>
+        </button>
+        <button type="button" class="btn" style="padding: 8px 12px;" onclick="handleDoneButton()">Done</button>
     </div>
 </div>
 
@@ -90,25 +97,781 @@ let setsSongs = {};
 let availableSongsCollapsed = false;
 let selectedSet = 1; // Track which set is selected for adding songs
 
+// Auto-save and undo state management
+let stateHistory = [];           // Array of state snapshots (max 50 operations)
+let currentHistoryIndex = -1;    // Current position in history
+let pendingSaveTimeout = null;   // Debounced auto-save timer (2 seconds)
+let saveStatus = 'saved';        // 'saving', 'saved', 'error'
+let isOnline = navigator.onLine; // Track connectivity status
+
+// Command Pattern Implementation
+class Command {
+    constructor(description) {
+        this.description = description;
+        this.timestamp = new Date();
+    }
+
+    execute() {
+        throw new Error('Execute method must be implemented');
+    }
+
+    undo() {
+        throw new Error('Undo method must be implemented');
+    }
+}
+
+class AddSongCommand extends Command {
+    constructor(songData, setNumber, insertPosition = -1) {
+        super(`Add "${songData.title}" to Set ${setNumber}`);
+        this.songData = songData;
+        this.setNumber = setNumber;
+        this.insertPosition = insertPosition; // -1 means add to end
+        this.actualPosition = insertPosition;
+    }
+
+    execute() {
+        if (!setsSongs[this.setNumber]) {
+            setsSongs[this.setNumber] = [];
+        }
+
+        // Add transition data if not present
+        const songWithTransitionData = {
+            ...this.songData,
+            transition_data: this.songData.transition_data || {
+                has_transition: false,
+                transition_type: '',
+                transition_notes: '',
+                transition_timing: ''
+            }
+        };
+
+        if (this.insertPosition === -1) {
+            this.actualPosition = setsSongs[this.setNumber].length;
+            setsSongs[this.setNumber].push(songWithTransitionData);
+        } else {
+            this.actualPosition = this.insertPosition;
+            setsSongs[this.setNumber].splice(this.insertPosition, 0, songWithTransitionData);
+        }
+
+        rebuildSet(this.setNumber);
+        updateAvailableSongs();
+        updateSetCount(this.setNumber);
+        updateTotalTime();
+    }
+
+    undo() {
+        if (setsSongs[this.setNumber] && this.actualPosition >= 0 && this.actualPosition < setsSongs[this.setNumber].length) {
+            setsSongs[this.setNumber].splice(this.actualPosition, 1);
+            rebuildSet(this.setNumber);
+            updateAvailableSongs();
+            updateSetCount(this.setNumber);
+            updateTotalTime();
+        }
+    }
+}
+
+class RemoveSongCommand extends Command {
+    constructor(songId, setNumber) {
+        super(`Remove song from Set ${setNumber}`);
+        this.songId = songId;
+        this.setNumber = setNumber;
+        this.removedSong = null;
+        this.removedPosition = -1;
+        this.previousSongTransition = null;
+        this.nextSongTransition = null;
+    }
+
+    execute() {
+        if (!setsSongs[this.setNumber]) return;
+
+        const songIndex = setsSongs[this.setNumber].findIndex(song => song.id === this.songId);
+        if (songIndex === -1) return;
+
+        this.removedSong = setsSongs[this.setNumber][songIndex];
+        this.removedPosition = songIndex;
+        this.description = `Remove "${this.removedSong.title}" from Set ${this.setNumber}`;
+
+        // Store transition states for restoration
+        if (songIndex > 0) {
+            this.previousSongTransition = { ...setsSongs[this.setNumber][songIndex - 1].transition_data };
+        }
+        if (songIndex < setsSongs[this.setNumber].length - 1) {
+            this.nextSongTransition = { ...setsSongs[this.setNumber][songIndex + 1].transition_data };
+        }
+
+        // Clean up transitions as in original code
+        if (this.removedSong.transition_data?.has_transition) {
+            this.removedSong.transition_data.has_transition = false;
+            this.removedSong.transition_data.transition_type = '';
+            this.removedSong.transition_data.transition_notes = '';
+            this.removedSong.transition_data.transition_timing = '';
+        }
+
+        if (songIndex > 0) {
+            const prevSong = setsSongs[this.setNumber][songIndex - 1];
+            if (prevSong.transition_data?.has_transition) {
+                prevSong.transition_data.has_transition = false;
+                prevSong.transition_data.transition_type = '';
+                prevSong.transition_data.transition_notes = '';
+                prevSong.transition_data.transition_timing = '';
+            }
+        }
+
+        setsSongs[this.setNumber].splice(songIndex, 1);
+        rebuildSet(this.setNumber);
+        updateAvailableSongs();
+        updateSetCount(this.setNumber);
+        updateTotalTime();
+    }
+
+    undo() {
+        if (!this.removedSong || this.removedPosition === -1) return;
+
+        if (!setsSongs[this.setNumber]) {
+            setsSongs[this.setNumber] = [];
+        }
+
+        // Restore song at original position
+        setsSongs[this.setNumber].splice(this.removedPosition, 0, this.removedSong);
+
+        // Restore transition states
+        if (this.removedPosition > 0 && this.previousSongTransition) {
+            setsSongs[this.setNumber][this.removedPosition - 1].transition_data = this.previousSongTransition;
+        }
+        if (this.removedPosition < setsSongs[this.setNumber].length - 1 && this.nextSongTransition) {
+            setsSongs[this.setNumber][this.removedPosition + 1].transition_data = this.nextSongTransition;
+        }
+
+        rebuildSet(this.setNumber);
+        updateAvailableSongs();
+        updateSetCount(this.setNumber);
+        updateTotalTime();
+    }
+}
+
+class ToggleTransitionCommand extends Command {
+    constructor(songId, setNumber, oldTransitionData) {
+        super(`Toggle transition for song in Set ${setNumber}`);
+        this.songId = songId;
+        this.setNumber = setNumber;
+        this.oldTransitionData = oldTransitionData ? { ...oldTransitionData } : null;
+        this.newTransitionData = null;
+    }
+
+    execute() {
+        if (!setsSongs[this.setNumber]) return;
+
+        const songIndex = setsSongs[this.setNumber].findIndex(song => song.id === this.songId);
+        if (songIndex === -1) return;
+
+        const song = setsSongs[this.setNumber][songIndex];
+        this.description = `Toggle transition for "${song.title}" in Set ${this.setNumber}`;
+
+        // Store old state if not already stored
+        if (!this.oldTransitionData && song.transition_data) {
+            this.oldTransitionData = { ...song.transition_data };
+        }
+
+        // Toggle transition state
+        const newState = !song.transition_data?.has_transition;
+        song.transition_data = {
+            has_transition: newState,
+            transition_type: newState ? (this.oldTransitionData?.transition_type || '') : '',
+            transition_notes: newState ? (this.oldTransitionData?.transition_notes || '') : '',
+            transition_timing: newState ? (this.oldTransitionData?.transition_timing || '') : ''
+        };
+
+        this.newTransitionData = { ...song.transition_data };
+        rebuildSet(this.setNumber);
+    }
+
+    undo() {
+        if (!setsSongs[this.setNumber] || !this.oldTransitionData) return;
+
+        const songIndex = setsSongs[this.setNumber].findIndex(song => song.id === this.songId);
+        if (songIndex === -1) return;
+
+        setsSongs[this.setNumber][songIndex].transition_data = { ...this.oldTransitionData };
+        rebuildSet(this.setNumber);
+    }
+}
+
+class ChangeSetCountCommand extends Command {
+    constructor(oldSetCount, newSetCount) {
+        super(`Change set count from ${oldSetCount} to ${newSetCount}`);
+        this.oldSetCount = oldSetCount;
+        this.newSetCount = newSetCount;
+        this.removedSongs = {}; // Store songs that were removed from deleted sets
+    }
+
+    execute() {
+        // If reducing sets, store songs from removed sets
+        if (this.newSetCount < this.oldSetCount) {
+            for (let i = this.newSetCount + 1; i <= this.oldSetCount; i++) {
+                if (setsSongs[i] && setsSongs[i].length > 0) {
+                    this.removedSongs[i] = [...setsSongs[i]];
+                }
+                delete setsSongs[i];
+            }
+        }
+
+        currentSets = this.newSetCount;
+
+        // Reset selected set if invalid
+        if (selectedSet > currentSets) {
+            selectedSet = 1;
+        }
+
+        document.getElementById('num_sets').value = currentSets;
+        generateSets();
+        updateAvailableSongs();
+        updateAllSetTimes();
+        updateTotalTime();
+        setupSetSelectionListeners();
+    }
+
+    undo() {
+        currentSets = this.oldSetCount;
+
+        // Restore removed songs
+        Object.keys(this.removedSongs).forEach(setNumber => {
+            setsSongs[setNumber] = [...this.removedSongs[setNumber]];
+        });
+
+        // Reset selected set if it was changed
+        if (selectedSet > currentSets) {
+            selectedSet = 1;
+        }
+
+        document.getElementById('num_sets').value = currentSets;
+        generateSets();
+        updateAvailableSongs();
+        updateAllSetTimes();
+        updateTotalTime();
+        setupSetSelectionListeners();
+    }
+}
+
+class ReorderSongCommand extends Command {
+    constructor(songId, fromSet, fromPosition, toSet, toPosition) {
+        super(`Move song between sets`);
+        this.songId = songId;
+        this.fromSet = fromSet;
+        this.fromPosition = fromPosition;
+        this.toSet = toSet;
+        this.toPosition = toPosition;
+        this.songData = null;
+    }
+
+    execute() {
+        // Find and store the song data
+        if (setsSongs[this.fromSet] && setsSongs[this.fromSet][this.fromPosition]) {
+            this.songData = { ...setsSongs[this.fromSet][this.fromPosition] };
+            this.description = `Move "${this.songData.title}" from Set ${this.fromSet} to Set ${this.toSet}`;
+
+            // Remove from old position
+            setsSongs[this.fromSet].splice(this.fromPosition, 1);
+
+            // Add to new position
+            if (!setsSongs[this.toSet]) {
+                setsSongs[this.toSet] = [];
+            }
+            setsSongs[this.toSet].splice(this.toPosition, 0, this.songData);
+
+            // Update UI
+            rebuildSet(this.fromSet);
+            if (this.fromSet !== this.toSet) {
+                rebuildSet(this.toSet);
+            }
+            updateAvailableSongs();
+            updateSetCount(this.fromSet);
+            if (this.fromSet !== this.toSet) {
+                updateSetCount(this.toSet);
+            }
+            updateTotalTime();
+        }
+    }
+
+    undo() {
+        if (!this.songData) return;
+
+        // Remove from current position
+        if (setsSongs[this.toSet]) {
+            const currentIndex = setsSongs[this.toSet].findIndex(song => song.id === this.songId);
+            if (currentIndex !== -1) {
+                setsSongs[this.toSet].splice(currentIndex, 1);
+            }
+        }
+
+        // Restore to original position
+        if (!setsSongs[this.fromSet]) {
+            setsSongs[this.fromSet] = [];
+        }
+        setsSongs[this.fromSet].splice(this.fromPosition, 0, this.songData);
+
+        // Update UI
+        rebuildSet(this.fromSet);
+        if (this.fromSet !== this.toSet) {
+            rebuildSet(this.toSet);
+        }
+        updateAvailableSongs();
+        updateSetCount(this.fromSet);
+        if (this.fromSet !== this.toSet) {
+            updateSetCount(this.toSet);
+        }
+        updateTotalTime();
+    }
+}
+
+// State History Management System
+function executeCommand(command) {
+    if (!isOnline) {
+        showOfflineMessage();
+        return false;
+    }
+
+    try {
+        // Execute the command
+        command.execute();
+
+        // Add to history (remove any redo history if we're in the middle)
+        if (currentHistoryIndex < stateHistory.length - 1) {
+            stateHistory.splice(currentHistoryIndex + 1);
+        }
+
+        stateHistory.push(command);
+        currentHistoryIndex++;
+
+        // Limit history size to 50 operations
+        if (stateHistory.length > 50) {
+            stateHistory.shift();
+            currentHistoryIndex--;
+        }
+
+        // Update UI state
+        updateUndoButtonState();
+
+        // Trigger auto-save
+        scheduleAutoSave();
+
+        return true;
+    } catch (error) {
+        console.error('Error executing command:', error);
+        showErrorMessage('An error occurred. Please try again.');
+        return false;
+    }
+}
+
+function undoLastCommand() {
+    if (currentHistoryIndex < 0 || stateHistory.length === 0) {
+        return false;
+    }
+
+    if (!isOnline) {
+        showOfflineMessage();
+        return false;
+    }
+
+    try {
+        const command = stateHistory[currentHistoryIndex];
+        command.undo();
+        currentHistoryIndex--;
+
+        // Update UI state
+        updateUndoButtonState();
+
+        // Trigger auto-save
+        scheduleAutoSave();
+
+        return true;
+    } catch (error) {
+        console.error('Error undoing command:', error);
+        showErrorMessage('An error occurred while undoing. Please try again.');
+        return false;
+    }
+}
+
+function getLastCommandDescription() {
+    if (currentHistoryIndex >= 0 && stateHistory.length > 0) {
+        return stateHistory[currentHistoryIndex].description;
+    }
+    return null;
+}
+
+function hasUndoHistory() {
+    return currentHistoryIndex >= 0 && stateHistory.length > 0;
+}
+
+// Auto-save functionality
+function scheduleAutoSave() {
+    // Clear any pending save
+    if (pendingSaveTimeout) {
+        clearTimeout(pendingSaveTimeout);
+    }
+
+    // Update save status
+    saveStatus = 'pending';
+    updateSaveStatusDisplay();
+
+    // Schedule new save with 2-second debounce
+    pendingSaveTimeout = setTimeout(performAutoSave, 2000);
+}
+
+function performAutoSave() {
+    if (!isOnline) {
+        saveStatus = 'error';
+        updateSaveStatusDisplay();
+        return;
+    }
+
+    saveStatus = 'saving';
+    updateSaveStatusDisplay();
+
+    const formData = new FormData();
+
+    // Add sets data with transition information (same as original saveSongChanges)
+    Object.keys(setsSongs).forEach(setNumber => {
+        setsSongs[setNumber].forEach((song, index) => {
+            formData.append(`sets[${setNumber}][]`, song.id);
+
+            // Include transition data for this song
+            if (song.transition_data) {
+                formData.append(`transitions[${setNumber}][${song.id}][has_transition]`, song.transition_data.has_transition || false);
+                formData.append(`transitions[${setNumber}][${song.id}][transition_type]`, song.transition_data.transition_type || '');
+                formData.append(`transitions[${setNumber}][${song.id}][transition_notes]`, song.transition_data.transition_notes || '');
+                formData.append(`transitions[${setNumber}][${song.id}][transition_timing]`, song.transition_data.transition_timing || '');
+            }
+        });
+    });
+
+    fetch('/gigs/<%= @gig.id %>/update_songs', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            saveStatus = 'saved';
+            lastSaveTime = new Date();
+        } else {
+            saveStatus = 'error';
+            console.error('Auto-save failed:', data.error);
+        }
+        updateSaveStatusDisplay();
+    })
+    .catch(error => {
+        saveStatus = 'error';
+        console.error('Auto-save error:', error);
+        updateSaveStatusDisplay();
+    });
+}
+
+// UI State Management
+function updateUndoButtonState() {
+    const undoButton = document.getElementById('undo-button');
+    if (undoButton) {
+        const canUndo = hasUndoHistory();
+        undoButton.disabled = !canUndo || !isOnline;
+
+        if (canUndo) {
+            const lastCommand = getLastCommandDescription();
+            undoButton.title = `Undo: ${lastCommand}`;
+            undoButton.setAttribute('aria-label', `Undo: ${lastCommand}`);
+        } else {
+            undoButton.title = 'Nothing to undo';
+            undoButton.setAttribute('aria-label', 'Nothing to undo');
+        }
+    }
+}
+
+let lastSaveTime = new Date();
+
+function updateSaveStatusDisplay() {
+    const statusElement = document.getElementById('save-status');
+    if (!statusElement) return;
+
+    switch (saveStatus) {
+        case 'saving':
+            statusElement.textContent = 'Saving...';
+            statusElement.className = 'save-status saving';
+            statusElement.style.display = 'block';
+            statusElement.onclick = null;
+            break;
+        case 'saved':
+            // Hide the status after a brief delay when saved
+            setTimeout(() => {
+                if (statusElement && saveStatus === 'saved') {
+                    statusElement.className = 'save-status';
+                    // Use a longer timeout to allow the CSS transition to complete
+                    setTimeout(() => {
+                        statusElement.style.display = 'none';
+                    }, 300); // Wait for CSS transition
+                }
+            }, 1200); // Show for 1.2 seconds
+            break;
+        case 'error':
+            statusElement.textContent = 'Error - Click to retry';
+            statusElement.className = 'save-status error';
+            statusElement.style.display = 'block';
+            statusElement.onclick = () => {
+                saveStatus = 'pending';
+                scheduleAutoSave();
+            };
+            break;
+        case 'pending':
+            // Don't show pending status, wait for actual saving
+            statusElement.className = 'save-status';
+            setTimeout(() => {
+                statusElement.style.display = 'none';
+            }, 300); // Allow transition
+            break;
+        default:
+            statusElement.className = 'save-status';
+            setTimeout(() => {
+                statusElement.style.display = 'none';
+            }, 300); // Allow transition
+            break;
+    }
+}
+
+function getTimeAgoString(date) {
+    const now = new Date();
+    const diffMs = now - date;
+    const diffMins = Math.floor(diffMs / (1000 * 60));
+
+    if (diffMins < 1) return 'just now';
+    if (diffMins === 1) return '1 minute ago';
+    if (diffMins < 60) return `${diffMins} minutes ago`;
+
+    const diffHours = Math.floor(diffMins / 60);
+    if (diffHours === 1) return '1 hour ago';
+    if (diffHours < 24) return `${diffHours} hours ago`;
+
+    const diffDays = Math.floor(diffHours / 24);
+    if (diffDays === 1) return '1 day ago';
+    return `${diffDays} days ago`;
+}
+
+// Online/Offline Management
+function setupOnlineStatusMonitoring() {
+    window.addEventListener('online', function() {
+        isOnline = true;
+        hideOfflineMessage();
+        updateUndoButtonState();
+        updateSaveStatusDisplay();
+
+        // Try to auto-save if we have pending changes
+        if (saveStatus === 'error' || saveStatus === 'pending') {
+            scheduleAutoSave();
+        }
+    });
+
+    window.addEventListener('offline', function() {
+        isOnline = false;
+        showOfflineMessage();
+        updateUndoButtonState();
+
+        // Cancel pending save
+        if (pendingSaveTimeout) {
+            clearTimeout(pendingSaveTimeout);
+            pendingSaveTimeout = null;
+        }
+
+        saveStatus = 'error';
+        updateSaveStatusDisplay();
+    });
+}
+
+function showOfflineMessage() {
+    let offlineMessage = document.getElementById('offline-message');
+    if (!offlineMessage) {
+        offlineMessage = document.createElement('div');
+        offlineMessage.id = 'offline-message';
+        offlineMessage.innerHTML = `
+            <div style="background: #fed7d7; border: 1px solid #feb2b2; color: #9b2c2c; padding: 12px; border-radius: 6px; margin-bottom: 15px; text-align: center;">
+                <strong>No internet connection</strong> - Editing is disabled until connection is restored
+            </div>
+        `;
+        document.body.insertBefore(offlineMessage, document.body.firstChild);
+    }
+
+    // Disable all interactive elements
+    document.querySelectorAll('.song-item, .set-songs, #num_sets, #song-filter').forEach(el => {
+        el.style.pointerEvents = 'none';
+        el.style.opacity = '0.6';
+    });
+}
+
+function hideOfflineMessage() {
+    const offlineMessage = document.getElementById('offline-message');
+    if (offlineMessage) {
+        offlineMessage.remove();
+    }
+
+    // Re-enable interactive elements
+    document.querySelectorAll('.song-item, .set-songs, #num_sets, #song-filter').forEach(el => {
+        el.style.pointerEvents = 'auto';
+        el.style.opacity = '1';
+    });
+}
+
+function showErrorMessage(message) {
+    // Simple error display - could be enhanced with better UI
+    const existingError = document.getElementById('error-message');
+    if (existingError) {
+        existingError.remove();
+    }
+
+    const errorDiv = document.createElement('div');
+    errorDiv.id = 'error-message';
+    errorDiv.innerHTML = `
+        <div style="background: #fed7d7; border: 1px solid #feb2b2; color: #9b2c2c; padding: 12px; border-radius: 6px; margin-bottom: 15px; text-align: center;">
+            ${message}
+            <button onclick="document.getElementById('error-message').remove()" style="margin-left: 10px; background: none; border: none; color: #9b2c2c; font-weight: bold; cursor: pointer;">×</button>
+        </div>
+    `;
+    document.body.insertBefore(errorDiv, document.body.firstChild);
+
+    // Auto-remove after 5 seconds
+    setTimeout(() => {
+        if (document.getElementById('error-message')) {
+            document.getElementById('error-message').remove();
+        }
+    }, 5000);
+}
+
+// Handle Done button - save before navigating
+function handleDoneButton() {
+    if (!isOnline) {
+        // If offline, warn user but allow navigation
+        if (confirm('You are offline. Unsaved changes will be lost. Continue?')) {
+            window.location.href = '/gigs/<%= @gig.id %>';
+        }
+        return;
+    }
+
+    // Check if there are pending changes that need saving
+    if (saveStatus === 'pending' || pendingSaveTimeout) {
+        // Clear any pending auto-save
+        if (pendingSaveTimeout) {
+            clearTimeout(pendingSaveTimeout);
+            pendingSaveTimeout = null;
+        }
+
+        // Immediately save and then navigate
+        performImmediateSaveAndNavigate();
+    } else {
+        // No pending changes, navigate immediately
+        window.location.href = '/gigs/<%= @gig.id %>';
+    }
+}
+
+// Immediate save function for when user wants to leave
+function performImmediateSaveAndNavigate() {
+    if (!isOnline) {
+        window.location.href = '/gigs/<%= @gig.id %>';
+        return;
+    }
+
+    saveStatus = 'saving';
+    updateSaveStatusDisplay();
+
+    const formData = new FormData();
+
+    // Add sets data with transition information (same as auto-save)
+    Object.keys(setsSongs).forEach(setNumber => {
+        setsSongs[setNumber].forEach((song, index) => {
+            formData.append(`sets[${setNumber}][]`, song.id);
+
+            // Include transition data for this song
+            if (song.transition_data) {
+                formData.append(`transitions[${setNumber}][${song.id}][has_transition]`, song.transition_data.has_transition || false);
+                formData.append(`transitions[${setNumber}][${song.id}][transition_type]`, song.transition_data.transition_type || '');
+                formData.append(`transitions[${setNumber}][${song.id}][transition_notes]`, song.transition_data.transition_notes || '');
+                formData.append(`transitions[${setNumber}][${song.id}][transition_timing]`, song.transition_data.transition_timing || '');
+            }
+        });
+    });
+
+    fetch('/gigs/<%= @gig.id %>/update_songs', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            saveStatus = 'saved';
+            lastSaveTime = new Date();
+            // Navigate after successful save
+            window.location.href = '/gigs/<%= @gig.id %>';
+        } else {
+            saveStatus = 'error';
+            updateSaveStatusDisplay();
+            console.error('Save failed:', data.error);
+            // Still allow navigation on error with confirmation
+            if (confirm('Failed to save changes. Continue without saving?')) {
+                window.location.href = '/gigs/<%= @gig.id %>';
+            }
+        }
+    })
+    .catch(error => {
+        saveStatus = 'error';
+        updateSaveStatusDisplay();
+        console.error('Save error:', error);
+        // Still allow navigation on error with confirmation
+        if (confirm('Failed to save changes. Continue without saving?')) {
+            window.location.href = '/gigs/<%= @gig.id %>';
+        }
+    });
+}
+
+// Keyboard Shortcuts Setup
+function setupUndoKeyboardShortcuts() {
+    document.addEventListener('keydown', function(e) {
+        // Handle Ctrl+Z (or Cmd+Z on Mac) for undo
+        if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
+            e.preventDefault();
+            if (hasUndoHistory() && isOnline) {
+                undoLastCommand();
+            }
+            return;
+        }
+
+        // Prevent other keyboard shortcuts when offline
+        if (!isOnline) {
+            return;
+        }
+    });
+}
+
 // Initialize the page
 document.addEventListener('DOMContentLoaded', function() {
     // Initialize all band songs data
     allBandSongs = <%= @all_band_songs_json.to_s %>;
-    
+
     // Initialize existing songs in sets
     setsSongs = <%= @sets_songs_json.to_s %>;
-    
+
     // Set the number of sets based on existing data
     const setNumbers = Object.keys(setsSongs).map(k => parseInt(k));
     const maxSetNumber = setNumbers.length > 0 ? Math.max(...setNumbers) : 1;
     currentSets = Math.max(Math.min(maxSetNumber, 3), 2); // Default to 2 sets minimum
     document.getElementById('num_sets').value = currentSets;
-    
+
+    // Initialize auto-save and undo system
+    setupOnlineStatusMonitoring();
+    setupUndoKeyboardShortcuts();
+
     generateSets();
     setupEventListeners();
     updateAvailableSongs();
     updateAllSetTimes();
     updateTotalTime();
+
+    // Initialize UI state
+    updateUndoButtonState();
+    // Don't show save status initially - it will show only when saving
+    saveStatus = 'saved'; // Initialize as saved to avoid showing any status
     
     // Fallback check - if sets aren't generated after 1 second, show error
     setTimeout(function() {
@@ -239,49 +1002,9 @@ function removeSongFromSet(button) {
     const setNumber = setContainer.dataset.set;
     const songId = songDiv.dataset.songId;
 
-    // Handle transition cleanup before removing the song
-    if (setsSongs[setNumber]) {
-        const songIndex = setsSongs[setNumber].findIndex(song => song.id === songId);
-
-        if (songIndex !== -1) {
-            const songBeingRemoved = setsSongs[setNumber][songIndex];
-
-            // If the song being removed has an outgoing transition, clear it
-            if (songBeingRemoved.transition_data?.has_transition) {
-                songBeingRemoved.transition_data.has_transition = false;
-                songBeingRemoved.transition_data.transition_type = '';
-                songBeingRemoved.transition_data.transition_notes = '';
-                songBeingRemoved.transition_data.transition_timing = '';
-            }
-
-            // If there's a previous song that has a transition to this song, clear it
-            if (songIndex > 0) {
-                const prevSong = setsSongs[setNumber][songIndex - 1];
-                if (prevSong.transition_data?.has_transition) {
-                    prevSong.transition_data.has_transition = false;
-                    prevSong.transition_data.transition_type = '';
-                    prevSong.transition_data.transition_notes = '';
-                    prevSong.transition_data.transition_timing = '';
-                }
-            }
-        }
-
-        // Remove from setsSongs data
-        setsSongs[setNumber] = setsSongs[setNumber].filter(song => song.id !== songId);
-    }
-
-    // Remove from DOM
-    songDiv.remove();
-
-    // Rebuild the set to update transition arrows properly
-    rebuildSet(setNumber);
-
-    // Update count and total time
-    updateSetCount(setNumber);
-    updateTotalTime();
-
-    // Add back to available songs
-    updateAvailableSongs();
+    // Use command pattern to remove the song
+    const command = new RemoveSongCommand(songId, setNumber);
+    executeCommand(command);
 }
 
 // Toggle transition state for the previous song (when clicking incoming arrow)
@@ -298,40 +1021,18 @@ function togglePreviousTransition(songId, setNumber) {
 
 // Toggle transition state for a song
 function toggleTransition(songId, setNumber) {
-    fetch(`/gigs/<%= @gig.id %>/toggle_transition`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-            song_id: songId,
-            set_number: parseInt(setNumber)
-        })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            // Update the song data in setsSongs
-            const songsInSet = setsSongs[setNumber];
-            if (songsInSet) {
-                const songIndex = songsInSet.findIndex(song => song.id === songId);
-                if (songIndex !== -1) {
-                    // Update the transition data for this song
-                    songsInSet[songIndex].transition_data = data.transition_data;
-                }
-            }
+    // Find current transition data
+    const songsInSet = setsSongs[setNumber];
+    if (!songsInSet) return;
 
-            // Rebuild the set to reflect the updated transition state
-            rebuildSet(setNumber);
-        } else {
-            console.error('Failed to toggle transition:', data.error);
-            alert('Failed to toggle transition. Please try again.');
-        }
-    })
-    .catch(error => {
-        console.error('Error toggling transition:', error);
-        alert('Error toggling transition. Please try again.');
-    });
+    const songIndex = songsInSet.findIndex(song => song.id === songId);
+    if (songIndex === -1) return;
+
+    const currentTransitionData = songsInSet[songIndex].transition_data;
+
+    // Use command pattern to toggle transition
+    const command = new ToggleTransitionCommand(songId, setNumber, currentTransitionData);
+    executeCommand(command);
 }
 
 // Update available songs (rebuild list in alphabetical order)
@@ -491,28 +1192,11 @@ function setupEventListeners() {
     // Number of sets change
     document.getElementById('num_sets').addEventListener('change', function() {
         const newSetCount = parseInt(this.value);
-        
-        // If reducing sets, move songs from removed sets back to available
-        if (newSetCount < currentSets) {
-            for (let i = newSetCount + 1; i <= currentSets; i++) {
-                if (setsSongs[i]) {
-                    delete setsSongs[i];
-                }
-            }
-        }
+        const oldSetCount = currentSets;
 
-        currentSets = newSetCount;
-
-        // Reset selected set if it's now invalid
-        if (selectedSet > currentSets) {
-            selectedSet = 1;
-        }
-
-        generateSets();
-        updateAvailableSongs();
-        updateAllSetTimes();
-        updateTotalTime();
-        setupSetSelectionListeners();
+        // Use command pattern to change set count
+        const command = new ChangeSetCountCommand(oldSetCount, newSetCount);
+        executeCommand(command);
     });
     
     // Song filter
@@ -650,43 +1334,14 @@ function addSongToSelectedSet(songElement) {
         return;
     }
 
-    // Initialize set if it doesn't exist
-    if (!setsSongs[setNumber]) {
-        setsSongs[setNumber] = [];
-    }
-
-    // Initialize transition data for the new song
-    const songWithTransitionData = {
-        ...songData,
-        transition_data: {
-            has_transition: false,
-            transition_type: '',
-            transition_notes: '',
-            transition_timing: ''
-        }
-    };
-
-    // Add song to the end of the set
-    setsSongs[setNumber].push(songWithTransitionData);
-
-    // Clear drop zone text if this is the first song
-    const dropZoneText = setContainer.querySelector('.drop-zone-text');
-    if (dropZoneText) {
-        dropZoneText.remove();
-    }
-
-    // Rebuild the entire set to ensure all transition arrows are properly updated
-    rebuildSet(setNumber);
+    // Use command pattern to add the song
+    const command = new AddSongCommand(songData, setNumber);
+    executeCommand(command);
 
     // Scroll to show the newly added song
     setTimeout(() => {
         setContainer.scrollTop = setContainer.scrollHeight;
     }, 100); // Small delay to ensure DOM is updated
-
-    // Update the available songs list and counts
-    updateAvailableSongs();
-    updateSetCount(setNumber);
-    updateTotalTime();
 }
 
 // Setup song drag events and double-click functionality
@@ -808,91 +1463,45 @@ function setupSetDropZones() {
             e.preventDefault();
             this.style.borderColor = '#e2e8f0';
             this.style.backgroundColor = 'transparent';
-            
+
             // Remove drop indicators
             this.querySelectorAll('.drop-indicator').forEach(indicator => indicator.remove());
-            
+
             if (draggedElement) {
                 const songId = draggedElement.dataset.songId;
                 const setNumber = this.dataset.set;
-                
+
                 // Find song data
                 const songData = allBandSongs.find(song => song.id === songId);
-                
+
                 if (songData) {
                     // Calculate insertion position
                     const afterElement = getDragAfterElement(this, e.clientY);
                     let insertPosition = 0;
-                    
+
                     if (afterElement) {
                         const songs = Array.from(this.querySelectorAll('.set-song'));
                         insertPosition = songs.indexOf(afterElement);
                     } else {
                         insertPosition = this.querySelectorAll('.set-song').length;
                     }
-                    
-                    // Remove from current location
+
                     if (draggedElement.classList.contains('available-song')) {
-                        // Moving from available songs
+                        // Adding from available songs - use AddSongCommand
+                        const command = new AddSongCommand(songData, setNumber, insertPosition);
+                        executeCommand(command);
                     } else {
-                        // Moving from another set
+                        // Moving from another set - use ReorderSongCommand
                         const fromSet = draggedElement.closest('.set-songs').dataset.set;
                         const fromPosition = Array.from(draggedElement.closest('.set-songs').querySelectorAll('.set-song')).indexOf(draggedElement);
-                        
-                        if (setsSongs[fromSet]) {
-                            setsSongs[fromSet].splice(fromPosition, 1);
-                            updateSetCount(fromSet);
-                        }
-                        
+
                         // Adjust insertion position if moving within same set
                         if (fromSet === setNumber && fromPosition < insertPosition) {
                             insertPosition--;
                         }
-                    }
-                    
-                    // Add to new set at specific position
-                    if (!setsSongs[setNumber]) {
-                        setsSongs[setNumber] = [];
-                    }
-                    
-                    // Check if song is already in this set at different position
-                    const existingIndex = setsSongs[setNumber].findIndex(song => song.id === songId);
-                    if (existingIndex !== -1) {
-                        // Remove from old position
-                        setsSongs[setNumber].splice(existingIndex, 1);
-                        // Adjust insertion position if necessary
-                        if (existingIndex < insertPosition) {
-                            insertPosition--;
-                        }
-                    }
-                    
-                    // Initialize transition data if the song doesn't have it (new song from available songs)
-                    const songWithTransitionData = songData.transition_data ? songData : {
-                        ...songData,
-                        transition_data: {
-                            has_transition: false,
-                            transition_type: '',
-                            transition_notes: '',
-                            transition_timing: ''
-                        }
-                    };
 
-                    // Insert at precise position
-                    setsSongs[setNumber].splice(insertPosition, 0, songWithTransitionData);
-                    
-                    // Clear drop zone text if this is the first song
-                    const dropZoneText = this.querySelector('.drop-zone-text');
-                    if (dropZoneText) {
-                        dropZoneText.remove();
-                    }
-                    
-                    // Rebuild the entire set to reflect new order
-                    rebuildSet(setNumber);
-                    updateAvailableSongs();
-                    
-                    // Remove dragged element if it was moved from another set
-                    if (!draggedElement.classList.contains('available-song')) {
-                        draggedElement.remove();
+                        const command = new ReorderSongCommand(songId, fromSet, fromPosition, setNumber, insertPosition);
+                        executeCommand(command);
                     }
                 }
             }
@@ -943,52 +1552,7 @@ function rebuildSet(setNumber) {
     updateTotalTime();
 }
 
-// Save song changes
-function saveSongChanges() {
-    const formData = new FormData();
-
-    // Add sets data with transition information
-    Object.keys(setsSongs).forEach(setNumber => {
-        setsSongs[setNumber].forEach((song, index) => {
-            formData.append(`sets[${setNumber}][]`, song.id);
-
-            // Include transition data for this song
-            if (song.transition_data) {
-                formData.append(`transitions[${setNumber}][${song.id}][has_transition]`, song.transition_data.has_transition || false);
-                formData.append(`transitions[${setNumber}][${song.id}][transition_type]`, song.transition_data.transition_type || '');
-                formData.append(`transitions[${setNumber}][${song.id}][transition_notes]`, song.transition_data.transition_notes || '');
-                formData.append(`transitions[${setNumber}][${song.id}][transition_timing]`, song.transition_data.transition_timing || '');
-            }
-        });
-    });
-
-    // Show saving indicator
-    const button = event.target;
-    const originalText = button.textContent;
-    button.textContent = 'Saving...';
-    button.disabled = true;
-
-    fetch('/gigs/<%= @gig.id %>/update_songs', {
-        method: 'POST',
-        body: formData
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            window.location.href = '/gigs/<%= @gig.id %>';
-        } else {
-            alert('Error saving changes. Please try again.');
-            button.textContent = originalText;
-            button.disabled = false;
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        alert('Error saving changes. Please try again.');
-        button.textContent = originalText;
-        button.disabled = false;
-    });
-}
+// Legacy save function - replaced by auto-save functionality
 
 // Toggle Available Songs column collapse
 function toggleAvailableSongs() {
@@ -1318,5 +1882,54 @@ function toggleClearButton(filterValue) {
 #available-songs::-webkit-scrollbar-thumb:hover,
 .set-songs::-webkit-scrollbar-thumb:hover {
     background: #a8a8a8;
+}
+
+/* Auto-save and Undo UI Styles */
+.save-status {
+    padding: 6px 12px;
+    border-radius: 4px;
+    font-weight: 500;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    border: 1px solid transparent;
+    opacity: 0;
+    transform: translateY(-10px);
+}
+
+.save-status.saving {
+    background: #fff3cd;
+    color: #22c55e;
+    border-color: #ffeaa7;
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.save-status.error {
+    background: #f8d7da;
+    color: #721c24;
+    border-color: #f1c0c7;
+    cursor: pointer;
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.save-status.error:hover {
+    background: #f1c0c7;
+    transform: translateY(-1px);
+}
+
+#undo-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}
+
+#undo-button:not(:disabled):hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+/* Undo button animation */
+#undo-button:not(:disabled):active {
+    transform: translateY(0);
 }
 </style>
