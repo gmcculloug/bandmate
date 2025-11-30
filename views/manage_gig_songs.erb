@@ -9,18 +9,17 @@
             </div>
         </button>
         <h2 style="margin: 0;">Manage Songs: <%= @gig.name %></h2>
+        <button type="button" id="undo-button" class="btn btn-secondary" onclick="undoLastCommand()" disabled
+                style="display: flex; align-items: center; gap: 6px; padding: 8px 12px;">
+            <span style="font-size: 1.1rem;">↶</span>
+            <span>Undo</span>
+        </button>
     </div>
 
     <div class="actions" style="display: flex; gap: 15px; align-items: center;">
         <div id="save-status" class="save-status" style="font-size: 0.9rem; color: #4a5568; display: none;">
             Saving...
         </div>
-        <button type="button" id="undo-button" class="btn btn-secondary" onclick="undoLastCommand()" disabled
-                style="display: flex; align-items: center; gap: 6px; padding: 8px 12px;">
-            <span style="font-size: 1.1rem;">↶</span>
-            <span>Undo</span>
-        </button>
-        <button type="button" class="btn" style="padding: 8px 12px;" onclick="handleDoneButton()">Done</button>
     </div>
 </div>
 
@@ -296,6 +295,7 @@ class ToggleTransitionCommand extends Command {
     }
 }
 
+
 class ChangeSetCountCommand extends Command {
     constructor(oldSetCount, newSetCount) {
         super(`Change set count from ${oldSetCount} to ${newSetCount}`);
@@ -421,6 +421,16 @@ class ReorderSongCommand extends Command {
         }
         updateTotalTime();
     }
+}
+
+// Practice State Visual Functions (Read-only indicators for gig planning awareness)
+function createPracticeStateHTML(song) {
+    const isPractice = song.practice_state || false;
+    const badgeDisplay = isPractice ? 'inline' : 'none';
+
+    return {
+        badge: `<span class="practice-badge" style="display: ${badgeDisplay}; background: #28a745; color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.75rem; font-weight: bold;">P</span>`
+    };
 }
 
 // State History Management System
@@ -970,7 +980,15 @@ function addSongToSet(setContainer, song, transitionData = null) {
     songDiv.draggable = true;
     songDiv.style.cssText = 'margin-bottom: 8px; padding: 10px; background: #edf2f7; border: 1px solid #cbd5e0; border-radius: 6px; cursor: grab; transition: all 0.2s ease;';
 
+    // Add practice state class if needed
+    if (song.practice_state) {
+        songDiv.classList.add('practice-song');
+    }
+
     let keyHtml = song.key ? `<span style="background: #667eea; color: white; padding: 2px 6px; border-radius: 10px; font-size: 0.7rem; margin-left: 8px;">${song.key}</span>` : '';
+
+    // Add practice state visuals
+    const practiceState = createPracticeStateHTML(song);
 
     // Add incoming transition arrow if this song has a transition coming into it
     let incomingArrow = '';
@@ -986,7 +1004,9 @@ function addSongToSet(setContainer, song, transitionData = null) {
     }
 
     songDiv.innerHTML = `
-        <div style="font-weight: bold; color: #2d3748; font-size: 0.9rem;">${incomingArrow}${song.title}${keyHtml}${outgoingArrow}</div>
+        <div style="font-weight: bold; color: #2d3748; font-size: 0.9rem; display: flex; align-items: center; gap: 0.25rem;">
+            ${incomingArrow}${practiceState.badge}${song.title}${keyHtml}${outgoingArrow}
+        </div>
         <button type="button" onclick="removeSongFromSet(this)" style="position: absolute; top: 5px; right: 5px; background: #f56565; color: white; border: none; border-radius: 50%; width: 20px; height: 20px; font-size: 12px; cursor: pointer;">×</button>
     `;
     songDiv.style.position = 'relative';
@@ -1058,13 +1078,23 @@ function updateAvailableSongs() {
         songDiv.dataset.songId = song.id;
         songDiv.draggable = true;
         songDiv.style.cssText = 'margin-bottom: 8px; padding: 10px; background: #f7fafc; border: 1px solid #e2e8f0; border-radius: 6px; cursor: grab; transition: all 0.2s ease;';
-        
+
+        // Add practice state class if needed
+        if (song.practice_state) {
+            songDiv.classList.add('practice-song');
+        }
+
         let keyHtml = song.key ? `<span style="background: #667eea; color: white; padding: 2px 6px; border-radius: 10px; font-size: 0.7rem; margin-left: 8px;">${song.key}</span>` : '';
-        
+
+        // Add practice state visuals
+        const practiceState = createPracticeStateHTML(song);
+
         songDiv.innerHTML = `
-            <div style="font-weight: bold; color: #2d3748; font-size: 0.9rem;">${song.title}${keyHtml}</div>
+            <div style="font-weight: bold; color: #2d3748; font-size: 0.9rem; display: flex; align-items: center; gap: 0.25rem;">
+                ${practiceState.badge}${song.title}${keyHtml}
+            </div>
         `;
-        
+
         availableContainer.appendChild(songDiv);
         setupSongDragEvents(songDiv);
     });
@@ -1931,5 +1961,22 @@ function toggleClearButton(filterValue) {
 /* Undo button animation */
 #undo-button:not(:disabled):active {
     transform: translateY(0);
+}
+
+/* Practice Song Styling */
+.practice-song {
+    background: #fef3c7 !important;
+    border: 2px solid #f59e0b !important;
+    box-shadow: 0 0 8px rgba(245, 158, 11, 0.3) !important;
+    transition: all 0.2s ease !important;
+}
+
+.practice-badge {
+    background: #28a745;
+    color: white;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: bold;
 }
 </style>

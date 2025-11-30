@@ -184,13 +184,19 @@
 
                   # Check for outgoing transition (to next song)
                   has_outgoing = gig_song.has_transition && index < gig_songs_by_set[set_number].length - 1
+
+                  # Check if song is marked as practice for the current band
+                  is_practice = gig_song.song.practice_for_band?(current_band)
                 %>
-                <div class="song-card" style="margin-bottom: 4px; padding: 8px 12px; border: 1px solid #e2e8f0; border-radius: 4px; cursor: pointer;" onclick="window.location.href='/songs/<%= gig_song.song.id %>?from_gig=<%= @gig.id %>'" data-tooltip="<%= tooltip_content %>">
+                <div class="song-card <%= 'practice-song' if is_practice %>" style="margin-bottom: 4px; padding: 8px 12px; border: 1px solid #e2e8f0; border-radius: 4px; cursor: pointer; <%= 'background: #fef3c7 !important; border: 2px solid #f59e0b !important; box-shadow: 0 0 8px rgba(245, 158, 11, 0.3) !important;' if is_practice %>" onclick="window.location.href='/songs/<%= gig_song.song.id %>?from_gig=<%= @gig.id %>'" data-tooltip="<%= tooltip_content %>">
                   <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px; white-space: nowrap;">
                     <div style="flex: 1; min-width: 0; display: flex; align-items: center; gap: 8px; overflow: hidden;">
                       <div style="font-weight: 600; font-size: 1rem; overflow: hidden; text-overflow: ellipsis; min-width: 0; flex: 1;">
                         <% if has_incoming %>
                           <span class="transition-arrow active" style="color: #2d3748; font-size: 1em; margin-right: 8px; opacity: 1; font-weight: bold;" title="incoming transition">➔</span>
+                        <% end %>
+                        <% if is_practice %>
+                          <span class="practice-badge" style="background: #28a745; color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.75rem; margin-right: 0.5rem; font-weight: bold;">P</span>
                         <% end %>
                         <%= gig_song.song.title %>
                         <% if gig_song.song.notes.present? %>
@@ -600,6 +606,23 @@ document.addEventListener('click', function(event) {
 .venue-link[data-venue-tooltip=""]:hover::after,
 .venue-link[data-venue-tooltip=""]:hover::before {
     display: none;
+}
+
+/* Practice Song Styling */
+.practice-song {
+    background: #fef3c7 !important;
+    border: 2px solid #f59e0b !important;
+    box-shadow: 0 0 8px rgba(245, 158, 11, 0.3) !important;
+    transition: all 0.2s ease !important;
+}
+
+.practice-badge {
+    background: #28a745;
+    color: white;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: bold;
 }
 
 /* Keyframe animation for tooltip delay */

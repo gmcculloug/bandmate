@@ -154,6 +154,158 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 });
+
+// Practice state toggle functionality
+function togglePracticeState(songId, button) {
+    // Update button state immediately for responsiveness
+    const wasPractice = button.classList.contains('active');
+    const newPracticeState = !wasPractice;
+
+    // Update button appearance
+    if (newPracticeState) {
+        button.classList.add('active');
+        button.textContent = 'P';
+        button.style.background = '#28a745';
+        button.style.borderColor = '#28a745';
+        button.title = 'Mark as ready (click to toggle)';
+    } else {
+        button.classList.remove('active');
+        button.textContent = 'P';
+        button.style.background = '#6c757d';
+        button.style.borderColor = '#6c757d';
+        button.title = 'Mark as practice (click to toggle)';
+    }
+
+    // Find the song card and update visual indicators
+    const songCard = button.closest('.song-card');
+    const practiceBadge = songCard.querySelector('.practice-badge');
+
+    if (newPracticeState) {
+        songCard.classList.add('practice-song');
+        songCard.style.setProperty('background', '#fef3c7', 'important');
+        songCard.style.setProperty('border', '2px solid #f59e0b', 'important');
+        songCard.style.setProperty('box-shadow', '0 0 8px rgba(245, 158, 11, 0.3)', 'important');
+        songCard.style.setProperty('transition', 'all 0.2s ease', 'important');
+
+        // Add practice badge if it doesn't exist
+        if (!practiceBadge) {
+            const titleDiv = songCard.querySelector('div[style*="font-weight: bold"]');
+            const badge = document.createElement('span');
+            badge.className = 'practice-badge';
+            badge.style.cssText = 'background: #28a745; color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.75rem; font-weight: bold;';
+            badge.textContent = 'P';
+            titleDiv.insertBefore(badge, titleDiv.firstChild);
+        }
+    } else {
+        songCard.classList.remove('practice-song');
+        songCard.style.setProperty('background', '', 'important');
+        songCard.style.setProperty('border', '', 'important');
+        songCard.style.setProperty('box-shadow', '', 'important');
+        songCard.style.setProperty('transition', 'all 0.2s ease', 'important');
+
+        // Remove practice badge if it exists
+        if (practiceBadge) {
+            practiceBadge.remove();
+        }
+    }
+
+    // Send API call to update server
+    fetch(`/songs/${songId}/toggle_practice`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => {
+        console.log('Practice toggle response status:', response.status);
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        console.log('Practice toggle response data:', data);
+        if (!data.success) {
+            console.error('Failed to update practice state on server:', data);
+            // Revert UI changes on error
+            if (newPracticeState) {
+                button.classList.remove('active');
+                button.textContent = 'P';
+                button.style.background = '#6c757d';
+                button.style.borderColor = '#6c757d';
+
+                // Revert song card styling
+                songCard.classList.remove('practice-song');
+                songCard.style.setProperty('background', '', 'important');
+                songCard.style.setProperty('border', '', 'important');
+                songCard.style.setProperty('box-shadow', '', 'important');
+                if (practiceBadge) {
+                    practiceBadge.remove();
+                }
+            } else {
+                button.classList.add('active');
+                button.textContent = 'P';
+                button.style.background = '#28a745';
+                button.style.borderColor = '#28a745';
+
+                // Revert song card styling
+                songCard.classList.add('practice-song');
+                songCard.style.setProperty('background', '#fef3c7', 'important');
+                songCard.style.setProperty('border', '2px solid #f59e0b', 'important');
+                songCard.style.setProperty('box-shadow', '0 0 8px rgba(245, 158, 11, 0.3)', 'important');
+                if (!practiceBadge) {
+                    const titleDiv = songCard.querySelector('div[style*="font-weight: bold"]');
+                    const badge = document.createElement('span');
+                    badge.className = 'practice-badge';
+                    badge.style.cssText = 'background: #28a745; color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.75rem; font-weight: bold;';
+                    badge.textContent = 'P';
+                    titleDiv.insertBefore(badge, titleDiv.firstChild);
+                }
+            }
+        } else {
+            console.log('Practice state successfully updated to:', data.practice_state);
+        }
+    })
+    .catch(error => {
+        console.error('Error updating practice state:', error);
+        // Revert UI changes on error
+        if (newPracticeState) {
+            button.classList.remove('active');
+            button.textContent = 'P';
+            button.style.background = '#6c757d';
+            button.style.borderColor = '#6c757d';
+
+            // Revert song card styling
+            songCard.classList.remove('practice-song');
+            songCard.style.setProperty('background', '', 'important');
+            songCard.style.setProperty('border', '', 'important');
+            songCard.style.setProperty('box-shadow', '', 'important');
+            if (practiceBadge) {
+                practiceBadge.remove();
+            }
+        } else {
+            button.classList.add('active');
+            button.textContent = 'P';
+            button.style.background = '#28a745';
+            button.style.borderColor = '#28a745';
+
+            // Revert song card styling
+            songCard.classList.add('practice-song');
+            songCard.style.setProperty('background', '#fef3c7', 'important');
+            songCard.style.setProperty('border', '2px solid #f59e0b', 'important');
+            songCard.style.setProperty('box-shadow', '0 0 8px rgba(245, 158, 11, 0.3)', 'important');
+            if (!practiceBadge) {
+                const titleDiv = songCard.querySelector('div[style*="font-weight: bold"]');
+                const badge = document.createElement('span');
+                badge.className = 'practice-badge';
+                badge.style.cssText = 'background: #28a745; color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.75rem; font-weight: bold;';
+                badge.textContent = 'P';
+                titleDiv.insertBefore(badge, titleDiv.firstChild);
+            }
+        }
+        alert('Failed to update practice state. Please try again.');
+    });
+}
 </script>
 
 <% if params[:copied] %>
@@ -172,16 +324,26 @@ document.addEventListener('DOMContentLoaded', function() {
 <% if @songs.any? %>
     <div style="display: flex; flex-direction: column; gap: 2px;">
         <% @songs.each do |song| %>
-            <div class="song-card" style="padding: 8px 12px; margin-bottom: 0; cursor: pointer; border-radius: 4px;" onclick="window.location.href='/songs/<%= song.id %>/edit'">
+            <% is_practice = song.practice_for_band?(current_band) %>
+            <div class="song-card <%= 'practice-song' if is_practice %>" style="padding: 8px 12px; margin-bottom: 0; cursor: pointer; border-radius: 4px; transition: all 0.2s ease; <%= 'background: #fef3c7 !important; border: 2px solid #f59e0b !important; box-shadow: 0 0 8px rgba(245, 158, 11, 0.3) !important;' if is_practice %>" onclick="window.location.href='/songs/<%= song.id %>/edit'">
                 <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px;">
                     <div style="flex: 1; min-width: 0; display: flex; align-items: center; gap: 10px;">
-                        <div style="font-weight: bold; color: #2d3748; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; flex: 1;">
+                        <div style="font-weight: bold; color: #2d3748; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; flex: 1; display: flex; align-items: center; gap: 0.5rem;">
+                            <% if is_practice %>
+                                <span class="practice-badge" style="background: #28a745; color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.75rem; font-weight: bold;">P</span>
+                            <% end %>
                             <%= song.title %>
                             <% if song.artist.present? %>
                                 <span style="color: #718096; font-weight: normal; font-size: 0.9rem;"> • <%= song.artist %></span>
                             <% end %>
                         </div>
                         <div style="display: flex; align-items: center; gap: 6px; flex-shrink: 0;">
+                            <button type="button" class="practice-toggle-btn <%= 'active' if is_practice %>"
+                                    onclick="togglePracticeState('<%= song.id %>', this); event.stopPropagation();"
+                                    title="<%= is_practice ? 'Mark as ready (click to toggle)' : 'Mark as practice (click to toggle)' %>"
+                                    style="background: <%= is_practice ? '#28a745' : '#6c757d' %>; border: 1px solid <%= is_practice ? '#28a745' : '#6c757d' %>; cursor: pointer; padding: 3px 6px; border-radius: 4px; transition: all 0.2s ease; color: white; font-size: 0.65rem; min-width: 24px; min-height: 24px; display: flex; align-items: center; justify-content: center; font-weight: bold;">
+                                P
+                            </button>
                             <span style="background: #667eea; color: white; padding: 2px 6px; border-radius: 10px; font-size: 0.75rem;">
                                 <%= song.key %>
                             </span>
@@ -192,12 +354,11 @@ document.addEventListener('DOMContentLoaded', function() {
                             <% end %>
                         </div>
                     </div>
-                    <div class="actions" onclick="event.stopPropagation();" style="display: flex; gap: 5px; flex-shrink: 0;">
-                        <a href="/songs/<%= song.id %>/edit" class="btn btn-small" style="padding: 4px 8px; font-size: 0.75rem; min-height: 28px; color: black;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -1px;"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="m18.5 2.5 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg></a>
-                        <% if song.url.present? %>
+                    <% if song.url.present? %>
+                        <div class="actions" onclick="event.stopPropagation();" style="display: flex; gap: 5px; flex-shrink: 0;">
                             <a href="<%= song.url %>" target="_blank" class="btn btn-small" style="padding: 4px 8px; font-size: 0.75rem; min-height: 28px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -1px;"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg></a>
-                        <% end %>
-                    </div>
+                        </div>
+                    <% end %>
                 </div>
             </div>
         <% end %>

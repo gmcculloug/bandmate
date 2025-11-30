@@ -166,7 +166,8 @@ class Routes::Gigs < Sinatra::Base
         title: song.title,
         artist: song.artist || "",
         key: song.key || "",
-        duration: song.duration || ""
+        duration: song.duration || "",
+        practice_state: song.practice_for_band?(current_band)
       }
     }.to_json
 
@@ -178,6 +179,7 @@ class Routes::Gigs < Sinatra::Base
           artist: gig_song.song.artist || "",
           key: gig_song.song.key || "",
           duration: gig_song.song.duration || "",
+          practice_state: gig_song.song.practice_for_band?(current_band),
           transition_data: gig_song.transition_data
         }
       }

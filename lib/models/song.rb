@@ -1,6 +1,7 @@
 class Song < ActiveRecord::Base
   belongs_to :song_catalog, optional: true
-  has_and_belongs_to_many :bands, join_table: 'songs_bands'
+  has_many :song_bands, dependent: :destroy
+  has_many :bands, through: :song_bands
   has_many :gig_songs
   has_many :gigs, through: :gig_songs
   
@@ -20,6 +21,8 @@ class Song < ActiveRecord::Base
   scope :by_tempo_range, ->(min, max) { where(tempo: min..max) }
   scope :active, -> { where(archived: false) }
   scope :archived, -> { where(archived: true) }
+  scope :practice_for_band, ->(band) { joins(:bands).where(bands: { id: band.id }, 'songs_bands.practice_state': true) }
+  scope :ready_for_band, ->(band) { joins(:bands).where(bands: { id: band.id }, 'songs_bands.practice_state': false) }
 
   # Create a band-specific copy from song catalog
   def self.create_from_song_catalog(song_catalog, band_ids = [])
@@ -57,6 +60,29 @@ class Song < ActiveRecord::Base
 
   def active?
     !archived
+  end
+
+  # Practice state methods for band-specific practice management
+  def practice_for_band?(band)
+    song_band = SongBand.find_by_song_and_band(self, band)
+    song_band&.practice_state || false
+  end
+
+  def ready_for_band?(band)
+    !practice_for_band?(band)
+  end
+
+  def toggle_practice_for_band!(band)
+    song_band = SongBand.find_or_create_by_song_and_band(self, band)
+    song_band.toggle_practice_state!
+  end
+
+  def set_practice_for_band!(band, practice_state)
+    song_band = SongBand.find_or_create_by_song_and_band(self, band)
+    song_band.practice_state = practice_state
+    song_band.practice_state_updated_at = Time.current
+    song_band.save!
+    practice_state
   end
 
 end

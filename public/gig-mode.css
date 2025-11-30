@@ -362,6 +362,77 @@ body {
   margin-top: 0.25rem;
 }
 
+/* Practice Song Styles */
+.practice-song {
+  background: #fef3c7 !important;
+  border-color: #f59e0b !important;
+  border-width: 2px;
+  box-shadow: 0 0 8px rgba(245, 158, 11, 0.3) !important;
+  transition: all 0.2s ease !important;
+}
+
+.theme-light .practice-song {
+  background: #fef3c7 !important;
+  border-color: #f59e0b !important;
+  box-shadow: 0 0 8px rgba(245, 158, 11, 0.3) !important;
+}
+
+.theme-amber .practice-song {
+  background: #3d2600 !important;
+  border-color: #f59e0b !important;
+  box-shadow: 0 0 8px rgba(245, 158, 11, 0.4) !important;
+}
+
+.practice-badge {
+  color: #f59e0b;
+  font-size: calc(0.9rem * var(--font-size-multiplier));
+  margin-right: 0.5rem;
+  font-weight: bold;
+  opacity: 0.9;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.2));
+}
+
+.theme-amber .practice-badge {
+  color: #f59e0b;
+}
+
+.practice-toggle-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  margin-left: 0.5rem;
+  opacity: 0.6;
+  transition: all 0.2s ease;
+  color: var(--text-muted);
+  font-size: calc(0.8rem * var(--font-size-multiplier));
+  min-width: 32px;
+  min-height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.practice-toggle-btn:hover {
+  opacity: 1;
+  background: rgba(243, 156, 18, 0.1);
+  color: #f39c12;
+}
+
+.practice-toggle-btn.active {
+  opacity: 1;
+  background: rgba(243, 156, 18, 0.15);
+  color: #f39c12;
+  font-weight: 600;
+}
+
+.theme-amber .practice-toggle-btn:hover,
+.theme-amber .practice-toggle-btn.active {
+  color: #f59e0b;
+  background: rgba(245, 158, 11, 0.15);
+}
+
 /* Modal */
 .modal {
   position: fixed;

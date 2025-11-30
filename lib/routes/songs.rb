@@ -160,6 +160,30 @@ class Routes::Songs < Sinatra::Base
     redirect '/songs'
   end
 
+  post '/songs/:id/toggle_practice' do
+    require_login
+    content_type :json
+
+    unless current_band
+      status 401
+      return { error: 'No band selected' }.to_json
+    end
+
+    begin
+      song = current_band.songs.find(params[:id])
+      new_state = song.toggle_practice_for_band!(current_band)
+
+      {
+        success: true,
+        song_id: song.id,
+        practice_state: new_state
+      }.to_json
+    rescue => e
+      status 500
+      { error: 'Failed to toggle practice state' }.to_json
+    end
+  end
+
   get '/songs/:id' do
     require_login
     @song = current_band.songs.find(params[:id])

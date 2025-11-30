@@ -164,13 +164,18 @@ class GigMode {
     processGigData() {
         if (!this.gigData) return;
 
+        console.log('=== PROCESSING GIG DATA ===');
+        console.log('Full gig data:', this.gigData);
+
         // Flatten songs from all sets for easier navigation
         this.songs = [];
         const setNumbers = Object.keys(this.gigData.sets).map(Number).sort();
 
         setNumbers.forEach(setNumber => {
             const setData = this.gigData.sets[setNumber];
-            setData.songs.forEach(song => {
+            console.log(`Set ${setNumber} data:`, setData);
+            setData.songs.forEach((song, index) => {
+                console.log(`  Song ${index + 1}: "${song.title}" - transition_data:`, song.transition_data);
                 this.songs.push({
                     ...song,
                     setNumber: setNumber
@@ -182,6 +187,7 @@ class GigMode {
         if (setNumbers.length > 0) {
             this.currentSet = setNumbers[0];
         }
+        console.log('=== DONE PROCESSING GIG DATA ===');
     }
 
     renderSetNavigation() {
@@ -222,15 +228,32 @@ class GigMode {
             // Check for outgoing transition (to next song)
             const hasOutgoing = song.transition_data?.has_transition && index < setData.songs.length - 1;
 
-            const incomingArrow = hasIncoming ? '<span class="transition-arrow incoming" title="incoming transition">➔</span> ' : '';
-            const outgoingArrow = hasOutgoing ? ' <span class="transition-arrow outgoing" title="transition">➔</span>' : '';
+            // Debug logging for transitions
+            console.log(`Song "${song.title}" (${index + 1}/${setData.songs.length}):`);
+            console.log(`  - Transition data:`, song.transition_data);
+            console.log(`  - Has incoming: ${hasIncoming}`);
+            console.log(`  - Has outgoing: ${hasOutgoing}`);
+            if (index > 0) {
+                console.log(`  - Previous song transition data:`, setData.songs[index - 1].transition_data);
+            }
+
+            // Add test arrow that always shows (for debugging)
+            const testArrow = ' <span class="test-arrow" style="color: red !important; font-weight: bold; font-size: 1.5em;" title="TEST ARROW (always visible)">🔥</span>';
+
+            const incomingArrow = hasIncoming ? '<span class="transition-arrow incoming active" title="incoming transition" style="color: #3b82f6 !important; font-weight: bold; font-size: 1.2em;">➔</span> ' : '';
+            const outgoingArrow = hasOutgoing ? ' <span class="transition-arrow outgoing active" title="transition" style="color: #3b82f6 !important; font-weight: bold; font-size: 1.2em;">➔</span>' : '';
+
+            // Practice state styling and badge
+            const isPractice = song.practice_state || false;
+            const practiceClass = isPractice ? ' practice-song' : '';
+            const practiceBadge = isPractice ? '<span class="practice-badge">🎯</span>' : '';
 
             return `
-            <div class="song-item" data-song-id="${song.id}" data-position="${index}">
+            <div class="song-item${practiceClass}" data-song-id="${song.id}" data-position="${index}">
                 <div class="song-header">
                     <h3 class="song-title">
                         <span class="song-count">${song.position}.</span>
-                        ${incomingArrow}${this.escapeHtml(song.title)}${outgoingArrow}
+                        ${incomingArrow}${practiceBadge}${this.escapeHtml(song.title)}${outgoingArrow}${testArrow}
                     </h3>
                     <div class="song-meta">
                         <div class="song-key">${this.escapeHtml(song.key || 'N/A')}</div>
