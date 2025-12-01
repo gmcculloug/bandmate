@@ -229,12 +229,12 @@ class GigMode {
             const hasOutgoing = song.transition_data?.has_transition && index < setData.songs.length - 1;
 
             // Debug logging for transitions
-            console.log(`Song "${song.title}" (${index + 1}/${setData.songs.length}):`);
-            console.log(`  - Transition data:`, song.transition_data);
-            console.log(`  - Has incoming: ${hasIncoming}`);
-            console.log(`  - Has outgoing: ${hasOutgoing}`);
+            console.log('Song "' + song.title + '" (' + (index + 1) + '/' + setData.songs.length + '):');
+            console.log('  - Transition data:', song.transition_data);
+            console.log('  - Has incoming: ' + hasIncoming);
+            console.log('  - Has outgoing: ' + hasOutgoing);
             if (index > 0) {
-                console.log(`  - Previous song transition data:`, setData.songs[index - 1].transition_data);
+                console.log('  - Previous song transition data:', setData.songs[index - 1].transition_data);
             }
 
             // Add test arrow that always shows (for debugging)
@@ -257,13 +257,14 @@ class GigMode {
                     </h3>
                     <div class="song-meta">
                         <div class="song-key">${this.escapeHtml(song.key || 'N/A')}</div>
-                        ${song.tempo ? `<span>${song.tempo} BPM</span>` : ''}
-                        ${song.duration ? `<span>${song.duration}</span>` : ''}
+                        ${song.tempo ? '<span>' + song.tempo + ' BPM</span>' : ''}
+                        ${song.duration ? '<span>' + song.duration + '</span>' : ''}
                     </div>
                 </div>
-                ${song.notes ? `<div class="song-notes">${this.escapeHtml(song.notes)}</div>` : ''}
+                ${song.notes ? '<div class="song-notes">' + this.escapeHtml(song.notes) + '</div>' : ''}
             </div>
-        `).join('');
+        `;
+        }).join('');
 
         // Add event listeners for song items
         songList.querySelectorAll('.song-item').forEach(item => {
