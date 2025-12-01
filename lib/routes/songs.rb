@@ -22,13 +22,22 @@ class Routes::Songs < Sinatra::Base
     set_breadcrumbs(breadcrumb_for_section('songs'))
 
     @search = params[:search]
+    @practice_filter = params[:practice] == 'true'
 
     @songs = filter_by_current_band(Song).active.order('LOWER(title)')
+
+    # Apply practice filter
+    if @practice_filter
+      @songs = @songs.practice_for_band(current_band)
+    end
 
     # Apply search filter
     if @search.present?
       @songs = @songs.where('LOWER(title) LIKE ? OR LOWER(artist) LIKE ?', "%#{@search.downcase}%", "%#{@search.downcase}%")
     end
+
+    # Get count of practice songs to determine if filter button should be enabled
+    @practice_songs_count = filter_by_current_band(Song).active.practice_for_band(current_band).count
 
     erb :songs
   end

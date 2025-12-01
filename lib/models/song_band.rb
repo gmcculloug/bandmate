@@ -49,6 +49,6 @@ class SongBand < ActiveRecord::Base
   private
 
   def set_default_practice_state
-    self.practice_state = false if practice_state.nil?
+    self.practice_state = false if self.practice_state.nil?
   end
 end
