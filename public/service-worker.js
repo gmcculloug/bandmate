@@ -13,16 +13,12 @@ const STATIC_ASSETS = [
 
 // Install event - cache static assets
 self.addEventListener('install', (event) => {
-  console.log('[Service Worker] Installing...');
-
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then((cache) => {
-        console.log('[Service Worker] Caching static assets');
         return cache.addAll(STATIC_ASSETS);
       })
       .then(() => {
-        console.log('[Service Worker] Static assets cached');
         return self.skipWaiting();
       })
       .catch((error) => {
@@ -33,22 +29,18 @@ self.addEventListener('install', (event) => {
 
 // Activate event - clean up old caches
 self.addEventListener('activate', (event) => {
-  console.log('[Service Worker] Activating...');
-
   event.waitUntil(
     caches.keys()
       .then((cacheNames) => {
         return Promise.all(
           cacheNames.map((cacheName) => {
             if (cacheName !== CACHE_NAME && cacheName !== GIG_DATA_CACHE) {
-              console.log('[Service Worker] Deleting old cache:', cacheName);
               return caches.delete(cacheName);
             }
           })
         );
       })
       .then(() => {
-        console.log('[Service Worker] Activated');
         return self.clients.claim();
       })
   );
@@ -88,8 +80,6 @@ async function handleGigDataRequest(request) {
     // Try cache first
     const cachedResponse = await cache.match(request);
     if (cachedResponse) {
-      console.log('[Service Worker] Serving gig data from cache');
-
       // Fetch fresh data in background and update cache
       fetchAndCacheGigData(request, cache);
 
@@ -97,13 +87,11 @@ async function handleGigDataRequest(request) {
     }
 
     // No cache, fetch from network
-    console.log('[Service Worker] Fetching fresh gig data');
     const networkResponse = await fetch(request);
 
     if (networkResponse.ok) {
       // Cache the response
       await cache.put(request, networkResponse.clone());
-      console.log('[Service Worker] Cached fresh gig data');
     }
 
     return networkResponse;
@@ -114,7 +102,6 @@ async function handleGigDataRequest(request) {
     // Try to serve from cache as fallback
     const cachedResponse = await cache.match(request);
     if (cachedResponse) {
-      console.log('[Service Worker] Serving stale gig data from cache (offline)');
       return cachedResponse;
     }
 
@@ -141,7 +128,7 @@ async function handleGigModePageRequest(request) {
       return networkResponse;
     }
   } catch (error) {
-    console.log('[Service Worker] Network failed, trying cache');
+    // Network failed, try cache
   }
 
   // Fall back to cache
@@ -149,7 +136,6 @@ async function handleGigModePageRequest(request) {
   const cachedResponse = await cache.match(request);
 
   if (cachedResponse) {
-    console.log('[Service Worker] Serving gig mode page from cache');
     return cachedResponse;
   }
 
@@ -189,7 +175,6 @@ async function fetchAndCacheGigData(request, cache) {
     const networkResponse = await fetch(request);
     if (networkResponse.ok) {
       await cache.put(request, networkResponse.clone());
-      console.log('[Service Worker] Updated gig data cache in background');
 
       // Notify clients about the update
       self.clients.matchAll().then(clients => {
@@ -202,7 +187,7 @@ async function fetchAndCacheGigData(request, cache) {
       });
     }
   } catch (error) {
-    console.log('[Service Worker] Background update failed:', error);
+    // Background update failed silently
   }
 }
 
@@ -245,14 +230,12 @@ async function cacheGigData(gigId) {
     const dataResponse = await fetch(gigDataUrl);
     if (dataResponse.ok) {
       await dataCache.put(gigDataUrl, dataResponse.clone());
-      console.log('[Service Worker] Cached gig data for gig:', gigId);
     }
 
     // Fetch and cache gig page
     const pageResponse = await fetch(gigPageUrl);
     if (pageResponse.ok) {
       await pageCache.put(gigPageUrl, pageResponse.clone());
-      console.log('[Service Worker] Cached gig page for gig:', gigId);
     }
 
     // Notify clients
@@ -296,8 +279,6 @@ async function clearGigCache(gigId) {
       dataCache.delete(gigDataUrl),
       pageCache.delete(gigPageUrl)
     ]);
-
-    console.log('[Service Worker] Cleared cache for gig:', gigId);
 
   } catch (error) {
     console.error('[Service Worker] Failed to clear gig cache:', error);

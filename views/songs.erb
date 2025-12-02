@@ -301,14 +301,12 @@ function togglePracticeState(songId, button) {
         }
     })
     .then(response => {
-        console.log('Practice toggle response status:', response.status);
         if (!response.ok) {
             throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }
         return response.json();
     })
     .then(data => {
-        console.log('Practice toggle response data:', data);
         if (!data.success) {
             console.error('Failed to update practice state on server:', data);
             // Revert UI changes on error
@@ -351,7 +349,6 @@ function togglePracticeState(songId, button) {
                 updatePracticeFilterButton(1);
             }
         } else {
-            console.log('Practice state successfully updated to:', data.practice_state);
             // Update practice filter button count
             const countChange = newPracticeState ? 1 : -1;
             updatePracticeFilterButton(countChange);

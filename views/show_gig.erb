@@ -322,12 +322,10 @@ function showCopyToGigModal() {
 }
 
 function closeCopyToGigModal() {
-    console.log('DEBUG: closeCopyToGigModal called, current values - selectedTargetGigId:', selectedTargetGigId, 'selectedTargetGigName:', selectedTargetGigName);
     document.getElementById('copy-to-gig-modal').style.display = 'none';
     // DON'T reset the variables when closing the modal - we need them for the confirmation modal
     // selectedTargetGigId = null;
     // selectedTargetGigName = null;
-    console.log('DEBUG: Modal closed, keeping variables intact');
 }
 
 function closeConfirmationModal() {
@@ -335,7 +333,6 @@ function closeConfirmationModal() {
     // Reset variables when confirmation modal is closed
     selectedTargetGigId = null;
     selectedTargetGigName = null;
-    console.log('DEBUG: Confirmation modal closed, variables reset');
 }
 
 
@@ -407,10 +404,8 @@ function fetchEmptyGigs() {
 }
 
 function selectTargetGig(gigId, gigName, gigDate) {
-    console.log('DEBUG: selectTargetGig called with:', gigId, gigName, gigDate);
     selectedTargetGigId = gigId;
     selectedTargetGigName = gigName;
-    console.log('DEBUG: Set global variables - selectedTargetGigId:', selectedTargetGigId, 'selectedTargetGigName:', selectedTargetGigName);
 
     // Show confirmation modal
     const confirmationText = `Are you sure you want to copy all songs from "<strong><%= @gig.name %></strong>" to "<strong>${gigName}</strong>"?<br><br>` +
@@ -420,14 +415,10 @@ function selectTargetGig(gigId, gigName, gigDate) {
 
     closeCopyToGigModal();
     document.getElementById('copy-confirmation-modal').style.display = 'block';
-    console.log('DEBUG: Confirmation modal should now be visible');
 }
 
 function confirmCopy() {
-    console.log('DEBUG: confirmCopy called, selectedTargetGigId:', selectedTargetGigId, 'selectedTargetGigName:', selectedTargetGigName);
-
     if (!selectedTargetGigId) {
-        console.log('DEBUG: selectedTargetGigId is null/undefined');
         alert('Please select a gig first');
         return;
     }
@@ -436,8 +427,6 @@ function confirmCopy() {
     const confirmBtn = document.querySelector('#copy-confirmation-modal .btn-success');
     confirmBtn.textContent = 'Copying...';
     confirmBtn.disabled = true;
-
-    console.log('DEBUG: Sending copy request with target_gig_id:', selectedTargetGigId);
 
     fetch('/gigs/<%= @gig.id %>/copy_to_gig', {
         method: 'POST',
@@ -448,11 +437,9 @@ function confirmCopy() {
         body: `target_gig_id=${selectedTargetGigId}`
     })
     .then(response => {
-        console.log('DEBUG: Response received:', response.status);
         return response.json();
     })
     .then(data => {
-        console.log('DEBUG: Response data:', data);
         if (data.success) {
             closeConfirmationModal();
             // No popup - just close the modal silently
@@ -463,7 +450,7 @@ function confirmCopy() {
         }
     })
     .catch(error => {
-        console.error('DEBUG: Error:', error);
+        console.error('Error copying songs:', error);
         alert('Error copying songs. Please try again.');
         confirmBtn.textContent = 'Copy Songs';
         confirmBtn.disabled = false;

@@ -98,7 +98,6 @@ class GigMode {
                     this.handleServiceWorkerMessage(event.data);
                 });
 
-                console.log('Service Worker registered:', registration);
             } catch (error) {
                 console.warn('Service Worker registration failed:', error);
             }
@@ -164,18 +163,13 @@ class GigMode {
     processGigData() {
         if (!this.gigData) return;
 
-        console.log('=== PROCESSING GIG DATA ===');
-        console.log('Full gig data:', this.gigData);
-
         // Flatten songs from all sets for easier navigation
         this.songs = [];
         const setNumbers = Object.keys(this.gigData.sets).map(Number).sort();
 
         setNumbers.forEach(setNumber => {
             const setData = this.gigData.sets[setNumber];
-            console.log(`Set ${setNumber} data:`, setData);
             setData.songs.forEach((song, index) => {
-                console.log(`  Song ${index + 1}: "${song.title}" - transition_data:`, song.transition_data);
                 this.songs.push({
                     ...song,
                     setNumber: setNumber
@@ -187,7 +181,6 @@ class GigMode {
         if (setNumbers.length > 0) {
             this.currentSet = setNumbers[0];
         }
-        console.log('=== DONE PROCESSING GIG DATA ===');
     }
 
     renderSetNavigation() {
@@ -227,15 +220,6 @@ class GigMode {
 
             // Check for outgoing transition (to next song)
             const hasOutgoing = song.transition_data?.has_transition && index < setData.songs.length - 1;
-
-            // Debug logging for transitions
-            console.log('Song "' + song.title + '" (' + (index + 1) + '/' + setData.songs.length + '):');
-            console.log('  - Transition data:', song.transition_data);
-            console.log('  - Has incoming: ' + hasIncoming);
-            console.log('  - Has outgoing: ' + hasOutgoing);
-            if (index > 0) {
-                console.log('  - Previous song transition data:', setData.songs[index - 1].transition_data);
-            }
 
             const incomingArrow = hasIncoming ? '<span class="transition-arrow incoming active" title="incoming transition" style="color: #3b82f6 !important; font-weight: bold; font-size: 1.2em;">➔</span> ' : '';
             const outgoingArrow = hasOutgoing ? ' <span class="transition-arrow outgoing active" title="transition" style="color: #3b82f6 !important; font-weight: bold; font-size: 1.2em;">➔</span>' : '';
@@ -634,11 +618,9 @@ class GigMode {
             try {
                 if (enable && !this.wakeLock) {
                     this.wakeLock = await navigator.wakeLock.request('screen');
-                    console.log('Screen wake lock enabled');
                 } else if (!enable && this.wakeLock) {
                     await this.wakeLock.release();
                     this.wakeLock = null;
-                    console.log('Screen wake lock disabled');
                 }
             } catch (error) {
                 console.warn('Wake lock failed:', error);
@@ -811,7 +793,6 @@ class GigMode {
     // Auto-scroll functionality
     toggleAutoScroll() {
         this.autoScrollEnabled = !this.autoScrollEnabled;
-        console.log(`Auto-scroll toggled: ${this.autoScrollEnabled ? 'ON' : 'OFF'}`);
 
         if (this.autoScrollEnabled) {
             this.startAutoScroll();
@@ -842,15 +823,12 @@ class GigMode {
         const baseInterval = 50; // milliseconds between scroll steps
         const scrollInterval = Math.max(10, baseInterval / this.autoScrollSpeed);
 
-        console.log(`Starting auto-scroll at ${this.autoScrollSpeed}x speed (${scrollInterval}ms interval)`);
-
         this.autoScrollInterval = setInterval(() => {
             const currentScroll = contentEl.scrollTop;
             const maxScroll = contentEl.scrollHeight - contentEl.clientHeight;
 
             if (currentScroll >= maxScroll) {
                 // Reached the end, stop auto-scroll
-                console.log('Auto-scroll reached end of content');
                 this.autoScrollEnabled = false;
                 this.stopAutoScroll();
                 this.updateAutoScrollButton();
@@ -863,7 +841,6 @@ class GigMode {
 
     stopAutoScroll() {
         if (this.autoScrollInterval) {
-            console.log('Stopping auto-scroll');
             clearInterval(this.autoScrollInterval);
             this.autoScrollInterval = null;
         }
@@ -994,7 +971,6 @@ document.addEventListener('visibilitychange', () => {
     }
 });
 
-// Expose for debugging
 window.gigMode = null;
 document.addEventListener('DOMContentLoaded', () => {
     window.gigMode = new GigMode();
