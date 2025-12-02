@@ -368,6 +368,12 @@ class Routes::Songs < Sinatra::Base
       @song_catalogs = @song_catalogs.search(@search)
     end
 
+    # Get IDs of catalog songs already in current band for Add to Band button logic
+    @existing_catalog_ids = []
+    if current_band
+      @existing_catalog_ids = current_band.songs.where.not(song_catalog_id: nil).pluck(:song_catalog_id) || []
+    end
+
     erb :song_catalogs
   end
 
@@ -400,6 +406,12 @@ class Routes::Songs < Sinatra::Base
     # Apply search filter
     if @search.present?
       @song_catalogs = @song_catalogs.search(@search)
+    end
+
+    # Get IDs of catalog songs already in current band for Add to Band button logic
+    @existing_catalog_ids = []
+    if current_band
+      @existing_catalog_ids = current_band.songs.where.not(song_catalog_id: nil).pluck(:song_catalog_id) || []
     end
 
     erb :song_catalog
