@@ -397,7 +397,19 @@ class Routes::Songs < Sinatra::Base
     song_catalog = SongCatalog.new(params[:song_catalog])
 
     if song_catalog.save
-      redirect '/song_catalog'
+      # If user has a current band, automatically add the song to that band
+      if current_band
+        song = Song.create_from_song_catalog(song_catalog, [current_band.id])
+        if song.save
+          # Redirect to the band's songs page to show the new song was added
+          redirect '/songs'
+        else
+          # Song catalog was created but couldn't add to band - still redirect to catalog
+          redirect '/song_catalog'
+        end
+      else
+        redirect '/song_catalog'
+      end
     else
       @errors = song_catalog.errors.full_messages
       erb :new_song_catalog
@@ -409,7 +421,19 @@ class Routes::Songs < Sinatra::Base
     song_catalog = SongCatalog.new(params[:song_catalog])
 
     if song_catalog.save
-      redirect '/song_catalogs'
+      # If user has a current band, automatically add the song to that band
+      if current_band
+        song = Song.create_from_song_catalog(song_catalog, [current_band.id])
+        if song.save
+          # Redirect to the band's songs page to show the new song was added
+          redirect '/songs'
+        else
+          # Song catalog was created but couldn't add to band - still redirect to catalog
+          redirect '/song_catalogs'
+        end
+      else
+        redirect '/song_catalogs'
+      end
     else
       @errors = song_catalog.errors.full_messages
       erb :new_song_catalog
