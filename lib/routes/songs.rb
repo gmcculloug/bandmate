@@ -39,6 +39,18 @@ class Routes::Songs < Sinatra::Base
     # Get count of practice songs to determine if filter button should be enabled
     @practice_songs_count = filter_by_current_band(Song).active.practice_for_band(current_band).count
 
+    # Add catalog search when band results are sparse
+    @catalog_songs = []
+    if @search.present? && @songs.count <= 2
+      # Get IDs of catalog songs already in this band to exclude them
+      existing_catalog_ids = current_band.songs.where.not(song_catalog_id: nil).pluck(:song_catalog_id)
+
+      @catalog_songs = SongCatalog.active
+                                  .search(@search)
+                                  .where.not(id: existing_catalog_ids)
+                                  .order('LOWER(title)')
+    end
+
     erb :songs
   end
 
@@ -105,6 +117,33 @@ class Routes::Songs < Sinatra::Base
     end
 
     redirect "/songs?copied=#{copied_count}"
+  end
+
+  post '/songs/copy_single_from_catalog' do
+    require_login
+    return redirect '/gigs' unless current_band
+
+    song_catalog_id = params[:song_catalog_id]
+    search_term = params[:search] || ''
+
+    begin
+      song_catalog = SongCatalog.find(song_catalog_id)
+
+      # Check if song already exists in this band
+      existing_song = current_band.songs.find_by(song_catalog_id: song_catalog_id)
+      if existing_song
+        redirect "/songs?search=#{ERB::Util.url_encode(search_term)}&error=already_exists"
+      else
+        song = Song.create_from_song_catalog(song_catalog, [current_band.id])
+        if song.save
+          redirect "/songs?search=#{ERB::Util.url_encode(search_term)}&copied=1"
+        else
+          redirect "/songs?search=#{ERB::Util.url_encode(search_term)}&error=copy_failed"
+        end
+      end
+    rescue ActiveRecord::RecordNotFound
+      redirect "/songs?search=#{ERB::Util.url_encode(search_term)}&error=not_found"
+    end
   end
 
   post '/songs' do

@@ -400,9 +400,36 @@ function togglePracticeState(songId, button) {
 }
 </script>
 
+<style>
+.catalog-song-card:hover {
+    background-color: #f3f4f6 !important;
+    border-color: #9ca3af !important;
+}
+
+.catalog-suggestions {
+    border-left: 4px solid #667eea;
+    padding-left: 16px;
+    margin-left: -4px;
+}
+</style>
+
 <% if params[:copied] %>
     <div class="message message--success">
         ✅ Successfully copied <%= params[:copied] %> song<%= params[:copied].to_i == 1 ? '' : 's' %> to your band!
+    </div>
+<% end %>
+
+<% if params[:error] %>
+    <div class="message message--error">
+        <% if params[:error] == 'already_exists' %>
+            ❌ Song is already in your band
+        <% elsif params[:error] == 'copy_failed' %>
+            ❌ Failed to copy song. Please try again.
+        <% elsif params[:error] == 'not_found' %>
+            ❌ Song not found in catalog
+        <% else %>
+            ❌ An error occurred while copying the song
+        <% end %>
     </div>
 <% end %>
 
@@ -465,6 +492,63 @@ function togglePracticeState(songId, button) {
         <h3>No songs yet!</h3>
         <p>Get started by adding your first song to the library.</p>
     </div>
+<% end %>
+
+<% if @catalog_songs&.any? %>
+  <div class="catalog-suggestions" style="margin-top: 30px; padding-top: 20px; padding-left: 16px; margin-left: -4px; border-top: 2px solid #e2e8f0; border-left: 4px solid #667eea;">
+    <div style="margin-bottom: 20px;">
+      <h3 style="margin: 0 0 8px 0; color: #4a5568; display: flex; align-items: center; gap: 8px;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="2" y1="12" x2="22" y2="12"></line>
+          <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1 4-10z"></path>
+        </svg>
+        Songs from Catalog (<%= @catalog_songs.count %>)
+      </h3>
+      <p style="margin: 0; font-size: 0.9rem; color: #718096;">
+        Found additional songs matching "<strong><%= @search %></strong>" in the song catalog
+      </p>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 2px;">
+      <% @catalog_songs.each do |catalog_song| %>
+        <div class="catalog-song-card" style="padding: 8px 12px; border: 1px solid #d1d5db; border-radius: 4px; background: #f9fafb; transition: all 0.2s ease;">
+          <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px;">
+            <div style="flex: 1; min-width: 0; display: flex; align-items: center; gap: 10px;">
+              <div style="font-weight: bold; color: #374151; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; flex: 1; display: flex; align-items: center; gap: 0.5rem;">
+                <%= catalog_song.title %>
+                <% if catalog_song.artist.present? %>
+                  <span style="color: #9ca3af; font-weight: normal; font-size: 0.9rem;"> • <%= catalog_song.artist %></span>
+                <% end %>
+              </div>
+              <div style="display: flex; align-items: center; gap: 6px; flex-shrink: 0;">
+                <span style="background: #667eea; color: white; padding: 2px 6px; border-radius: 10px; font-size: 0.75rem;">
+                  <%= catalog_song.key %>
+                </span>
+                <% if catalog_song.tempo %>
+                  <span style="background: #38a169; color: white; padding: 2px 6px; border-radius: 10px; font-size: 0.75rem;">
+                    <%= catalog_song.tempo %> BPM
+                  </span>
+                <% end %>
+              </div>
+            </div>
+            <form method="post" action="/songs/copy_single_from_catalog" style="display: inline;" onclick="event.stopPropagation();">
+              <input type="hidden" name="song_catalog_id" value="<%= catalog_song.id %>">
+              <input type="hidden" name="search" value="<%= @search %>">
+              <button type="submit" class="btn btn-success" style="padding: 4px 8px; font-size: 0.75rem; min-height: 28px; white-space: nowrap; display: inline-flex; align-items: center; justify-content: center;"
+                      onclick="this.disabled=true; this.textContent='Adding...'; this.form.submit();">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -1px; margin-right: 4px;">
+                  <line x1="12" y1="5" x2="12" y2="19"></line>
+                  <line x1="5" y1="12" x2="19" y2="12"></line>
+                </svg>
+                Add to Band
+              </button>
+            </form>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  </div>
 <% end %>
 
 <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #e2e8f0;">
