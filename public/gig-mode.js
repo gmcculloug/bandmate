@@ -237,9 +237,6 @@ class GigMode {
                 console.log('  - Previous song transition data:', setData.songs[index - 1].transition_data);
             }
 
-            // Add test arrow that always shows (for debugging)
-            const testArrow = ' <span class="test-arrow" style="color: red !important; font-weight: bold; font-size: 1.5em;" title="TEST ARROW (always visible)">🔥</span>';
-
             const incomingArrow = hasIncoming ? '<span class="transition-arrow incoming active" title="incoming transition" style="color: #3b82f6 !important; font-weight: bold; font-size: 1.2em;">➔</span> ' : '';
             const outgoingArrow = hasOutgoing ? ' <span class="transition-arrow outgoing active" title="transition" style="color: #3b82f6 !important; font-weight: bold; font-size: 1.2em;">➔</span>' : '';
 
@@ -253,7 +250,7 @@ class GigMode {
                 <div class="song-header">
                     <h3 class="song-title">
                         <span class="song-count">${song.position}.</span>
-                        ${incomingArrow}${practiceBadge}${this.escapeHtml(song.title)}${outgoingArrow}${testArrow}
+                        ${incomingArrow}${practiceBadge}${this.escapeHtml(song.title)}${outgoingArrow}
                     </h3>
                     <div class="song-meta">
                         <div class="song-key">${this.escapeHtml(song.key || 'N/A')}</div>
