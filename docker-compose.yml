@@ -16,6 +16,27 @@ services:
       interval: 30s
       timeout: 10s
       retries: 5
+  db-migrate:
+    image: bandmate
+    environment:
+      - RACK_ENV=production
+      - DATABASE_HOST=postgres
+      - DATABASE_PORT=${DATABASE_PORT}
+      - DATABASE_NAME=${DATABASE_NAME}
+      - DATABASE_USERNAME=${DATABASE_USERNAME}
+      - DATABASE_PASSWORD=${DATABASE_PASSWORD}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: >
+      sh -c "
+        echo 'Running database migrations...' &&
+        bundle exec rake db:migrate &&
+        bundle exec rake db:seed_songs &&
+        echo 'Database setup completed successfully'
+      "
+    restart: "no"
+
   bandmate:
     image: bandmate
     expose:
@@ -36,6 +57,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      db-migrate:
+        condition: service_completed_successfully
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:4567/health"]
@@ -46,9 +69,6 @@ services:
     command: >
       sh -c "
         echo 'BANDMATE_ACCT_CREATION_SECRET: ${BANDMATE_ACCT_CREATION_SECRET}' &&
-        echo 'Connecting to PostgreSQL at ${DATABASE_HOST}:${DATABASE_PORT}...' &&
-        (bundle exec rake db:migrate || echo 'Migration failed or already applied, continuing...') &&
-        (bundle exec rake db:seed_songs || echo 'Seeding Songs failed, continuing...') &&
         echo 'Starting Bandmate application (HTTP - SSL handled by nginx)...' &&
         ruby app.rb
       "
