@@ -12,6 +12,9 @@ gem 'google-apis-calendar_v3'
 gem 'googleauth'
 gem 'json'
 gem 'dotenv'
+gem 'redis'            # Redis client (Valkey compatible)
+gem 'redis-rack'       # Redis session store for Rack (more stable alternative)
+gem 'connection_pool'  # Connection pooling
 
 group :development, :test do
   gem 'rspec'

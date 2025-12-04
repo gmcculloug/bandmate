@@ -5,6 +5,14 @@ require 'json'
 require 'erb'
 require 'bcrypt'
 require 'rack/method_override'
+require 'connection_pool'
+
+# Only require Redis gems when Valkey sessions are enabled
+if ENV['VALKEY_ENABLED'] == 'true'
+  require 'redis'
+  require 'rack/session/redis'
+  puts "🔗 Using Redis client for Valkey-compatible session storage"
+end
 
 # Load models
 require_relative 'lib/models/user'
@@ -39,32 +47,64 @@ require_relative 'lib/routes/calendar'
 require_relative 'lib/routes/practices'
 require_relative 'lib/routes/api'
 
-enable :sessions
 enable :static
 use Rack::MethodOverride
 
-# Session secret configuration with production security requirements
-if ENV['RACK_ENV'] == 'production' || ENV['APP_ENV'] == 'production'
-  # In production, SESSION_SECRET must be set and strong
-  session_secret = ENV['SESSION_SECRET']
+# Conditional session store configuration
+if ENV['VALKEY_ENABLED'] == 'true'
+  # Valkey session store configuration
+  # Note: Connection pooling can be added later if needed using ConnectionPool
 
-  if session_secret.nil? || session_secret.empty?
-    puts "ERROR: SESSION_SECRET environment variable must be set in production"
-    puts "Generate a strong secret with: openssl rand -hex 64"
-    exit 1
+  # Session secret validation (keep existing production logic)
+  if ENV['RACK_ENV'] == 'production' || ENV['APP_ENV'] == 'production'
+    session_secret = ENV['SESSION_SECRET']
+    if session_secret.nil? || session_secret.empty?
+      puts "ERROR: SESSION_SECRET environment variable must be set in production"
+      puts "Generate a strong secret with: openssl rand -hex 64"
+      exit 1
+    end
+    if session_secret.length < 32
+      puts "ERROR: SESSION_SECRET must be at least 32 characters long"
+      puts "Current length: #{session_secret.length} characters"
+      puts "Generate a strong secret with: openssl rand -hex 64"
+      exit 1
+    end
+  else
+    session_secret = ENV['SESSION_SECRET'] || 'development_secret_key_not_for_production_use'
   end
 
-  if session_secret.length < 32
-    puts "ERROR: SESSION_SECRET must be at least 32 characters long"
-    puts "Current length: #{session_secret.length} characters"
-    puts "Generate a strong secret with: openssl rand -hex 64"
-    exit 1
-  end
+  use Rack::Session::Redis,
+      redis_server: "redis://#{ENV['VALKEY_HOST'] || 'valkey'}:#{ENV['VALKEY_PORT'] || 6379}/#{ENV['VALKEY_DB'] || 0}",
+      key: '_bandmate_session',
+      secret: session_secret
 
-  set :session_secret, session_secret
 else
-  # In development/test, allow fallback for convenience
-  set :session_secret, ENV['SESSION_SECRET'] || 'development_secret_key_not_for_production_use'
+  # Use Sinatra's built-in cookie sessions (existing behavior)
+  enable :sessions
+
+  # Session secret configuration with production security requirements
+  if ENV['RACK_ENV'] == 'production' || ENV['APP_ENV'] == 'production'
+    # In production, SESSION_SECRET must be set and strong
+    session_secret = ENV['SESSION_SECRET']
+
+    if session_secret.nil? || session_secret.empty?
+      puts "ERROR: SESSION_SECRET environment variable must be set in production"
+      puts "Generate a strong secret with: openssl rand -hex 64"
+      exit 1
+    end
+
+    if session_secret.length < 32
+      puts "ERROR: SESSION_SECRET must be at least 32 characters long"
+      puts "Current length: #{session_secret.length} characters"
+      puts "Generate a strong secret with: openssl rand -hex 64"
+      exit 1
+    end
+
+    set :session_secret, session_secret
+  else
+    # In development/test, allow fallback for convenience
+    set :session_secret, ENV['SESSION_SECRET'] || 'development_secret_key_not_for_production_use'
+  end
 end
 
 set :public_folder, File.dirname(__FILE__) + '/public'

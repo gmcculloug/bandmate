@@ -16,6 +16,23 @@ services:
       interval: 30s
       timeout: 10s
       retries: 5
+  valkey:
+    image: valkey/valkey:8.0-alpine
+    ports:
+      - "${VALKEY_PORT:-6379}:6379"  # Expose for development debugging
+    volumes:
+      - valkey_data:/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "valkey-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    command: >
+      valkey-server
+      --appendonly yes
+      --appendfsync everysec
+
   db-migrate:
     image: bandmate
     environment:
@@ -54,8 +71,15 @@ services:
       - DATABASE_NAME=${DATABASE_NAME}
       - DATABASE_USERNAME=${DATABASE_USERNAME}
       - DATABASE_PASSWORD=${DATABASE_PASSWORD}
+      - VALKEY_ENABLED=${VALKEY_ENABLED:-true}
+      - VALKEY_HOST=${VALKEY_HOST:-valkey}
+      - VALKEY_PORT=${VALKEY_PORT:-6379}
+      - VALKEY_DB=${VALKEY_DB:-0}
+      - VALKEY_POOL_SIZE=${VALKEY_POOL_SIZE:-5}
     depends_on:
       postgres:
+        condition: service_healthy
+      valkey:
         condition: service_healthy
       db-migrate:
         condition: service_completed_successfully
@@ -88,3 +112,4 @@ services:
 
 volumes:
   postgres_data:
+  valkey_data:
