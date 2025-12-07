@@ -41,7 +41,7 @@
                             </span>
                             <% if practice.best_day %>
                                 <span style="background: rgba(56, 161, 105, 0.1); color: #38a169; padding: 4px 8px; border-radius: 12px; font-size: 0.8em; font-weight: 500;">
-                                    <%= practice.status == 'finalized' ? 'Selected' : 'Best' %>: <%= practice.best_day %>
+                                    <%= practice.status == 'finalized' ? 'Selected' : 'Best' %>: <strong><%= practice.best_day %></strong>
                                 </span>
                             <% end %>
                             <% if practice.status == 'active' && practice.possible_dates_display %>
