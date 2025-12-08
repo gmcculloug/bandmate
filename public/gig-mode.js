@@ -16,8 +16,9 @@ class GigMode {
 
         // Auto-scroll properties
         this.autoScrollEnabled = false;
-        this.autoScrollSpeed = 1.0; // Speed multiplier - 1x normal speed
         this.autoScrollInterval = null;
+        this.autoScrollAnimationId = null;
+        this.scrollAccumulator = 0; // Accumulate small scroll amounts
 
         // Generate speed options from 0.1x to 2x in 0.05x increments
         this.scrollSpeedOptions = [];
@@ -26,6 +27,7 @@ class GigMode {
         }
 
         this.currentSpeedIndex = 18; // Default to 1.0x (index 18)
+        this.autoScrollSpeed = this.scrollSpeedOptions[this.currentSpeedIndex];
 
         // Font size properties
         this.fontSizeOptions = ['xs', 'sm', 'md', 'lg', 'xl', '2xl', '3xl'];
@@ -328,6 +330,17 @@ class GigMode {
 
         // Prevent body scroll
         document.body.style.overflow = 'hidden';
+
+        // Defensive footer visibility validation
+        setTimeout(() => {
+            const footer = document.getElementById('song-modal').querySelector('.modal-footer');
+            const footerRect = footer.getBoundingClientRect();
+            if (footerRect.bottom > window.innerHeight || footerRect.top < 0) {
+                console.warn('Footer not visible, forcing layout recalculation');
+                footer.style.position = 'relative';
+                footer.style.zIndex = '1000';
+            }
+        }, 100);
     }
 
     closeSongModal() {
@@ -804,26 +817,33 @@ class GigMode {
     }
 
     startAutoScroll() {
-        this.stopAutoScroll(); // Clear any existing interval
+        this.stopAutoScroll(); // Clear any existing animation
 
         const contentEl = document.getElementById('song-content');
-        if (!contentEl) {
-            console.warn('song-content element not found for auto-scroll');
-            return;
-        }
+        if (!contentEl) return;
 
         // Check if content is scrollable
         if (contentEl.scrollHeight <= contentEl.clientHeight) {
-            console.warn('Content is not scrollable - too short for auto-scroll');
             return;
         }
 
-        // Calculate scroll speed: lower number = faster scroll
-        // Base interval of 50ms, adjusted by speed multiplier
-        const baseInterval = 50; // milliseconds between scroll steps
-        const scrollInterval = Math.max(10, baseInterval / this.autoScrollSpeed);
+        // Reset accumulator
+        this.scrollAccumulator = 0;
 
-        this.autoScrollInterval = setInterval(() => {
+        // Calculate smooth scroll speed - convert from interval-based to pixels per second
+        // Original: 1 pixel every (50ms / speed), so pixels per second = speed * (1000/50) = speed * 20
+        const pixelsPerSecond = this.autoScrollSpeed * 20;
+        let lastFrameTime = performance.now();
+
+        const animateScroll = (currentTime) => {
+            if (!this.autoScrollEnabled) return;
+
+            const deltaTime = currentTime - lastFrameTime;
+            const scrollAmount = (deltaTime / 1000) * pixelsPerSecond;
+
+            // Accumulate small scroll amounts
+            this.scrollAccumulator += scrollAmount;
+
             const currentScroll = contentEl.scrollTop;
             const maxScroll = contentEl.scrollHeight - contentEl.clientHeight;
 
@@ -833,17 +853,36 @@ class GigMode {
                 this.stopAutoScroll();
                 this.updateAutoScrollButton();
             } else {
-                // Scroll down by 1 pixel
-                contentEl.scrollTop += 1;
+                // Apply scroll when we have at least 0.5 pixels accumulated
+                if (this.scrollAccumulator >= 0.5) {
+                    const pixelsToScroll = Math.floor(this.scrollAccumulator);
+                    contentEl.scrollTop += pixelsToScroll;
+                    this.scrollAccumulator -= pixelsToScroll;
+                }
+
+                lastFrameTime = currentTime;
+                this.autoScrollAnimationId = requestAnimationFrame(animateScroll);
             }
-        }, scrollInterval);
+        };
+
+        this.autoScrollAnimationId = requestAnimationFrame(animateScroll);
     }
 
     stopAutoScroll() {
+        // Clear animation frame
+        if (this.autoScrollAnimationId) {
+            cancelAnimationFrame(this.autoScrollAnimationId);
+            this.autoScrollAnimationId = null;
+        }
+
+        // Clear interval (for backwards compatibility)
         if (this.autoScrollInterval) {
             clearInterval(this.autoScrollInterval);
             this.autoScrollInterval = null;
         }
+
+        // Reset accumulator
+        this.scrollAccumulator = 0;
     }
 
     increaseScrollSpeed() {

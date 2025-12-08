@@ -455,7 +455,8 @@ body {
 .modal-content {
   background: var(--primary-bg);
   width: 100%;
-  height: 100%;
+  height: 100vh;
+  max-height: 100vh;
   display: flex;
   flex-direction: column;
   transform: translateX(100%);
@@ -473,6 +474,7 @@ body {
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
+  flex-shrink: 0;
 }
 
 .modal-header .song-title {
@@ -506,9 +508,20 @@ body {
 
 .modal-body {
   flex: 1;
+  min-height: 0;
   padding: 1rem;
+  padding-bottom: 100px !important;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
+.lyrics-container {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
 
 .song-content {
   background: var(--secondary-bg);
@@ -519,8 +532,9 @@ body {
   line-height: 1.4;
   white-space: pre-wrap;
   color: var(--text-secondary);
-  height: 100%;
+  flex: 1;
   overflow-y: auto;
+  min-height: 0;
 }
 
 .lyrics {
@@ -548,10 +562,18 @@ body {
 .modal-footer {
   padding: 1rem 1.5rem;
   border-top: 1px solid var(--border-color);
-  display: flex;
+  display: flex !important;
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
+  position: fixed !important;
+  bottom: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  height: 80px !important;
+  background: var(--primary-bg) !important;
+  z-index: 9999 !important;
+  border-top: 2px solid var(--border-color) !important;
 }
 
 .nav-btn {
@@ -1025,3 +1047,20 @@ body {
     scroll-behavior: auto !important;
   }
 }
+
+/* Mobile viewport fixes for iOS Safari */
+@supports (-webkit-touch-callout: none) {
+  .modal-content {
+    height: 100vh;
+    height: -webkit-fill-available;
+  }
+}
+
+/* Short screen optimizations */
+@media (max-height: 600px) {
+  .modal-footer {
+    padding: 0.75rem 1rem;
+    min-height: 50px;
+  }
+}
+
