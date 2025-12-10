@@ -58,9 +58,16 @@
         </div>
         
         <div id="available-songs-content">
-            <div style="margin-bottom: 15px; position: relative;">
-                <input type="text" id="song-filter" placeholder="Search songs..." style="width: 100%; padding: 8px 30px 8px 8px; border: 1px solid #d1d5db; border-radius: 4px;">
-                <button type="button" id="clear-filter" onclick="clearSongFilter()" style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: none; border: none; color: #9ca3af; cursor: pointer; font-size: 16px; padding: 0; width: 20px; height: 20px; display: none; align-items: center; justify-content: center;">×</button>
+            <div style="margin-bottom: 15px;">
+                <%= erb :_search_input, locals: {
+                    input_id: 'song-filter',
+                    placeholder: 'Search songs...',
+                    search_value: '',
+                    container_style: 'position: relative;',
+                    input_style: 'width: 100%; padding: 8px 30px 8px 8px; border: 1px solid #d1d5db; border-radius: 4px;',
+                    clear_function: 'clearSongFilter()',
+                    show_clear: false
+                } %>
             </div>
             
             <div id="available-songs" style="overflow-y: scroll; border: 1px solid #e2e8f0; border-radius: 6px; padding: 10px;">

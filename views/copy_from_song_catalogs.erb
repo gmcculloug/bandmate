@@ -17,7 +17,13 @@
             
             <!-- Search Filter -->
             <div style="margin-bottom: 15px;">
-                <input type="text" id="catalog-search" value="<%= @search %>" placeholder="Filter song catalog..." style="width: 100%; padding: 8px; border: 2px solid #e2e8f0; border-radius: 6px; font-size: 14px;">
+                <%= erb :_search_input, locals: {
+                    input_id: 'catalog-search',
+                    placeholder: 'Filter song catalog...',
+                    container_style: 'position: relative;',
+                    input_style: 'width: 100%; padding: 8px; border: 2px solid #e2e8f0; border-radius: 6px; font-size: 14px;',
+                    show_clear: false
+                } %>
             </div>
             
             <!-- Song Catalog List -->

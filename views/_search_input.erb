@@ -1,0 +1,40 @@
+<%
+  # Search input partial with customizable options
+  # Local variables:
+  #   input_id: ID for the input field (default: 'search-input')
+  #   placeholder: Placeholder text (default: 'Search...')
+  #   search_value: Current search value (default: @search or '')
+  #   container_class: Additional CSS classes for container (optional)
+  #   container_style: Inline styles for container (optional)
+  #   input_style: Inline styles for input (optional)
+  #   clear_function: JavaScript function to call for clear button (default: 'clearSearch()')
+  #   show_clear: Whether to show clear button when search is present (default: true)
+
+  input_id ||= 'search-input'
+  placeholder ||= 'Search...'
+  search_value ||= defined?(@search) ? @search : ''
+  container_class ||= ''
+  container_style ||= 'position: relative; max-width: 400px;'
+  input_style ||= 'width: 100%; padding: 10px 40px 10px 10px; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 16px;'
+  clear_function ||= 'clearSearch()'
+  show_clear = true if show_clear.nil?
+%>
+
+<div class="<%= container_class %>" style="<%= container_style %>">
+    <input type="text"
+           id="<%= input_id %>"
+           value="<%= search_value %>"
+           placeholder="<%= placeholder %>"
+           style="<%= input_style %>">
+
+    <% if show_clear && search_value.present? %>
+        <a href="#"
+           onclick="<%= clear_function %>; return false;"
+           style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; color: #718096; font-size: 18px; cursor: pointer; text-decoration: none; display: flex; align-items: center; justify-content: center; width: 20px; height: 20px;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+        </a>
+    <% end %>
+</div>

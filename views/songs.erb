@@ -29,12 +29,11 @@
 
 <div style="margin-bottom: 20px;">
     <div style="display: flex; gap: 10px; align-items: flex-start; flex-wrap: wrap;">
-        <div style="position: relative; flex: 1; max-width: 400px; min-width: 250px;">
-            <input type="text" id="search-input" value="<%= @search %>" placeholder="Search songs by title or artist..." style="width: 100%; padding: 10px 40px 10px 10px; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 16px;">
-            <% if @search.present? %>
-                <a href="#" onclick="clearSearch(); return false;" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; color: #718096; font-size: 18px; cursor: pointer; text-decoration: none; display: flex; align-items: center; justify-content: center; width: 20px; height: 20px;">✕</a>
-            <% end %>
-        </div>
+        <%= erb :_search_input, locals: {
+            container_style: 'position: relative; flex: 1; max-width: 400px; min-width: 250px;',
+            placeholder: 'Search songs by title or artist...',
+            clear_function: 'clearSearch()'
+        } %>
 
         <button type="button"
                 id="practice-filter-btn"
