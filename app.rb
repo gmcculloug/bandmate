@@ -14,6 +14,9 @@ if ENV['VALKEY_ENABLED'] == 'true'
   puts "🔗 Using Redis client for Valkey-compatible session storage"
 end
 
+# Load concerns
+require_relative 'lib/concerns/archivable'
+
 # Load models
 require_relative 'lib/models/user'
 require_relative 'lib/models/user_band'

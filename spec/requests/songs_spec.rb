@@ -105,7 +105,7 @@ RSpec.describe 'Songs API', type: :request do
       get '/songs/new'
       
       expect(last_response).to be_ok
-      expect(last_response.body).to include('New Song')
+      expect(last_response.body).to include('Add Song')
       expect(last_response.body).to include('title')
       expect(last_response.body).to include('artist')
       expect(last_response.body).to include('key')

@@ -1,4 +1,5 @@
 class Song < ActiveRecord::Base
+  include Archivable
   belongs_to :song_catalog, optional: true
   has_many :song_bands, dependent: :destroy
   has_many :bands, through: :song_bands
@@ -19,8 +20,6 @@ class Song < ActiveRecord::Base
   scope :with_lyrics, -> { where.not(lyrics: [nil, '']) }
   scope :by_key, ->(key) { where(key: key) }
   scope :by_tempo_range, ->(min, max) { where(tempo: min..max) }
-  scope :active, -> { where(archived: false) }
-  scope :archived, -> { where(archived: true) }
   scope :practice_for_band, ->(band) { joins(:bands).where(bands: { id: band.id }, 'songs_bands.practice_state': true) }
   scope :ready_for_band, ->(band) { joins(:bands).where(bands: { id: band.id }, 'songs_bands.practice_state': false) }
 
@@ -43,23 +42,6 @@ class Song < ActiveRecord::Base
     )
     song.band_ids = band_ids
     song
-  end
-
-  # Instance methods for archiving
-  def archive!
-    update!(archived: true, archived_at: Time.current)
-  end
-
-  def unarchive!
-    update!(archived: false, archived_at: nil)
-  end
-
-  def archived?
-    archived
-  end
-
-  def active?
-    !archived
   end
 
   # Practice state methods for band-specific practice management
