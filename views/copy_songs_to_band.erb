@@ -22,44 +22,10 @@
 </div>
 
 <script>
-let searchTimeout;
-
-document.getElementById('search-input').addEventListener('input', function() {
-    clearTimeout(searchTimeout);
-    searchTimeout = setTimeout(function() {
-        filterSongs();
-    }, 500);
+// Initialize search functionality using shared utilities
+DOMUtils.ready(function() {
+    SearchUtils.initializeSearch('search-input', 500);
 });
-
-document.getElementById('search-input').addEventListener('keypress', function(e) {
-    if (e.key === 'Enter') {
-        e.preventDefault();
-        filterSongs();
-    }
-});
-
-function filterSongs() {
-    const searchTerm = document.getElementById('search-input').value;
-    const currentUrl = new URL(window.location);
-    
-    if (searchTerm.trim() === '') {
-        currentUrl.searchParams.delete('search');
-    } else {
-        currentUrl.searchParams.set('search', searchTerm);
-    }
-    
-    window.location.href = currentUrl.toString();
-}
-
-function clearSearch() {
-    const searchInput = document.getElementById('search-input');
-    searchInput.value = '';
-    const currentUrl = new URL(window.location);
-    currentUrl.searchParams.delete('search');
-    window.location.href = currentUrl.toString();
-    
-    // Focus will be restored by the DOMContentLoaded handler when the page reloads
-}
 
 function selectAll() {
     const checkboxes = document.querySelectorAll('input[name="song_catalog_ids[]"]');

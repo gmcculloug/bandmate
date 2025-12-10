@@ -14,18 +14,20 @@
   placeholder ||= 'Search...'
   search_value ||= defined?(@search) ? @search : ''
   container_class ||= ''
-  container_style ||= 'position: relative; max-width: 400px;'
-  input_style ||= 'width: 100%; padding: 10px 40px 10px 10px; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 16px;'
+  container_style ||= ''
+  input_style ||= ''
+  input_classes ||= 'input-standard input-search'
   clear_function ||= 'clearSearch()'
   show_clear = true if show_clear.nil?
 %>
 
-<div class="<%= container_class %>" style="<%= container_style %>">
+<div class="<%= container_class %> relative max-w-sm" <% if container_style.present? %>style="<%= container_style %>"<% end %>>
     <input type="text"
            id="<%= input_id %>"
            value="<%= search_value %>"
            placeholder="<%= placeholder %>"
-           style="<%= input_style %>">
+           class="<%= input_classes %>"
+           <% if input_style.present? %>style="<%= input_style %>"<% end %>>
 
     <% if show_clear && search_value.present? %>
         <a href="#"
