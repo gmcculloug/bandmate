@@ -49,6 +49,7 @@ require_relative 'lib/routes/venues'
 require_relative 'lib/routes/calendar'
 require_relative 'lib/routes/practices'
 require_relative 'lib/routes/api'
+require_relative 'lib/routes/mobile_api'
 
 enable :static
 use Rack::MethodOverride
@@ -124,6 +125,7 @@ use Routes::Venues
 use Routes::Calendar
 use Routes::Practices
 use Routes::Api
+use Routes::MobileAPI
 
 # Account creation code for user registration (required)
 # Set BANDMATE_ACCT_CREATION_SECRET environment variable to enable account creation

@@ -387,6 +387,265 @@ class Routes::Api < Sinatra::Base
     end
   end
 
+  # ============================================================================
+  # ENHANCED MOBILE GIG MODE API
+  # ============================================================================
+
+  # Enhanced gig mode data with practice states and mobile optimizations
+  get '/api/gigs/:id/mobile_gig_mode' do
+    require_login
+    content_type :json
+
+    begin
+      @gig = filter_by_current_band(Gig).includes(:venue, gig_songs: { song: :songs_bands }).find(params[:id])
+
+      # Build comprehensive gig data optimized for mobile
+      gig_data = {
+        id: @gig.id,
+        name: @gig.name,
+        notes: @gig.notes,
+        performance_date: @gig.performance_date&.strftime('%Y-%m-%d'),
+        start_time: @gig.start_time&.strftime('%H:%M'),
+        end_time: @gig.end_time&.strftime('%H:%M'),
+        venue: @gig.venue ? {
+          id: @gig.venue.id,
+          name: @gig.venue.name,
+          location: @gig.venue.location,
+          contact_name: @gig.venue.contact_name,
+          phone_number: @gig.venue.phone_number,
+          website: @gig.venue.website,
+          notes: @gig.venue.notes
+        } : nil,
+        sets: {},
+        total_songs: @gig.songs.count,
+        estimated_duration: calculate_gig_duration(@gig.songs),
+        band: {
+          id: current_band.id,
+          name: current_band.name,
+          member_count: current_band.users.count
+        },
+        cached_at: Time.current.iso8601,
+        last_modified: [@gig.updated_at, @gig.songs.maximum(:updated_at)].compact.max.iso8601
+      }
+
+      # Organize songs by sets with complete data including practice states
+      gig_songs_by_set = @gig.gig_songs.includes(song: :songs_bands).order(:set_number, :position).group_by(&:set_number)
+
+      gig_songs_by_set.each do |set_number, gig_songs|
+        gig_data[:sets][set_number] = {
+          number: set_number,
+          song_count: gig_songs.count,
+          estimated_duration: calculate_gig_duration(gig_songs.map(&:song)),
+          songs: gig_songs.map.with_index do |gig_song, index|
+            song = gig_song.song
+
+            # Get practice state for current band
+            songs_band = song.songs_bands.find { |sb| sb.band_id == current_band.id }
+
+            {
+              id: song.id,
+              gig_song_id: gig_song.id,
+              position: gig_song.position,
+              title: song.title,
+              artist: song.artist,
+              key: song.key,
+              original_key: song.original_key,
+              duration: song.duration,
+              tempo: song.tempo,
+              notes: song.notes,
+              lyrics: song.lyrics,
+              url: song.url,
+              year: song.year,
+              album: song.album,
+              genre: song.genre,
+              # Enhanced mobile features
+              practice_state: songs_band&.practice_state || false,
+              practice_state_updated_at: songs_band&.practice_state_updated_at&.iso8601,
+              has_transition: gig_song.has_transition,
+              transition_type: gig_song.transition_type,
+              transition_timing: gig_song.transition_timing,
+              transition_notes: gig_song.transition_notes,
+              # Mobile display optimizations
+              display_key: song.key || song.original_key,
+              tempo_display: song.tempo ? "#{song.tempo} BPM" : nil,
+              duration_seconds: parse_duration_to_seconds(song.duration),
+              updated_at: song.updated_at.iso8601
+            }
+          end
+        }
+      end
+
+      gig_data.to_json
+
+    rescue ActiveRecord::RecordNotFound
+      status 404
+      { error: 'Gig not found' }.to_json
+    rescue => e
+      status 500
+      { error: 'Failed to fetch enhanced gig data' }.to_json
+    end
+  end
+
+  # Update practice state for a song in the current band
+  post '/api/gigs/:gig_id/songs/:song_id/practice_state' do
+    require_login
+    content_type :json
+
+    begin
+      gig = filter_by_current_band(Gig).find(params[:gig_id])
+      song = filter_by_current_band(Song).find(params[:song_id])
+
+      # Verify the song is in this gig
+      unless gig.songs.include?(song)
+        status 400
+        return { error: 'Song is not in this gig' }.to_json
+      end
+
+      practice_state = params[:practice_state] == true || params[:practice_state] == 'true'
+
+      # Find or create the songs_bands relationship
+      songs_band = song.songs_bands.find_by(band_id: current_band.id)
+      if songs_band
+        songs_band.update!(
+          practice_state: practice_state,
+          practice_state_updated_at: Time.current
+        )
+      else
+        # This shouldn't happen if the song is properly associated with the band
+        status 400
+        return { error: 'Song is not associated with current band' }.to_json
+      end
+
+      {
+        success: true,
+        data: {
+          song_id: song.id,
+          practice_state: practice_state,
+          practice_state_updated_at: songs_band.practice_state_updated_at.iso8601
+        }
+      }.to_json
+
+    rescue ActiveRecord::RecordNotFound
+      status 404
+      { error: 'Gig or song not found' }.to_json
+    rescue => e
+      status 500
+      { error: 'Failed to update practice state' }.to_json
+    end
+  end
+
+  # Get real-time updates for band members during gig mode
+  get '/api/gigs/:id/live_updates' do
+    require_login
+    content_type :json
+
+    begin
+      gig = filter_by_current_band(Gig).includes(:songs).find(params[:id])
+      since = params[:since] ? Time.parse(params[:since]) : 5.minutes.ago
+
+      # Get recently updated practice states
+      updated_songs = gig.songs.joins(:songs_bands)
+                               .where(songs_bands: { band_id: current_band.id })
+                               .where('songs_bands.practice_state_updated_at > ?', since)
+
+      updates = updated_songs.map do |song|
+        songs_band = song.songs_bands.find { |sb| sb.band_id == current_band.id }
+        {
+          song_id: song.id,
+          title: song.title,
+          practice_state: songs_band.practice_state,
+          practice_state_updated_at: songs_band.practice_state_updated_at.iso8601
+        }
+      end
+
+      {
+        data: {
+          gig_id: gig.id,
+          since: since.iso8601,
+          updates: updates,
+          generated_at: Time.current.iso8601
+        }
+      }.to_json
+
+    rescue ActiveRecord::RecordNotFound
+      status 404
+      { error: 'Gig not found' }.to_json
+    rescue ArgumentError
+      status 400
+      { error: 'Invalid timestamp format' }.to_json
+    rescue => e
+      status 500
+      { error: 'Failed to fetch live updates' }.to_json
+    end
+  end
+
+  # Get current set position and navigation info for gig mode
+  get '/api/gigs/:id/navigation' do
+    require_login
+    content_type :json
+
+    begin
+      gig = filter_by_current_band(Gig).includes(gig_songs: :song).find(params[:id])
+
+      # Organize sets for navigation
+      sets_data = {}
+      gig_songs_by_set = gig.gig_songs.order(:set_number, :position).group_by(&:set_number)
+
+      total_songs = 0
+      gig_songs_by_set.each do |set_number, gig_songs|
+        sets_data[set_number] = {
+          number: set_number,
+          song_count: gig_songs.count,
+          start_position: total_songs + 1,
+          end_position: total_songs + gig_songs.count,
+          songs: gig_songs.map { |gs|
+            total_songs += 1
+            {
+              id: gs.song.id,
+              gig_song_id: gs.id,
+              position: gs.position,
+              overall_position: total_songs,
+              title: gs.song.title,
+              artist: gs.song.artist,
+              key: gs.song.key,
+              duration: gs.song.duration,
+              has_transition: gs.has_transition,
+              transition_type: gs.transition_type
+            }
+          }
+        }
+        total_songs -= gig_songs.count # Reset for correct counting
+        total_songs += gig_songs.count
+      end
+
+      navigation_data = {
+        gig_id: gig.id,
+        total_sets: sets_data.keys.count,
+        total_songs: total_songs,
+        sets: sets_data,
+        generated_at: Time.current.iso8601
+      }
+
+      { data: navigation_data }.to_json
+
+    rescue ActiveRecord::RecordNotFound
+      status 404
+      { error: 'Gig not found' }.to_json
+    rescue => e
+      status 500
+      { error: 'Failed to fetch navigation data' }.to_json
+    end
+  end
+
+  private
+
+  def parse_duration_to_seconds(duration)
+    return nil unless duration&.match?(/^\d+:\d+$/)
+
+    parts = duration.split(':').map(&:to_i)
+    (parts[0] * 60) + parts[1]
+  end
+
   def calculate_gig_duration(songs)
     total_minutes = songs.sum do |song|
       if song.duration.present? && song.duration.match?(/^\d+:\d+$/)

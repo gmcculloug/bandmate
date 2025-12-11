@@ -78,6 +78,170 @@ class Routes::Authentication < Sinatra::Base
   end
 
   # ============================================================================
+  # MOBILE API AUTHENTICATION ROUTES
+  # ============================================================================
+
+  # Mobile login with extended session and JSON response
+  post '/api/auth/login' do
+    content_type :json
+
+    puts "params: #{params}"
+    user = User.where('LOWER(username) = ?', params[:username].downcase).first
+
+    if user && user.authenticate(params[:password])
+      session[:user_id] = user.id
+
+      # Restore the last selected band if it exists and user still has access to it
+      if user.last_selected_band && user.bands.include?(user.last_selected_band)
+        session[:band_id] = user.last_selected_band.id
+        selected_band = user.last_selected_band
+      elsif user.bands.any?
+        # If no saved band or user no longer has access, select the first band
+        session[:band_id] = user.bands.first.id
+        selected_band = user.bands.first
+      else
+        selected_band = nil
+      end
+
+      # Return user data with bands for mobile app
+      {
+        success: true,
+        data: {
+          user: {
+            id: user.id,
+            username: user.username,
+            email: user.email,
+            timezone: user.timezone
+          },
+          bands: user.bands.map { |band|
+            {
+              id: band.id,
+              name: band.name,
+              role: user.user_bands.find_by(band: band)&.role || 'member'
+            }
+          },
+          current_band: selected_band ? {
+            id: selected_band.id,
+            name: selected_band.name
+          } : nil
+        }
+      }.to_json
+    else
+      status 401
+      { success: false, error: "Invalid username or password" }.to_json
+    end
+  end
+
+  # Validate current session for mobile
+  get '/api/auth/session' do
+    content_type :json
+
+    if logged_in?
+      {
+        valid: true,
+        user: {
+          id: current_user.id,
+          username: current_user.username,
+          email: current_user.email,
+          timezone: current_user.timezone
+        },
+        current_band: current_band ? {
+          id: current_band.id,
+          name: current_band.name
+        } : nil
+      }.to_json
+    else
+      status 401
+      { valid: false, error: "Session expired or invalid" }.to_json
+    end
+  end
+
+  # Mobile logout
+  post '/api/auth/logout' do
+    content_type :json
+
+    if logged_in?
+      # Save the current band selection before clearing session
+      if current_band
+        current_user.update(last_selected_band_id: current_band.id)
+      end
+
+      session.clear
+      { success: true, message: "Logged out successfully" }.to_json
+    else
+      status 401
+      { success: false, error: "Not logged in" }.to_json
+    end
+  end
+
+  # Get current user with bands info for mobile
+  get '/api/auth/user' do
+    require_login
+    content_type :json
+
+    {
+      data: {
+        user: {
+          id: current_user.id,
+          username: current_user.username,
+          email: current_user.email,
+          timezone: current_user.timezone,
+          created_at: current_user.created_at.iso8601
+        },
+        bands: current_user.bands.map { |band|
+          user_band = current_user.user_bands.find_by(band: band)
+          {
+            id: band.id,
+            name: band.name,
+            role: user_band&.role || 'member',
+            notes: band.notes,
+            google_calendar_enabled: band.google_calendar_enabled,
+            created_at: band.created_at.iso8601
+          }
+        },
+        current_band: current_band ? {
+          id: current_band.id,
+          name: current_band.name
+        } : nil
+      }
+    }.to_json
+  end
+
+  # Switch active band for mobile
+  post '/api/auth/switch_band' do
+    require_login
+    content_type :json
+
+    band_id = params[:band_id]&.to_i
+
+    unless band_id
+      status 400
+      return { success: false, error: "Band ID is required" }.to_json
+    end
+
+    # Verify user has access to this band
+    band = current_user.bands.find_by(id: band_id)
+
+    if band
+      session[:band_id] = band.id
+      current_user.update(last_selected_band_id: band.id)
+
+      {
+        success: true,
+        data: {
+          current_band: {
+            id: band.id,
+            name: band.name
+          }
+        }
+      }.to_json
+    else
+      status 403
+      { success: false, error: "Access denied to this band" }.to_json
+    end
+  end
+
+  # ============================================================================
   # USER PROFILE AND ACCOUNT ROUTES
   # ============================================================================
 
