@@ -68,41 +68,57 @@ puts "Created/found band: #{on_tap_band.name} (owner: #{steve.username})"
 side_piece_users = ["greg", "vik", "gershom", "ingrid", "dave", "armaan"]
 side_piece_users.each do |username|
   user = users.find { |u| u.username == username }
-  if user && !side_piece_band.users.include?(user)
-    side_piece_band.users << user
-  end
+  next unless user
+
+  # Find or create UserBand entry with appropriate role
+  user_band = UserBand.find_or_initialize_by(user: user, band: side_piece_band)
+  role = username == "greg" ? "owner" : "member"
+  user_band.role = role
+  user_band.save!
+
   # Set as user's last selected band
-  user.update(last_selected_band: side_piece_band) if user
+  user.update(last_selected_band: side_piece_band)
 end
-puts "Added members to Side Piece: #{side_piece_users.join(', ')}"
+puts "Added members to Side Piece: #{side_piece_users.join(', ')} (Greg as owner)"
 
 # Assign users to Sound Bite band (Greg, Jim, Bill, DaveP, Deb, Courtney)
 sound_bite_users = ["greg", "jim", "bill", "davep", "deb", "courtney"]
 sound_bite_users.each do |username|
   user = users.find { |u| u.username == username }
-  if user && !sound_bite_band.users.include?(user)
-    sound_bite_band.users << user
-  end
+  next unless user
+
+  # Find or create UserBand entry with appropriate role
+  user_band = UserBand.find_or_initialize_by(user: user, band: sound_bite_band)
+  role = username == "greg" ? "owner" : "member"
+  user_band.role = role
+  user_band.save!
+
   # Set as user's last selected band if they're not already in Side Piece
   unless side_piece_users.include?(username)
-    user.update(last_selected_band: sound_bite_band) if user
+    user.update(last_selected_band: sound_bite_band)
   end
 end
-puts "Added members to Sound Bite: #{sound_bite_users.join(', ')}"
+puts "Added members to Sound Bite: #{sound_bite_users.join(', ')} (Greg as owner)"
 
 # Assign users to On Tap band (Steve, Faith, Greg, GregB, Vik, Jen)
 on_tap_users = ["steve", "faith", "greg", "gregb", "vik", "jen"]
 on_tap_users.each do |username|
   user = users.find { |u| u.username == username }
-  if user && !on_tap_band.users.include?(user)
-    on_tap_band.users << user
-  end
+  next unless user
+
+  # Find or create UserBand entry with appropriate role
+  user_band = UserBand.find_or_initialize_by(user: user, band: on_tap_band)
+  # Assign appropriate role: Steve gets owner (primary owner), Greg gets owner (he's in multiple bands as owner)
+  role = (username == "steve" || username == "greg") ? "owner" : "member"
+  user_band.role = role
+  user_band.save!
+
   # Set as user's last selected band if they're not already in other bands
   unless side_piece_users.include?(username) || sound_bite_users.include?(username)
-    user.update(last_selected_band: on_tap_band) if user
+    user.update(last_selected_band: on_tap_band)
   end
 end
-puts "Added members to On Tap: #{on_tap_users.join(', ')}"
+puts "Added members to On Tap: #{on_tap_users.join(', ')} (Steve and Greg as owners)"
 
 # Use shared song data
 song_catalogs = []
@@ -316,3 +332,12 @@ puts "- #{Song.count} band-specific songs"
 puts "- #{Venue.count} venues"
 puts "- #{Gig.count} gigs (past and future)"
 puts "- #{GigSong.count} gig songs"
+
+puts "\nBand ownership structure:"
+Band.all.each do |band|
+  owners = UserBand.where(band: band, role: 'owner').includes(:user).map { |ub| ub.user.username }
+  members = UserBand.where(band: band, role: 'member').includes(:user).map { |ub| ub.user.username }
+  puts "- #{band.name}:"
+  puts "  Owners: #{owners.any? ? owners.join(', ') : 'None'}"
+  puts "  Members: #{members.any? ? members.join(', ') : 'None'}"
+end
