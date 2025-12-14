@@ -1,6 +1,6 @@
-# Bandmate Docker Configuration
+# Band Huddle Docker Configuration
 
-This document explains how to run Bandmate with Docker using HTTPS and an external PostgreSQL database.
+This document explains how to run Band Huddle with Docker using HTTPS and an external PostgreSQL database.
 
 ## Configuration Changes
 
@@ -23,12 +23,12 @@ Edit `.env` with your database details:
 
 ```bash
 # Required: Account creation secret
-BANDMATE_ACCT_CREATION_SECRET=your_secret_key_here
+BAND_HUDDLE_ACCT_CREATION_SECRET=your_secret_key_here
 
 # Required: External PostgreSQL connection
 DATABASE_HOST=your_postgres_host
 DATABASE_PORT=5432
-DATABASE_NAME=bandmate_production
+DATABASE_NAME=band-huddle_production
 DATABASE_USERNAME=your_db_user
 DATABASE_PASSWORD=your_db_password
 ```
@@ -40,7 +40,7 @@ DATABASE_PASSWORD=your_db_password
 docker-compose up -d
 
 # View logs
-docker-compose logs -f bandmate
+docker-compose logs -f band-huddle
 ```
 
 ### 3. Access the Application
@@ -89,9 +89,9 @@ Place your certificates in `./custom-ssl/`:
 3. Verify mounted certificate files have correct permissions
 
 ### Environment Variables
-- Use `docker-compose logs bandmate` to see startup messages
+- Use `docker-compose logs band-huddle` to see startup messages
 - Verify environment variables are set correctly in `.env`
-- Check that `BANDMATE_ACCT_CREATION_SECRET` is configured
+- Check that `BAND_HUDDLE_ACCT_CREATION_SECRET` is configured
 
 ## Previous Internal PostgreSQL
 

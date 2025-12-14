@@ -101,7 +101,7 @@ module ApplicationHelpers
     (calendar_start..calendar_end).to_a
   end
   
-  def gigs_for_date(date, current_band_gigs: [], other_band_gigs: [], bandmate_conflicts: [], blackout_dates: [])
+  def gigs_for_date(date, current_band_gigs: [], other_band_gigs: [], band_huddle_conflicts: [], blackout_dates: [])
     gigs = {}
     
     # Current band gigs
@@ -116,8 +116,8 @@ module ApplicationHelpers
       gigs[:other] << gig
     end
     
-    # Bandmate conflicts
-    bandmate_conflicts.select { |gig| gig.performance_date == date }.each do |gig|
+    # Band Huddle conflicts
+    band_huddle_conflicts.select { |gig| gig.performance_date == date }.each do |gig|
       gigs[:conflicts] ||= []
       gigs[:conflicts] << gig
     end
@@ -137,7 +137,7 @@ module ApplicationHelpers
       date,
       current_band_gigs: @current_band_gigs || [],
       other_band_gigs: @other_band_gigs || [],
-      bandmate_conflicts: @bandmate_conflicts || [],
+      band_huddle_conflicts: @band_huddle_conflicts || [],
       blackout_dates: @blackout_dates || []
     )
   end

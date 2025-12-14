@@ -1,4 +1,4 @@
-# 🎸 Bandmate - Band Management System
+# 🎸 Band Huddle - Band Management System
 
 A Sinatra-based web application for managing bands, songs, set lists, and venues.
 
@@ -32,13 +32,13 @@ This will:
 The application requires certain environment variables to be set for security and functionality:
 
 - **SESSION_SECRET**: A secure random string for session encryption (at least 64 characters)
-- **BANDMATE_ACCT_CREATION_SECRET**: An account creation code required for new user registration
+- **BAND_HUDDLE_ACCT_CREATION_SECRET**: An account creation code required for new user registration
 - **GOOGLE_SERVICE_ACCOUNT_JSON**: JSON credentials for Google Calendar integration (optional)
 
 You can set these in several ways:
 1. Create a `.env` file in the project root (copy from `env.example`)
-2. Export them in your shell: `export BANDMATE_ACCT_CREATION_SECRET=your_account_creation_code`
-3. Set them when running the app: `BANDMATE_ACCT_CREATION_SECRET=your_account_creation_code ruby app.rb`
+2. Export them in your shell: `export BAND_HUDDLE_ACCT_CREATION_SECRET=your_account_creation_code`
+3. Set them when running the app: `BAND_HUDDLE_ACCT_CREATION_SECRET=your_account_creation_code ruby app.rb`
 
 ### Running the Application
 ```bash
@@ -90,7 +90,7 @@ YYYYMMDDHHMMSS_descriptive_name.rb
 ## 📁 Project Structure
 
 ```
-bandmate/
+band-huddle/
 ├── app.rb                 # Main application file
 ├── Gemfile               # Dependencies
 ├── Rakefile              # Database tasks
@@ -115,13 +115,13 @@ bandmate/
 
 ## 📅 Google Calendar Integration
 
-Bandmate includes optional Google Calendar integration that allows bands to automatically sync their gigs to a shared Google Calendar. This enables band members to see upcoming performances in their personal calendar apps.
+Band Huddle includes optional Google Calendar integration that allows bands to automatically sync their gigs to a shared Google Calendar. This enables band members to see upcoming performances in their personal calendar apps.
 
 ### Features
 - **Automatic Sync**: Gigs are automatically synced when created, updated, or deleted
 - **Shared Calendars**: Each band can have its own Google Calendar
 - **Event Details**: Includes venue information, performance times, and setlists
-- **Real-time Updates**: Changes in Bandmate are immediately reflected in Google Calendar
+- **Real-time Updates**: Changes in Band Huddle are immediately reflected in Google Calendar
 
 ### Setup
 Google Calendar integration requires additional setup including:

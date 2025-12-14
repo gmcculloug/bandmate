@@ -80,7 +80,7 @@ if ENV['VALKEY_ENABLED'] == 'true'
 
   use Rack::Session::Redis,
       redis_server: "redis://#{ENV['VALKEY_HOST'] || 'valkey'}:#{ENV['VALKEY_PORT'] || 6379}/#{ENV['VALKEY_DB'] || 0}",
-      key: '_bandmate_session',
+      key: '_band_huddle_session',
       secret: session_secret
 
 else
@@ -130,7 +130,7 @@ use Routes::Api
 use Routes::MobileAPI
 
 # Account creation code for user registration (required)
-# Set BANDMATE_ACCT_CREATION_SECRET environment variable to enable account creation
+# Set BAND_HUDDLE_ACCT_CREATION_SECRET environment variable to enable account creation
 
 # Database configuration
 configure :development do
@@ -138,7 +138,7 @@ configure :development do
     adapter: 'postgresql',
     host: ENV['DATABASE_HOST'] || 'localhost',
     port: ENV['DATABASE_PORT'] || 5432,
-    database: ENV['DATABASE_NAME'] || 'bandmate_development',
+    database: ENV['DATABASE_NAME'] || 'band_huddle_development',
     username: ENV['DATABASE_USERNAME'] || 'postgres',
     password: ENV['DATABASE_PASSWORD'] || ''
   }
@@ -153,7 +153,7 @@ configure :production do
       adapter: 'postgresql',
       host: ENV['DATABASE_HOST'] || 'localhost',
       port: ENV['DATABASE_PORT'] || 5432,
-      database: ENV['DATABASE_NAME'] || 'bandmate_production',
+      database: ENV['DATABASE_NAME'] || 'band_huddle_production',
       username: ENV['DATABASE_USERNAME'] || 'postgres',
       password: ENV['DATABASE_PASSWORD'] || ''
     }
@@ -165,7 +165,7 @@ configure :test do
     adapter: 'postgresql',
     host: ENV['DATABASE_HOST'] || 'localhost',
     port: ENV['DATABASE_PORT'] || 5432,
-    database: ENV['DATABASE_NAME'] || 'bandmate_test',
+    database: ENV['DATABASE_NAME'] || 'band_huddle_test',
     username: ENV['DATABASE_USERNAME'] || 'postgres',
     password: ENV['DATABASE_PASSWORD'] || ''
   }
@@ -244,7 +244,7 @@ end
 
 # Start the server
 if __FILE__ == $0
-  puts "🎸 Bandmate is starting up..."
+  puts "🎸 Band Huddle is starting up..."
   puts ""
   puts "📡 Starting HTTP server on port 4567"
 

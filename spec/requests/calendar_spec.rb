@@ -66,11 +66,11 @@ RSpec.describe 'Calendar API', type: :request do
       expect(last_response.body).to include(other_gig.name)
     end
 
-    it 'shows bandmate conflicts' do
+    it 'shows band_huddle conflicts' do
       login_as(user, band)
-      bandmate_band = create(:band, owner: other_user)
+      band_huddle_band = create(:band, owner: other_user)
       # UserBand relationship is automatically created by the band factory
-      conflict_gig = create(:gig, band: bandmate_band, performance_date: Date.current + 1.day)
+      conflict_gig = create(:gig, band: band_huddle_band, performance_date: Date.current + 1.day)
       
       get '/calendar'
       

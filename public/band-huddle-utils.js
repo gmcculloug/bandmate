@@ -1,5 +1,5 @@
 /**
- * Bandmate Shared JavaScript Utilities
+ * Band Huddle Shared JavaScript Utilities
  * Common functionality used across multiple views
  */
 

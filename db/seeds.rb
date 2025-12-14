@@ -4,21 +4,21 @@ puts "Seeding database with sample data..."
 
 # Create users with password "test123"
 users_data = [
-  { username: "greg", email: "greg@bandmate.com" },
-  { username: "vik", email: "vik@bandmate.com" },
-  { username: "gershom", email: "gershom@bandmate.com" },
-  { username: "ingrid", email: "ingrid@bandmate.com" },
-  { username: "dave", email: "dave@bandmate.com" },
-  { username: "armaan", email: "armaan@bandmate.com" },
-  { username: "jim", email: "jim@bandmate.com" },
-  { username: "bill", email: "bill@bandmate.com" },
-  { username: "davep", email: "davep@bandmate.com" },
-  { username: "deb", email: "deb@bandmate.com" },
-  { username: "courtney", email: "courtney@bandmate.com" },
-  { username: "steve", email: "steve@bandmate.com" },
-  { username: "faith", email: "faith@bandmate.com" },
-  { username: "gregb", email: "gregb@bandmate.com" },
-  { username: "jen", email: "jen@bandmate.com" }
+  { username: "greg", email: "greg@bandhuddle.com" },
+  { username: "vik", email: "vik@bandhuddle.com" },
+  { username: "gershom", email: "gershom@bandhuddle.com" },
+  { username: "ingrid", email: "ingrid@bandhuddle.com" },
+  { username: "dave", email: "dave@bandhuddle.com" },
+  { username: "armaan", email: "armaan@bandhuddle.com" },
+  { username: "jim", email: "jim@bandhuddle.com" },
+  { username: "bill", email: "bill@bandhuddle.com" },
+  { username: "davep", email: "davep@bandhuddle.com" },
+  { username: "deb", email: "deb@bandhuddle.com" },
+  { username: "courtney", email: "courtney@bandhuddle.com" },
+  { username: "steve", email: "steve@bandhuddle.com" },
+  { username: "faith", email: "faith@bandhuddle.com" },
+  { username: "gregb", email: "gregb@bandhuddle.com" },
+  { username: "jen", email: "jen@bandhuddle.com" }
 ]
 
 users = []

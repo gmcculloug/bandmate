@@ -13,14 +13,14 @@ RSpec.describe ApplicationHelpers, type: :helper do
     let(:date) { Date.current + 1.day }
     let(:current_band_gigs) { [] }
     let(:other_band_gigs) { [] }
-    let(:bandmate_conflicts) { [] }
+    let(:band_huddle_conflicts) { [] }
     let(:blackout_dates) { [] }
 
     it 'returns empty hash when no gigs or blackouts' do
       result = gigs_for_date(date, 
         current_band_gigs: current_band_gigs,
         other_band_gigs: other_band_gigs,
-        bandmate_conflicts: bandmate_conflicts,
+        band_huddle_conflicts: band_huddle_conflicts,
         blackout_dates: blackout_dates
       )
       
@@ -34,7 +34,7 @@ RSpec.describe ApplicationHelpers, type: :helper do
       result = gigs_for_date(date, 
         current_band_gigs: [gig1, gig2],
         other_band_gigs: other_band_gigs,
-        bandmate_conflicts: bandmate_conflicts,
+        band_huddle_conflicts: band_huddle_conflicts,
         blackout_dates: blackout_dates
       )
       
@@ -49,7 +49,7 @@ RSpec.describe ApplicationHelpers, type: :helper do
       result = gigs_for_date(date, 
         current_band_gigs: current_band_gigs,
         other_band_gigs: [gig1, gig2],
-        bandmate_conflicts: bandmate_conflicts,
+        band_huddle_conflicts: band_huddle_conflicts,
         blackout_dates: blackout_dates
       )
       
@@ -57,14 +57,14 @@ RSpec.describe ApplicationHelpers, type: :helper do
       expect(result[:other]).not_to include(gig2)
     end
 
-    it 'includes bandmate conflicts for the date' do
+    it 'includes band huddle conflicts for the date' do
       conflict1 = double('gig', performance_date: date, name: 'Conflict 1')
       conflict2 = double('gig', performance_date: date + 1.day, name: 'Conflict 2')
       
       result = gigs_for_date(date, 
         current_band_gigs: current_band_gigs,
         other_band_gigs: other_band_gigs,
-        bandmate_conflicts: [conflict1, conflict2],
+        band_huddle_conflicts: [conflict1, conflict2],
         blackout_dates: blackout_dates
       )
       
@@ -79,7 +79,7 @@ RSpec.describe ApplicationHelpers, type: :helper do
       result = gigs_for_date(date, 
         current_band_gigs: current_band_gigs,
         other_band_gigs: other_band_gigs,
-        bandmate_conflicts: bandmate_conflicts,
+        band_huddle_conflicts: band_huddle_conflicts,
         blackout_dates: [blackout1, blackout2]
       )
       
@@ -96,7 +96,7 @@ RSpec.describe ApplicationHelpers, type: :helper do
       result = gigs_for_date(date, 
         current_band_gigs: [current_gig],
         other_band_gigs: [other_gig],
-        bandmate_conflicts: [conflict],
+        band_huddle_conflicts: [conflict],
         blackout_dates: [blackout]
       )
       
@@ -113,7 +113,7 @@ RSpec.describe ApplicationHelpers, type: :helper do
     before do
       @current_band_gigs = []
       @other_band_gigs = []
-      @bandmate_conflicts = []
+      @band_huddle_conflicts = []
       @blackout_dates = []
     end
 
@@ -129,7 +129,7 @@ RSpec.describe ApplicationHelpers, type: :helper do
     it 'handles nil instance variables' do
       @current_band_gigs = nil
       @other_band_gigs = nil
-      @bandmate_conflicts = nil
+      @band_huddle_conflicts = nil
       @blackout_dates = nil
       
       result = gigs_for_date_legacy(date)

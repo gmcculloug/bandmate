@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### Database Management
 - **Setup database**: `rake db:setup` (runs migrations + seeds)
-- **Create PostgreSQL database**: `createdb bandmate_development` and `createdb bandmate_test`
+- **Create PostgreSQL database**: `createdb band_huddle_development` and `createdb band_huddle_test`
 - **Create migration**: `rake db:create_migration NAME=migration_name`
 - **Run migrations**: `rake db:migrate`
 - **Check migration status**: `rake db:status`
@@ -27,9 +27,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ### Docker Commands
 - **Start with Docker Compose**: `docker-compose up -d` (includes PostgreSQL)
 - **Stop Docker services**: `docker-compose down`
-- **View logs**: `docker-compose logs -f bandmate`
-- **Run migrations in Docker**: `docker-compose exec bandmate bundle exec rake db:migrate`
-- **Access PostgreSQL in Docker**: `docker-compose exec postgres psql -U bandmate -d bandmate_production`
+- **View logs**: `docker-compose logs -f band-huddle`
+- **Run migrations in Docker**: `docker-compose exec band-huddle bundle exec rake db:migrate`
+- **Access PostgreSQL in Docker**: `docker-compose exec postgres psql -U band-huddle -d band-huddle_production`
 
 ## Architecture Overview
 
@@ -47,8 +47,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **SetListSong**: Join table with position ordering for songs in set lists
 
 ### Database Configuration
-- Development: `bandmate_development` PostgreSQL database
-- Test: `bandmate_test` PostgreSQL database
+- Development: `band-huddle_development` PostgreSQL database
+- Test: `band-huddle_test` PostgreSQL database
 - Production: Uses `DATABASE_URL` environment variable or individual PostgreSQL connection env vars
 - Environment variables: `DATABASE_HOST`, `DATABASE_PORT`, `DATABASE_NAME`, `DATABASE_USERNAME`, `DATABASE_PASSWORD`
 
@@ -64,7 +64,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 #### Environment Variables
 - `SESSION_SECRET`: Strong session encryption key (production requirement)
-- `BANDMATE_ACCT_CREATION_SECRET`: Controls user registration access
+- `BAND_HUDDLE_ACCT_CREATION_SECRET`: Controls user registration access
 
 ### Custom Migration System
 This project implements a custom migration system (not Rails migrations):

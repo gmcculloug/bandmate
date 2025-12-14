@@ -213,7 +213,7 @@ class OauthService
 
       # GitHub requires User-Agent header
       if provider.to_s == 'github'
-        request['User-Agent'] = 'Bandmate-OAuth-Client'
+        request['User-Agent'] = 'BandHuddle-OAuth-Client'
         puts "[OAUTH DEBUG] Added User-Agent header for GitHub"
       end
 
@@ -318,7 +318,7 @@ class OauthService
 
     # Validate account creation code
     def validate_account_creation_code(code)
-      login_secret = ENV['BANDMATE_ACCT_CREATION_SECRET']
+      login_secret = ENV['BAND_HUDDLE_ACCT_CREATION_SECRET']
 
       # Check if secret is configured
       if login_secret.nil? || login_secret.empty?

@@ -34,7 +34,7 @@ services:
       --appendfsync everysec
 
   db-migrate:
-    image: bandmate
+    image: band-huddle
     environment:
       - RACK_ENV=production
       - DATABASE_HOST=postgres
@@ -54,8 +54,8 @@ services:
       "
     restart: "no"
 
-  bandmate:
-    image: bandmate
+  band-huddle:
+    image: band-huddle
     expose:
       - "4567"  # Only expose to internal network, nginx will handle external access
     volumes:
@@ -64,7 +64,7 @@ services:
     environment:
       - RACK_ENV=production
       - PORT=4567
-      - BANDMATE_ACCT_CREATION_SECRET=${BANDMATE_ACCT_CREATION_SECRET:-your_secret_here}
+      - BAND_HUDDLE_ACCT_CREATION_SECRET=${BAND_HUDDLE_ACCT_CREATION_SECRET:-your_secret_here}
       # PostgreSQL connection settings for Docker service
       - DATABASE_HOST=postgres
       - DATABASE_PORT=${DATABASE_PORT}
@@ -92,8 +92,8 @@ services:
       start_period: 10s
     command: >
       sh -c "
-        echo 'BANDMATE_ACCT_CREATION_SECRET: ${BANDMATE_ACCT_CREATION_SECRET}' &&
-        echo 'Starting Bandmate application (HTTP - SSL handled by nginx)...' &&
+        echo 'BAND_HUDDLE_ACCT_CREATION_SECRET: ${BAND_HUDDLE_ACCT_CREATION_SECRET}' &&
+        echo 'Starting Band Huddle application (HTTP - SSL handled by nginx)...' &&
         ruby app.rb
       "
 
@@ -107,7 +107,7 @@ services:
       - ./ssl:/etc/nginx/ssl:Z
       - ./logs/nginx:/var/log/nginx:Z
     depends_on:
-      - bandmate
+      - band-huddle
     restart: unless-stopped
 
 volumes:

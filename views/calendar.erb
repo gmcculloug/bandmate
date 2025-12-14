@@ -99,11 +99,11 @@
                     <% end %>
                 <% end %>
                 
-                <!-- Bandmate conflicts -->
+                <!-- Band Huddle conflicts -->
                 <% if gigs[:conflicts] %>
                     <% gigs[:conflicts].each do |gig| %>
-                        <div class="gig-event conflict" title="Bandmate busy with <%= gig.band.name %>: <%= gig.name %>">
-                            Bandmate busy - <%= gig.band.name %>
+                        <div class="gig-event conflict" title="Band Huddle busy with <%= gig.band.name %>: <%= gig.name %>">
+                            Band Huddle busy - <%= gig.band.name %>
                         </div>
                     <% end %>
                 <% end %>

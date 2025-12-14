@@ -61,7 +61,7 @@ class Routes::Api < Sinatra::Base
       http.use_ssl = true
       
       request = Net::HTTP::Get.new(uri)
-      request['User-Agent'] = 'Mozilla/5.0 (compatible; Bandmate/1.0)'
+      request['User-Agent'] = 'Mozilla/5.0 (compatible; BandHuddle/1.0)'
       
       response = http.request(request)
       

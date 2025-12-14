@@ -1,4 +1,4 @@
-// Bandmate Gig Mode JavaScript
+// Band Huddle Gig Mode JavaScript
 // Handles offline caching, UI interactions, and performance optimizations
 
 class GigMode {
@@ -142,7 +142,7 @@ class GigMode {
             // Try to load from cache if network fails
             if (!this.isOnline && 'caches' in window) {
                 try {
-                    const cache = await caches.open('bandmate-gig-data-v1');
+                    const cache = await caches.open('band-huddle-gig-data-v1');
                     const cachedResponse = await cache.match(`/api/gigs/${gigId}/gig_mode`);
 
                     if (cachedResponse) {

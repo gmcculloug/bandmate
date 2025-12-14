@@ -59,14 +59,14 @@ class Routes::Calendar < Sinatra::Base
                           .includes(:band, :venue)
                           .order(:performance_date)
     
-    # Get bandmate conflicts (other users in current band who have gigs with different bands)
+    # Get band huddle conflicts (other users in current band who have gigs with different bands)
     # Exclude bands that are already shown in "Other Bands" to avoid redundancy
-    @bandmate_conflicts = if current_band
+    @band_huddle_conflicts = if current_band
       # Get all users in current band except current user
-      bandmate_ids = current_band.users.where.not(id: current_user.id).pluck(:id)
+      band_huddle_ids = current_band.users.where.not(id: current_user.id).pluck(:id)
 
-      # Get bands of those bandmates (excluding current band)
-      bandmate_band_ids = UserBand.where(user_id: bandmate_ids)
+      # Get bands of those band huddle members (excluding current band)
+      band_huddle_band_ids = UserBand.where(user_id: band_huddle_ids)
                                  .where.not(band_id: current_band.id)
                                  .pluck(:band_id)
 
@@ -74,7 +74,7 @@ class Routes::Calendar < Sinatra::Base
       other_band_ids = @other_band_gigs.map(&:band_id).uniq
 
       # Exclude bands that are already shown in "Other Bands" section
-      conflict_band_ids = bandmate_band_ids - other_band_ids
+      conflict_band_ids = band_huddle_band_ids - other_band_ids
 
       # Get gigs from those remaining bands for the full calendar range
       if conflict_band_ids.any?
@@ -92,8 +92,8 @@ class Routes::Calendar < Sinatra::Base
     
     # Get blackout dates for all users in current band for the full calendar range (if there is one)
     if current_band
-      bandmate_ids = current_band.users.pluck(:id)
-      @blackout_dates = BlackoutDate.where(user_id: bandmate_ids)
+      band_huddle_ids = current_band.users.pluck(:id)
+      @blackout_dates = BlackoutDate.where(user_id: band_huddle_ids)
                                     .where(blackout_date: calendar_start..calendar_end)
                                     .includes(:user)
     else

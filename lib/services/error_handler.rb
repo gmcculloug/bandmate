@@ -1,4 +1,4 @@
-# ErrorHandler provides centralized error handling utilities for the Bandmate application.
+# ErrorHandler provides centralized error handling utilities for the Band Huddle application.
 #
 # This service standardizes error handling across different contexts:
 # - HTML form error display

@@ -1,6 +1,6 @@
 # Google Calendar Integration Setup Guide
 
-This guide explains how to set up Google Calendar integration for your Bandmate app, allowing bands to sync their gigs to Google Calendar.
+This guide explains how to set up Google Calendar integration for your Band Huddle app, allowing bands to sync their gigs to Google Calendar.
 
 ## Overview
 
@@ -29,8 +29,8 @@ The Google Calendar integration allows each band to:
 1. Go to "APIs & Services" > "Credentials"
 2. Click "Create Credentials" > "Service Account"
 3. Fill in the service account details:
-   - Name: `bandmate-calendar-service`
-   - Description: `Service account for Bandmate Google Calendar integration`
+   - Name: `band-huddle-calendar-service`
+   - Description: `Service account for Band Huddle Google Calendar integration`
 4. Click "Create and Continue"
 5. Skip the "Grant access" step for now
 6. Click "Done"
@@ -79,7 +79,7 @@ For each band that wants to use Google Calendar integration:
 
 ### 7. Configure Band Settings
 
-1. In Bandmate, go to your band's edit page
+1. In Band Huddle, go to your band's edit page
 2. Scroll down to "Google Calendar Integration"
 3. Check "Enable Google Calendar Sync"
 4. Enter the Calendar ID you copied in step 6
@@ -125,7 +125,7 @@ Each gig becomes a Google Calendar event with:
 - Look at the server logs for error messages
 
 ### Service Account Email
-The service account email looks like: `bandmate-calendar-service@your-project-id.iam.gserviceaccount.com`
+The service account email looks like: `band-huddle-calendar-service@your-project-id.iam.gserviceaccount.com`
 
 ## Security Notes
 

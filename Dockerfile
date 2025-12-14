@@ -40,9 +40,9 @@ ENV PORT=4567
 EXPOSE 4567
 
 # Create a non-root user for security
-RUN useradd -m -u 1000 bandmate && \
-    chown -R bandmate:bandmate /app
-USER bandmate
+RUN useradd -m -u 1000 band-huddle && \
+    chown -R band-huddle:band-huddle /app
+USER band-huddle
 
 # Health check (use HTTPS with self-signed cert)
 HEALTHCHECK --interval=30s --timeout=3s --start-period=30s --retries=3 \

@@ -14,7 +14,7 @@ PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 NGINX_CONF="${PROJECT_ROOT}/config/nginx-local.conf"
 LOG_DIR="${PROJECT_ROOT}/nginx/logs"
 
-echo -e "${BLUE}🚀 Starting nginx for Bandmate local development${NC}"
+echo -e "${BLUE}🚀 Starting nginx for Band Huddle local development${NC}"
 echo ""
 
 # Check if nginx is installed
@@ -90,7 +90,7 @@ if pgrep nginx > /dev/null; then
     echo ""
     echo -e "${BLUE}📡 Your application is now available at:${NC}"
     echo "  • HTTPS: https://localhost"
-    echo "  • HTTPS: https://bandmate.local (add to /etc/hosts if needed)"
+    echo "  • HTTPS: https://band-huddle.local (add to /etc/hosts if needed)"
     echo ""
     echo -e "${YELLOW}💡 Make sure your Sinatra app is running on port 4567:${NC}"
     echo "  ruby app.rb"

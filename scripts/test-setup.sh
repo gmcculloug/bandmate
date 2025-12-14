@@ -9,7 +9,7 @@ NC='\033[0m' # No Color
 
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
-echo -e "${BLUE}🧪 Testing Bandmate HTTPS setup${NC}"
+echo -e "${BLUE}🧪 Testing Band Huddle HTTPS setup${NC}"
 echo ""
 
 # Test 1: Check if SSL certificates exist
@@ -120,10 +120,10 @@ echo "   ./scripts/start-nginx.sh"
 echo ""
 echo "4. Visit your application:"
 echo "   https://localhost"
-echo "   https://bandmate.local (requires hosts file entry)"
+echo "   https://band-huddle.local (requires hosts file entry)"
 echo ""
-echo -e "${YELLOW}To add bandmate.local to your hosts file:${NC}"
-echo "   echo '127.0.0.1 bandmate.local' | sudo tee -a /etc/hosts"
+echo -e "${YELLOW}To add band-huddle.local to your hosts file:${NC}"
+echo "   echo '127.0.0.1 band-huddle.local' | sudo tee -a /etc/hosts"
 echo ""
 echo -e "${YELLOW}To stop nginx:${NC}"
 echo "   ./scripts/stop-nginx.sh"

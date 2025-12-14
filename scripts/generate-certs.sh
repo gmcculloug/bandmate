@@ -81,7 +81,7 @@ req_extensions = v3_req
 C=US
 ST=Development
 L=Local
-O=Bandmate Local Development
+O=Band Huddle Local Development
 OU=Development Team
 CN=localhost
 
@@ -92,8 +92,8 @@ subjectAltName = @alt_names
 
 [alt_names]
 DNS.1 = localhost
-DNS.2 = bandmate.local
-DNS.3 = *.bandmate.local
+DNS.2 = band-huddle.local
+DNS.3 = *.band-huddle.local
 IP.1 = 127.0.0.1
 IP.2 = ::1
 EOF

@@ -1,4 +1,4 @@
-# IconHelpers module provides centralized icon management for the Bandmate application.
+# IconHelpers module provides centralized icon management for the Band Huddle application.
 #
 # This module contains all SVG icon definitions used throughout the application,
 # providing a consistent and maintainable way to manage UI icons.

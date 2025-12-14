@@ -45,7 +45,7 @@ class Routes::Authentication < Sinatra::Base
 
   post '/signup' do
     # Validate account creation code
-    login_secret = ENV['BANDMATE_ACCT_CREATION_SECRET']
+    login_secret = ENV['BAND_HUDDLE_ACCT_CREATION_SECRET']
     if login_secret.nil? || login_secret.empty?
       @errors = ["Account creation code not configured. Please contact administrator."]
       return erb :signup, layout: :layout

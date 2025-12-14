@@ -22,7 +22,7 @@ class ApplicationConfig
     end
 
     def account_creation_secret
-      ENV['BANDMATE_ACCT_CREATION_SECRET'] || default_account_creation_secret
+      ENV['BAND_HUDDLE_ACCT_CREATION_SECRET'] || default_account_creation_secret
     end
 
     def google_service_account_json
@@ -74,11 +74,11 @@ class ApplicationConfig
     def database_name
       case environment
       when 'development'
-        ENV['DATABASE_NAME'] || 'bandmate_development'
+        ENV['DATABASE_NAME'] || 'band_huddle_development'
       when 'test'
-        ENV['DATABASE_NAME'] || 'bandmate_test'
+        ENV['DATABASE_NAME'] || 'band_huddle_test'
       when 'production'
-        ENV['DATABASE_NAME'] || 'bandmate_production'
+        ENV['DATABASE_NAME'] || 'band_huddle_production'
       end
     end
 
@@ -102,7 +102,7 @@ class ApplicationConfig
       if environment == 'development'
         'dev_account_creation_code'
       else
-        raise("BANDMATE_ACCT_CREATION_SECRET environment variable must be set for #{environment} environment")
+        raise("BAND_HUDDLE_ACCT_CREATION_SECRET environment variable must be set for #{environment} environment")
       end
     end
   end

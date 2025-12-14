@@ -1,8 +1,8 @@
-// Bandmate Gig Mode Service Worker
+// Band Huddle Gig Mode Service Worker
 // Provides offline caching for gig mode functionality
 
-const CACHE_NAME = 'bandmate-gig-mode-v1';
-const GIG_DATA_CACHE = 'bandmate-gig-data-v1';
+const CACHE_NAME = 'band-huddle-gig-mode-v1';
+const GIG_DATA_CACHE = 'band-huddle-gig-data-v1';
 
 // Static assets to always cache
 const STATIC_ASSETS = [
