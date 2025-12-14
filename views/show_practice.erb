@@ -13,7 +13,7 @@
             </span>
         </h2>
         <p style="color: #718096; margin: 0 0 0 0; font-size: 0.9em;">
-            Created by <%= @practice.created_by_user.username %>
+            Created by <%= @practice.created_by_user.display_name_or_fallback %>
         </p>
     </div>
     <div class="page-actions" style="display: flex; gap: 10px; flex-wrap: wrap;">
@@ -185,7 +185,7 @@
                                                onchange="handleUserSelection(this)"
                                                style="margin: 0;">
                                         <label for="user_<%= member.id %>" style="margin: 0; cursor: pointer; display: flex; align-items: center; gap: 4px;">
-                                            <%= member.username %>
+                                            <%= member.display_name_or_fallback %>
                                             <% if member == current_user %>
                                                 <span style="color: #667eea; font-size: 0.8em;">(You)</span>
                                             <% end %>
@@ -326,7 +326,7 @@
                         <% member_availabilities = @practice.practice_availabilities.where(user: member).index_by(&:specific_date) %>
                         <tr style="border-bottom: 1px solid #f1f5f9;">
                             <td style="padding: 12px; font-weight: 500;">
-                                <%= member.username %>
+                                <%= member.display_name_or_fallback %>
                                 <% if member == current_user %>
                                     <span style="color: #667eea; font-size: 0.8em;">(You)</span>
                                 <% end %>

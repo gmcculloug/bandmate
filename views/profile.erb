@@ -18,6 +18,12 @@
             <input type="hidden" name="_method" value="PUT">
             
             <div class="form-group">
+                <label for="display_name">Display Name:</label>
+                <input type="text" id="display_name" name="user[display_name]" value="<%= current_user.display_name %>" placeholder="Enter your display name" required maxlength="100">
+                <small>This is how your name will appear to other band members</small>
+            </div>
+
+            <div class="form-group">
                 <label for="username">Username:</label>
                 <input type="text" id="username" name="user[username]" value="<%= current_user.username %>" readonly style="background-color: #f3f4f6;">
                 <small>Username cannot be changed</small>

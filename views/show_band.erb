@@ -43,7 +43,7 @@
                     <div style="display: flex; justify-content: space-between; align-items: center;">
                         <div style="flex: 1;">
                             <div style="font-weight: 600; font-size: 1rem;">
-                                <%= user.username %>
+                                <%= user.display_name_or_fallback %>
                                 <% if user == current_user %>
                                     <span style="background: #667eea; color: white; padding: 2px 6px; border-radius: 10px; font-size: 0.75rem; margin-left: 8px;">You</span>
                                 <% end %>

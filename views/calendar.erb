@@ -111,7 +111,7 @@
                 <!-- Blackout dates -->
                 <% if gigs[:blackouts] %>
                     <% gigs[:blackouts].each do |blackout| %>
-                        <% user_text = blackout.user == current_user ? "You" : blackout.user.username %>
+                        <% user_text = blackout.user == current_user ? "You" : blackout.user.display_name_or_fallback %>
                         <% is_current_user = blackout.user == current_user %>
                         <div class="gig-event blackout <%= 'user-blackout' if is_current_user %>"
                              title="<%= user_text %> - unavailable<%= blackout.reason.present? ? ': ' + blackout.reason : '' %>"

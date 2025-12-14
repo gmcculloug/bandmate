@@ -69,7 +69,7 @@
                         <% is_owner = user_band&.owner? %>
                         <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px; border: 1px solid #e2e8f0; border-radius: 4px; margin-bottom: 5px;">
                             <span style="font-weight: 500;">
-                                <%= user.username %>
+                                <%= user.display_name_or_fallback %>
                                 <% if user == current_user %>
                                     <span style="background: #667eea; color: white; padding: 2px 6px; border-radius: 10px; font-size: 0.75rem; margin-left: 8px;">You</span>
                                 <% end %>
@@ -90,7 +90,7 @@
                                         <% unless is_owner && @band.owners.count <= 1 %>
                                             <form method="POST" action="/bands/<%= @band.id %>/remove_user" style="display: inline;">
                                                 <input type="hidden" name="user_id" value="<%= user.id %>">
-                                                <button type="submit" class="btn btn-danger" style="font-size: 0.8rem; padding: 3px 8px;" onclick="return confirm('Remove <%= user.username %> from this band?')">Remove</button>
+                                                <button type="submit" class="btn btn-danger" style="font-size: 0.8rem; padding: 3px 8px;" onclick="return confirm('Remove <%= user.display_name_or_fallback %> from this band?')">Remove</button>
                                             </form>
                                         <% end %>
                                         
@@ -98,13 +98,13 @@
                                             <form method="POST" action="/bands/<%= @band.id %>/change_membership" style="display: inline;">
                                                 <input type="hidden" name="user_id" value="<%= user.id %>">
                                                 <input type="hidden" name="role" value="member">
-                                                <button type="submit" class="btn btn-secondary" style="font-size: 0.8rem; padding: 3px 8px;" onclick="return confirm('Change <%= user.username %> to Member?')">Make Member</button>
+                                                <button type="submit" class="btn btn-secondary" style="font-size: 0.8rem; padding: 3px 8px;" onclick="return confirm('Change <%= user.display_name_or_fallback %> to Member?')">Make Member</button>
                                             </form>
                                         <% elsif !is_owner %>
                                             <form method="POST" action="/bands/<%= @band.id %>/change_membership" style="display: inline;">
                                                 <input type="hidden" name="user_id" value="<%= user.id %>">
                                                 <input type="hidden" name="role" value="owner">
-                                                <button type="submit" class="btn btn-warning" style="font-size: 0.8rem; padding: 3px 8px;" onclick="return confirm('Make <%= user.username %> an Owner?')">Make Owner</button>
+                                                <button type="submit" class="btn btn-warning" style="font-size: 0.8rem; padding: 3px 8px;" onclick="return confirm('Make <%= user.display_name_or_fallback %> an Owner?')">Make Owner</button>
                                             </form>
                                         <% end %>
                                     <% end %>

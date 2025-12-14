@@ -12,6 +12,7 @@ class User < ActiveRecord::Base
   validates :email, uniqueness: { case_sensitive: false }, allow_blank: true
   validates :email, format: { with: URI::MailTo::EMAIL_REGEXP }, allow_blank: true
   validates :timezone, inclusion: { in: ActiveSupport::TimeZone.all.map(&:name) + [nil] }, allow_nil: true
+  validates :display_name, presence: true, length: { maximum: 100 }
 
   # Password validations - only required if no OAuth provider
   validates :password, length: { minimum: 6 }, if: :password_required?
@@ -25,6 +26,9 @@ class User < ActiveRecord::Base
 
   # Ensure user has at least one authentication method
   validate :must_have_authentication_method
+
+  # Set default display name before validation if not set
+  before_validation :set_default_display_name, on: :create
 
   # Helper methods for checking ownership and membership
   def owner_of?(band)
@@ -67,6 +71,17 @@ class User < ActiveRecord::Base
     oauth_provider == provider.to_s
   end
 
+  # Display name helpers
+  def display_name_or_fallback
+    display_name.presence || default_display_name
+  end
+
+  def default_display_name
+    if oauth_user?
+      oauth_username.presence || oauth_email&.split('@')&.first
+    end || email&.split('@')&.first || username
+  end
+
   # Override authenticate to work with OAuth users
   def authenticate(password)
     return false if oauth_user? && !password_user?  # OAuth-only users can't login with password
@@ -103,5 +118,10 @@ class User < ActiveRecord::Base
     unless oauth_user? || password_digest.present?
       errors.add(:base, "Must have either password or OAuth authentication")
     end
+  end
+
+  def set_default_display_name
+    return if display_name.present?
+    self.display_name = default_display_name
   end
 end

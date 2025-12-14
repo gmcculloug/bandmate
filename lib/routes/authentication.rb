@@ -110,6 +110,7 @@ class Routes::Authentication < Sinatra::Base
           user: {
             id: user.id,
             username: user.username,
+            display_name: user.display_name_or_fallback,
             email: user.email,
             timezone: user.timezone
           },
@@ -142,6 +143,7 @@ class Routes::Authentication < Sinatra::Base
         user: {
           id: current_user.id,
           username: current_user.username,
+          display_name: current_user.display_name_or_fallback,
           email: current_user.email,
           timezone: current_user.timezone
         },
@@ -184,6 +186,7 @@ class Routes::Authentication < Sinatra::Base
         user: {
           id: current_user.id,
           username: current_user.username,
+          display_name: current_user.display_name_or_fallback,
           email: current_user.email,
           timezone: current_user.timezone,
           created_at: current_user.created_at.iso8601
