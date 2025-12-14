@@ -11,6 +11,134 @@ class Routes::MobileAPI < Sinatra::Base
   helpers ApplicationHelpers
 
   # ============================================================================
+  # MOBILE JWT AUTHENTICATION API
+  # ============================================================================
+
+  # JWT-based login for mobile apps
+  post '/api/mobile/auth/token' do
+    content_type :json
+
+    username = params[:username]
+    password = params[:password]
+
+    unless username.present? && password.present?
+      status 400
+      return { error: 'Username and password are required' }.to_json
+    end
+
+    # Find user
+    user = User.where('LOWER(username) = ?', username.downcase).first
+
+    if user && user.authenticate(password)
+      # Prepare device info for JWT
+      device_info = {
+        device_type: params[:device_type] || 'mobile',
+        device_id: params[:device_id]
+      }.compact
+
+      # Generate JWT tokens
+      require_relative '../services/jwt_service'
+      tokens = JwtService.generate_tokens(user, device_info)
+
+      # Prepare user data
+      user_data = {
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        timezone: user.timezone,
+        oauth_provider: user.oauth_provider
+      }
+
+      # Handle band selection
+      selected_band = nil
+      if user.last_selected_band && user.bands.include?(user.last_selected_band)
+        selected_band = user.last_selected_band
+      elsif user.bands.any?
+        selected_band = user.bands.first
+      end
+
+      # Response data
+      response_data = {
+        user: user_data,
+        bands: user.bands.map { |band|
+          {
+            id: band.id,
+            name: band.name,
+            role: user.user_bands.find_by(band: band)&.role || 'member'
+          }
+        },
+        current_band: selected_band ? {
+          id: selected_band.id,
+          name: selected_band.name
+        } : nil
+      }.merge(tokens)
+
+      {
+        success: true,
+        data: response_data
+      }.to_json
+    else
+      status 401
+      { success: false, error: 'Invalid username or password' }.to_json
+    end
+  end
+
+  # Refresh JWT access token
+  post '/api/mobile/auth/refresh' do
+    content_type :json
+
+    refresh_token = params[:refresh_token]
+
+    unless refresh_token.present?
+      status 400
+      return { error: 'Refresh token is required' }.to_json
+    end
+
+    require_relative '../services/jwt_service'
+    result = JwtService.refresh_access_token(refresh_token)
+
+    if result
+      {
+        success: true,
+        data: result
+      }.to_json
+    else
+      status 401
+      { success: false, error: 'Invalid or expired refresh token' }.to_json
+    end
+  end
+
+  # Revoke JWT tokens (logout)
+  post '/api/mobile/auth/revoke' do
+    content_type :json
+
+    # This is primarily client-side token removal since we use stateless JWT
+    # The client should remove tokens from local storage
+    { success: true, message: 'Logout successful - tokens should be removed from client' }.to_json
+  end
+
+  # Validate current JWT token
+  get '/api/mobile/auth/validate' do
+    require_api_auth
+    content_type :json
+
+    {
+      valid: true,
+      user: {
+        id: current_user.id,
+        username: current_user.username,
+        email: current_user.email,
+        timezone: current_user.timezone,
+        oauth_provider: current_user.oauth_provider
+      },
+      current_band: current_band ? {
+        id: current_band.id,
+        name: current_band.name
+      } : nil
+    }.to_json
+  end
+
+  # ============================================================================
   # MOBILE GIGS API
   # ============================================================================
 

@@ -1,0 +1,33 @@
+<h2>Account Creation Code Required</h2>
+
+<%= erb :_errors %>
+
+<!-- Simple OAuth Context -->
+<div style="margin-bottom: 20px; padding: 15px; background: #f0f9ff; border-radius: 8px; border-left: 4px solid #0284c7;">
+    <p style="margin: 0; color: #0c4a6e;">
+        <strong>Signing in with <%= @provider&.capitalize %>:</strong> <%= @email %>
+    </p>
+</div>
+
+<!-- Simple explanation -->
+<p style="color: #666; margin-bottom: 20px;">
+    To complete your account creation, please enter the account creation code.
+</p>
+
+<form method="POST" action="/auth/verify_account_creation_code">
+    <div class="form-group">
+        <label for="account_creation_code">Account Creation Code:</label>
+        <input type="password"
+               id="account_creation_code"
+               name="account_creation_code"
+               required
+               autofocus
+               placeholder="Enter your account creation code">
+        <small>Enter the account creation code required for registration</small>
+    </div>
+
+    <div class="actions">
+        <button type="submit" class="btn">Complete Account Creation</button>
+        <a href="/login" class="btn">Cancel</a>
+    </div>
+</form>

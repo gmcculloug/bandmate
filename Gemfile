@@ -16,6 +16,13 @@ gem 'redis'            # Redis client (Valkey compatible)
 gem 'redis-rack'       # Redis session store for Rack (more stable alternative)
 gem 'connection_pool'  # Connection pooling
 
+# OAuth and JWT support
+gem 'jwt'              # JSON Web Token handling
+gem 'omniauth'         # OAuth authentication framework
+gem 'omniauth-google-oauth2'  # Google OAuth provider
+gem 'omniauth-github'  # GitHub OAuth provider
+gem 'omniauth-rails_csrf_protection'  # CSRF protection for OmniAuth
+
 group :development, :test do
   gem 'rspec'
   gem 'capybara'

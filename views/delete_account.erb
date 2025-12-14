@@ -19,36 +19,92 @@
 
 <div class="card">
     <h3>Confirm Account Deletion</h3>
-    <p style="color: #666; margin-bottom: 20px;">
-        To confirm you want to delete your account, please enter your password below. 
-        This action will immediately log you out and permanently delete your account.
-    </p>
 
-    <form method="POST" action="/account/delete" onsubmit="return confirmAccountDeletion()">
-        
-        <div class="form-group">
-            <label for="password">Password:</label>
-            <input type="password" id="password" name="password" required>
-            <small>Enter your current password to confirm deletion</small>
+    <% if current_user.password_user? %>
+        <!-- Password-based user: require password confirmation -->
+        <p style="color: #666; margin-bottom: 20px;">
+            To confirm you want to delete your account, please enter your password below.
+            This action will immediately log you out and permanently delete your account.
+        </p>
+
+        <form method="POST" action="/account/delete" onsubmit="return confirmPasswordUserDeletion()">
+            <div class="form-group">
+                <label for="password">Password:</label>
+                <input type="password" id="password" name="password" required>
+                <small>Enter your current password to confirm deletion</small>
+            </div>
+
+            <div class="actions">
+                <button type="submit" class="btn btn-danger" style="background: #dc2626;">
+                    🗑️ Permanently Delete My Account
+                </button>
+                <a href="/profile" class="btn">Cancel</a>
+            </div>
+        </form>
+
+    <% else %>
+        <!-- OAuth user: enhanced popup warnings instead of password -->
+        <p style="color: #666; margin-bottom: 20px;">
+            You are logged in with <%= current_user.oauth_provider&.capitalize %> OAuth.
+            Since you don't have a password, clicking the button below will show confirmation dialogs
+            before permanently deleting your account.
+        </p>
+
+        <div style="margin-bottom: 20px; padding: 15px; background: #fef3c7; border-radius: 8px; border-left: 4px solid #f59e0b;">
+            <p style="margin: 0; color: #92400e; font-weight: 500;">
+                🔒 <strong>OAuth Account Security:</strong> Your account is secured by <%= current_user.oauth_provider&.capitalize %>.
+                Multiple confirmation dialogs will ensure this deletion is intentional.
+            </p>
         </div>
 
-        <div class="actions">
-            <button type="submit" class="btn btn-danger" style="background: #dc2626;">
-                🗑️ Permanently Delete My Account
-            </button>
-            <a href="/profile" class="btn">Cancel</a>
-        </div>
-    </form>
+        <form method="POST" action="/account/delete" onsubmit="return confirmOAuthUserDeletion()">
+            <div class="actions">
+                <button type="submit" class="btn btn-danger" style="background: #dc2626;">
+                    🗑️ Permanently Delete My Account
+                </button>
+                <a href="/profile" class="btn">Cancel</a>
+            </div>
+        </form>
+    <% end %>
 </div>
 
 <script>
-function confirmAccountDeletion() {
+// Confirmation function for password-based users
+function confirmPasswordUserDeletion() {
     const password = document.getElementById('password').value;
     if (!password) {
         alert('Please enter your password to confirm account deletion.');
         return false;
     }
-    
+
     return confirm('Are you absolutely sure you want to delete your account? This action cannot be undone and all your data will be permanently lost.');
+}
+
+// Enhanced confirmation function for OAuth users
+function confirmOAuthUserDeletion() {
+    // First confirmation - general warning
+    const firstConfirm = confirm(
+        'WARNING: You are about to permanently delete your account!\n\n' +
+        'This action will:\n' +
+        '• Delete all your user data and preferences\n' +
+        '• Remove your membership in all bands\n' +
+        '• Delete any songs or set lists you\'ve created\n' +
+        '• Erase all your associated data and history\n\n' +
+        'Are you sure you want to continue?'
+    );
+
+    if (!firstConfirm) {
+        return false;
+    }
+
+    // Second confirmation - final warning with typing requirement
+    const finalConfirm = confirm(
+        'FINAL WARNING: This action cannot be undone!\n\n' +
+        'Your account and ALL associated data will be permanently deleted.\n' +
+        'This includes all bands, songs, set lists, and history.\n\n' +
+        'Click OK to permanently delete your account, or Cancel to keep your account.'
+    );
+
+    return finalConfirm;
 }
 </script>

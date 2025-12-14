@@ -20,10 +20,10 @@ class Routes::Authentication < Sinatra::Base
 
   post '/login' do
     user = User.where('LOWER(username) = ?', params[:username].downcase).first
-    
+
     if user && user.authenticate(params[:password])
       session[:user_id] = user.id
-      
+
       # Restore the last selected band if it exists and user still has access to it
       if user.last_selected_band && user.bands.include?(user.last_selected_band)
         session[:band_id] = user.last_selected_band.id
@@ -31,7 +31,7 @@ class Routes::Authentication < Sinatra::Base
         # If no saved band or user no longer has access, select the first band
         session[:band_id] = user.bands.first.id
       end
-      
+
       redirect '/gigs'
     else
       @error = "Invalid username or password"
@@ -50,14 +50,14 @@ class Routes::Authentication < Sinatra::Base
       @errors = ["Account creation code not configured. Please contact administrator."]
       return erb :signup, layout: :layout
     end
-    
+
     if params[:login_secret] != login_secret
       @errors = ["Invalid account creation code. Please check your code and try again."]
       return erb :signup, layout: :layout
     end
-    
+
     user = User.new(username: params[:username], password: params[:password], email: params[:email].presence)
-    
+
     if user.save
       session[:user_id] = user.id
       redirect '/gigs'
@@ -323,10 +323,13 @@ class Routes::Authentication < Sinatra::Base
       { label: 'Delete Account', url: nil, icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px;"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c0 1 1 2 2H8z"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>' }
     ]
 
-    # Verify password for security
-    unless current_user.authenticate(params[:password])
-      @errors = ["Incorrect password. Please try again."]
-      return erb :delete_account
+    # Verify password for security (only for password-based users)
+    # OAuth users don't have passwords, so skip this check for them
+    if current_user.password_user?
+      unless current_user.authenticate(params[:password])
+        @errors = ["Incorrect password. Please try again."]
+        return erb :delete_account
+      end
     end
     
     user = current_user

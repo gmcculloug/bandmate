@@ -42,6 +42,7 @@ require_relative 'lib/helpers/application_helpers'
 
 # Load route modules
 require_relative 'lib/routes/authentication'
+require_relative 'lib/routes/oauth'
 require_relative 'lib/routes/bands'
 require_relative 'lib/routes/songs'
 require_relative 'lib/routes/gigs'
@@ -118,6 +119,7 @@ helpers ApplicationHelpers
 
 # Mount route modules
 use Routes::Authentication
+use Routes::OAuth
 use Routes::Bands
 use Routes::Songs
 use Routes::Gigs

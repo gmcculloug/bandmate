@@ -1,0 +1,394 @@
+require 'sinatra/base'
+require 'securerandom'
+
+module Routes
+end
+
+class Routes::OAuth < Sinatra::Base
+  configure do
+    set :views, File.join(File.dirname(__FILE__), '..', '..', 'views')
+  end
+
+  helpers ApplicationHelpers
+
+  # Load services
+  require_relative '../services/oauth_service'
+
+  # ============================================================================
+  # OAUTH ACCOUNT CREATION CODE VERIFICATION (must come before :provider routes)
+  # ============================================================================
+
+  # Display account creation code form for new OAuth users
+  get '/auth/verify_account_creation_code' do
+    # Check if there's pending OAuth user data
+    unless session[:pending_oauth_user]
+      puts "[OAUTH DEBUG] No pending OAuth user data found, redirecting to login"
+      redirect "/login?error=#{URI.encode_www_form_component('Session expired. Please try signing in again.')}"
+    end
+
+    # Check session timeout (30 minutes)
+    pending_data = session[:pending_oauth_user]
+
+    # Check session timeout (30 minutes = 1800 seconds)
+    if Time.now.to_i - pending_data[:timestamp] > 1800
+      puts "[OAUTH DEBUG] Pending OAuth session expired"
+      session.delete(:pending_oauth_user)
+      redirect "/login?error=#{URI.encode_www_form_component('Session expired. Please try signing in again.')}"
+    end
+
+    @provider = pending_data[:provider]
+    @email = pending_data[:user_info]['email']
+    @name = pending_data[:user_info]['name']
+
+    @breadcrumbs = [
+      { label: 'Account Creation', url: nil, icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M22 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>' }
+    ]
+
+    erb :oauth_account_creation_code
+  end
+
+  # Process account creation code for new OAuth users
+  post '/auth/verify_account_creation_code' do
+    # Check if there's pending OAuth user data
+    unless session[:pending_oauth_user]
+      puts "[OAUTH DEBUG] No pending OAuth user data found, redirecting to login"
+      redirect "/login?error=#{URI.encode_www_form_component('Session expired. Please try signing in again.')}"
+    end
+
+    pending_data = session[:pending_oauth_user]
+
+    # Check session timeout (30 minutes = 1800 seconds)
+    if Time.now.to_i - pending_data[:timestamp] > 1800
+      puts "[OAUTH DEBUG] Pending OAuth session expired"
+      session.delete(:pending_oauth_user)
+      redirect "/login?error=#{URI.encode_www_form_component('Session expired. Please try signing in again.')}"
+    end
+
+    provider = pending_data[:provider]
+    user_info = pending_data[:user_info]
+    account_creation_code = params[:account_creation_code]
+
+    @provider = provider
+    @email = user_info['email']
+    @name = user_info['name']
+
+    @breadcrumbs = [
+      { label: 'Account Creation', url: nil, icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M22 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>' }
+    ]
+
+    begin
+      puts "[OAUTH DEBUG] Attempting to create OAuth user with validation"
+
+      # Create user with validation
+      user = OauthService.create_oauth_user_with_validation(provider, user_info, account_creation_code)
+
+      puts "[OAUTH DEBUG] User created successfully: #{user.username} (ID: #{user.id})"
+
+      # Clear pending OAuth data
+      session.delete(:pending_oauth_user)
+
+      # Log in the user
+      session[:user_id] = user.id
+
+      # Handle band selection (same as normal OAuth flow)
+      if user.last_selected_band && user.bands.include?(user.last_selected_band)
+        session[:band_id] = user.last_selected_band.id
+      elsif user.bands.any?
+        session[:band_id] = user.bands.first.id
+      end
+
+      puts "[OAUTH DEBUG] New OAuth user logged in successfully, redirecting to /gigs"
+      redirect '/gigs'
+
+    rescue => e
+      puts "[OAUTH DEBUG] Error creating OAuth user: #{e.message}"
+
+      error_message = case e.message
+      when /Invalid account creation code/
+        "Invalid account creation code. Please check your code and try again."
+      when /Account creation code not configured/
+        "Account creation is not configured. Please contact administrator."
+      else
+        "Failed to create account. Please try again."
+      end
+
+      @errors = [error_message]
+      erb :oauth_account_creation_code
+    end
+  end
+
+  # ============================================================================
+  # OAUTH AUTHORIZATION ROUTES
+  # ============================================================================
+
+  # Initiate OAuth authorization
+  get '/auth/:provider' do
+    provider = params[:provider]
+
+    # Validate provider exists and is configured
+    unless OauthService::PROVIDERS.key?(provider.to_s)
+      redirect "/login?error=#{URI.encode_www_form_component('Unsupported OAuth provider')}"
+    end
+
+    # Check if provider is properly configured
+    unless OauthService.provider_configured?(provider)
+      redirect "/login?error=#{URI.encode_www_form_component('OAuth provider not configured')}"
+    end
+
+    # Generate state parameter for security
+    state = SecureRandom.hex(16)
+    session[:oauth_state] = state
+
+    # Build redirect URI
+    redirect_uri = "#{request.base_url}/auth/#{provider}/callback"
+
+    # Generate authorization URL
+    auth_url = OauthService.authorization_url(provider, redirect_uri, state)
+
+    if auth_url
+      redirect auth_url
+    else
+      redirect "/login?error=#{URI.encode_www_form_component('OAuth configuration error')}"
+    end
+  end
+
+  # Handle OAuth callback
+  get '/auth/:provider/callback' do
+    puts "\n[OAUTH DEBUG] ===== OAUTH CALLBACK STARTED ====="
+    puts "[OAUTH DEBUG] Provider: #{params[:provider]}"
+    puts "[OAUTH DEBUG] Code: #{params[:code] ? "#{params[:code][0..15]}..." : 'MISSING'}"
+    puts "[OAUTH DEBUG] State: #{params[:state]}"
+    puts "[OAUTH DEBUG] Error: #{params[:error]}"
+    puts "[OAUTH DEBUG] Session OAuth state: #{session[:oauth_state]}"
+
+    provider = params[:provider]
+    code = params[:code]
+    state = params[:state]
+    error = params[:error]
+
+    # Handle OAuth errors
+    if error
+      puts "[OAUTH DEBUG] OAuth provider returned error: #{error}"
+      error_msg = case error
+      when 'access_denied'
+        'OAuth access was denied'
+      else
+        "OAuth error: #{error}"
+      end
+      puts "[OAUTH DEBUG] Redirecting to login with error: #{error_msg}"
+      redirect "/login?error=#{URI.encode_www_form_component(error_msg)}"
+    end
+
+    # Verify state parameter to prevent CSRF attacks
+    unless state == session[:oauth_state]
+      puts "[OAUTH DEBUG] State mismatch! Expected: #{session[:oauth_state]}, Got: #{state}"
+      session.delete(:oauth_state)
+      redirect "/login?error=#{URI.encode_www_form_component('Invalid OAuth state')}"
+    end
+
+    puts "[OAUTH DEBUG] State verification passed"
+
+    # Clear state from session
+    session.delete(:oauth_state)
+
+    # Validate required parameters
+    unless code.present?
+      puts "[OAUTH DEBUG] Missing authorization code"
+      redirect "/login?error=#{URI.encode_www_form_component('Missing OAuth authorization code')}"
+    end
+
+    begin
+      puts "[OAUTH DEBUG] Starting OAuth token exchange process"
+
+      # Exchange authorization code for access token
+      redirect_uri = "#{request.base_url}/auth/#{provider}/callback"
+      puts "[OAUTH DEBUG] Redirect URI: #{redirect_uri}"
+
+      token_data = OauthService.exchange_code_for_token(provider, code, redirect_uri)
+      puts "[OAUTH DEBUG] Token exchange completed. Token data present: #{!token_data.nil?}"
+
+      unless token_data && token_data['access_token']
+        puts "[OAUTH DEBUG] ERROR: No access token received"
+        redirect "/login?error=#{URI.encode_www_form_component('Failed to obtain OAuth access token')}"
+      end
+
+      puts "[OAUTH DEBUG] Access token obtained successfully"
+
+      # Fetch user information
+      puts "[OAUTH DEBUG] Fetching user information"
+      user_info = OauthService.fetch_user_info(provider, token_data['access_token'])
+      puts "[OAUTH DEBUG] User info fetch completed. User info present: #{!user_info.nil?}"
+
+      unless user_info
+        puts "[OAUTH DEBUG] ERROR: Failed to fetch user information"
+        redirect "/login?error=#{URI.encode_www_form_component('Failed to fetch user information')}"
+      end
+
+      puts "[OAUTH DEBUG] User information fetched successfully"
+
+      # Check if this is an existing user or a new signup
+      puts "[OAUTH DEBUG] Checking if user exists"
+      existing_user = OauthService.find_existing_oauth_user(provider, user_info)
+
+      if existing_user
+        # Existing user - continue normal flow
+        puts "[OAUTH DEBUG] Existing user found: #{existing_user.username} (ID: #{existing_user.id})"
+        user = existing_user
+      else
+        # New user - requires account creation code validation
+        puts "[OAUTH DEBUG] New user detected - requires account creation code"
+
+        # Store OAuth data in session for later user creation
+        session[:pending_oauth_user] = {
+          provider: provider,
+          user_info: user_info,
+          token_data: token_data,
+          timestamp: Time.now.to_i
+        }
+
+        puts "[OAUTH DEBUG] OAuth data stored in session, redirecting to account creation code verification"
+        redirect '/auth/verify_account_creation_code'
+      end
+
+      puts "[OAUTH DEBUG] User account resolved: #{user.username} (ID: #{user.id})"
+
+      # Log in the user
+      puts "[OAUTH DEBUG] Setting session user_id to: #{user.id}"
+      session[:user_id] = user.id
+
+      # Handle band selection
+      puts "[OAUTH DEBUG] Handling band selection"
+      puts "[OAUTH DEBUG] User's last selected band: #{user.last_selected_band&.name}"
+      puts "[OAUTH DEBUG] User's bands: #{user.bands.pluck(:name)}"
+
+      if user.last_selected_band && user.bands.include?(user.last_selected_band)
+        puts "[OAUTH DEBUG] Setting session band_id to last selected: #{user.last_selected_band.id}"
+        session[:band_id] = user.last_selected_band.id
+      elsif user.bands.any?
+        puts "[OAUTH DEBUG] Setting session band_id to first band: #{user.bands.first.id}"
+        session[:band_id] = user.bands.first.id
+      else
+        puts "[OAUTH DEBUG] User has no bands, not setting band_id"
+      end
+
+      puts "[OAUTH DEBUG] Final session state - user_id: #{session[:user_id]}, band_id: #{session[:band_id]}"
+
+      # Redirect to main app
+      puts "[OAUTH DEBUG] Redirecting to /gigs"
+      puts "[OAUTH DEBUG] ===== OAUTH CALLBACK COMPLETED SUCCESSFULLY ====="
+      redirect '/gigs'
+
+    rescue => e
+      puts "[OAUTH DEBUG] ===== OAUTH CALLBACK ERROR ====="
+      puts "[OAUTH DEBUG] Exception: #{e.class.name}: #{e.message}"
+      puts "[OAUTH DEBUG] Backtrace:"
+      puts e.backtrace.first(10).map { |line| "[OAUTH DEBUG]   #{line}" }.join("\n")
+
+      error_msg = case e.message
+      when /already has .* OAuth account/
+        e.message
+      else
+        'OAuth authentication failed'
+      end
+
+      # Log error for debugging
+      puts "OAuth callback error: #{e.message}" if settings.development?
+
+      puts "[OAUTH DEBUG] Redirecting to login with error: #{error_msg}"
+      redirect "/login?error=#{URI.encode_www_form_component(error_msg)}"
+    end
+  end
+
+  # Disconnect OAuth provider
+  post '/auth/:provider/disconnect' do
+    require_login
+    provider = params[:provider]
+
+    # Verify user has this OAuth provider
+    unless current_user.has_oauth_provider?(provider)
+      status 404
+      return { error: 'OAuth provider not found' }.to_json
+    end
+
+    begin
+      # Unlink OAuth from user
+      OauthService.unlink_oauth_from_user(current_user)
+
+      if request.accept.include?('application/json')
+        content_type :json
+        { success: true, message: 'OAuth provider disconnected successfully' }.to_json
+      else
+        redirect '/profile?success=OAuth+provider+disconnected+successfully'
+      end
+
+    rescue => e
+      error_message = e.message
+
+      if request.accept.include?('application/json')
+        content_type :json
+        status 400
+        { error: error_message }.to_json
+      else
+        redirect "/profile?error=#{URI.encode_www_form_component(error_message)}"
+      end
+    end
+  end
+
+
+  # ============================================================================
+  # OAUTH PROFILE MANAGEMENT
+  # ============================================================================
+
+  # Get OAuth connection status (API endpoint)
+  get '/api/auth/oauth/status' do
+    require_api_auth
+    content_type :json
+
+    {
+      data: {
+        has_oauth: current_user.oauth_user?,
+        oauth_provider: current_user.oauth_provider,
+        oauth_username: current_user.oauth_username,
+        can_unlink: current_user.can_unlink_oauth?,
+        supported_providers: OauthService::PROVIDERS.keys
+      }
+    }.to_json
+  end
+
+  # Link OAuth provider to existing account
+  post '/api/auth/oauth/link/:provider' do
+    require_api_auth
+    content_type :json
+    provider = params[:provider]
+
+    # Check if user already has OAuth provider
+    if current_user.oauth_user?
+      status 400
+      return {
+        error: 'User already has OAuth provider linked',
+        current_provider: current_user.oauth_provider
+      }.to_json
+    end
+
+    # Validate provider
+    unless OauthService::PROVIDERS.key?(provider.to_s)
+      status 400
+      return { error: 'Unsupported OAuth provider' }.to_json
+    end
+
+    # Generate state and return authorization URL
+    state = SecureRandom.hex(16)
+    session[:oauth_link_state] = state
+    session[:oauth_link_mode] = true
+
+    redirect_uri = "#{request.base_url}/auth/#{provider}/callback"
+    auth_url = OauthService.authorization_url(provider, redirect_uri, state)
+
+    if auth_url
+      { data: { authorization_url: auth_url } }.to_json
+    else
+      status 500
+      { error: 'Failed to generate authorization URL' }.to_json
+    end
+  end
+end

@@ -4,13 +4,22 @@ module ApplicationHelpers
   include IconHelpers
   # Authentication helpers
   def current_user
+    # Return cached user if already loaded
+    return @current_user if @current_user
+
     if settings.test?
       # In test mode, try to get user from test session
       test_user_id = @test_session&.dig(:user_id) || session[:user_id]
-      @current_user ||= User.find(test_user_id) if test_user_id
+      @current_user = User.find(test_user_id) if test_user_id
     else
-      @current_user ||= User.find(session[:user_id]) if session[:user_id]
+      # Check for JWT token first (for mobile API)
+      @current_user = user_from_jwt_token
+
+      # Fall back to session (for web)
+      @current_user ||= user_from_session
     end
+
+    @current_user
   end
 
   def logged_in?
@@ -20,6 +29,14 @@ module ApplicationHelpers
   def require_login
     unless logged_in?
       redirect '/login'
+    end
+  end
+
+  def require_api_auth
+    unless logged_in?
+      content_type :json
+      status 401
+      halt({ error: 'Authentication required', code: 'UNAUTHORIZED' }.to_json)
     end
   end
 
@@ -206,4 +223,49 @@ module ApplicationHelpers
     /^\/profile/ => '/profile',
     /^\/song_catalog/ => '/songs'
   }.freeze
+
+  # OAuth helper methods
+  def oauth_provider_configured?(provider)
+    require_relative '../services/oauth_service'
+    OauthService.provider_configured?(provider)
+  end
+
+  def configured_oauth_providers
+    require_relative '../services/oauth_service'
+    OauthService.configured_providers
+  end
+
+  private
+
+  # Extract user from JWT token
+  def user_from_jwt_token
+    return nil unless request.env['HTTP_AUTHORIZATION']
+
+    auth_header = request.env['HTTP_AUTHORIZATION']
+    return nil unless auth_header.start_with?('Bearer ')
+
+    token = auth_header.split(' ')[1]
+    return nil unless token
+
+    # Use JWT service to authenticate token
+    require_relative '../services/jwt_service'
+    JwtService.authenticate_token(token)
+  rescue => e
+    # Log error but don't expose details to client
+    puts "JWT authentication error: #{e.message}" if settings.development?
+    nil
+  end
+
+  # Extract user from session
+  def user_from_session
+    return nil unless session[:user_id]
+
+    begin
+      User.find(session[:user_id])
+    rescue ActiveRecord::RecordNotFound
+      # Clear invalid session
+      session.delete(:user_id)
+      nil
+    end
+  end
 end
