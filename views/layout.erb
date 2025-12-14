@@ -89,6 +89,19 @@
             gap: 15px;
             flex-wrap: wrap;
         }
+
+        .user-info-section {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 5px;
+        }
+
+        .user-controls-line {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
         
         .welcome-text {
             color: #4a5568;
@@ -440,7 +453,12 @@
             .user-actions {
                 justify-content: center;
             }
-            
+
+            .user-info-section {
+                align-items: center;
+                text-align: center;
+            }
+
             .nav {
                 gap: 8px;
             }
@@ -634,7 +652,12 @@
             .user-actions {
                 justify-content: center;
             }
-            
+
+            .user-info-section {
+                align-items: center;
+                text-align: center;
+            }
+
             .mobile-menu-toggle {
                 display: block;
                 margin: 0 auto 15px auto;
@@ -1585,8 +1608,12 @@
                         <% end %>
                         </div>
                         <div class="user-actions">
-                            <span class="welcome-text">Welcome, <%= current_user.display_name_or_fallback %>!</span>
-                            <a href="/logout" class="logout-link">Logout</a>
+                            <div class="user-info-section">
+                                <span class="welcome-text">Welcome, <%= current_user.display_name_or_fallback %>!</span>
+                                <div class="user-controls-line">
+                                    <a href="/logout" class="logout-link">Logout</a>
+                                </div>
+                            </div>
                             <a href="/profile" class="profile-icon" title="User Profile">
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                     <circle cx="12" cy="12" r="3"></circle>
