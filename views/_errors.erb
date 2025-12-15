@@ -1,5 +1,6 @@
 <% if defined?(@errors) && @errors.any? %>
-    <div class="errors">
+    <div class="errors" role="alert" aria-live="assertive" id="form-errors">
+        <h3 class="sr-only">Form Errors</h3>
         <ul>
             <% @errors.each do |error| %>
                 <li><%= error %></li>

@@ -27,16 +27,24 @@
            value="<%= search_value %>"
            placeholder="<%= placeholder %>"
            class="<%= input_classes %>"
+           role="searchbox"
+           aria-label="<%= placeholder %>"
+           aria-describedby="<%= input_id %>-instructions"
+           autocomplete="off"
            <% if input_style.present? %>style="<%= input_style %>"<% end %>>
 
+    <div id="<%= input_id %>-instructions" class="sr-only">Type to search, results update automatically</div>
+
     <% if show_clear && search_value.present? %>
-        <a href="#"
-           onclick="<%= clear_function %>; return false;"
-           style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; color: #718096; font-size: 18px; cursor: pointer; text-decoration: none; display: flex; align-items: center; justify-content: center; width: 20px; height: 20px;">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <button type="button"
+                onclick="<%= clear_function %>"
+                aria-label="Clear search"
+                title="Clear search"
+                style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; color: #718096; font-size: 18px; cursor: pointer; text-decoration: none; display: flex; align-items: center; justify-content: center; width: 20px; height: 20px; padding: 0;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                 <line x1="18" y1="6" x2="6" y2="18"></line>
                 <line x1="6" y1="6" x2="18" y2="18"></line>
             </svg>
-        </a>
+        </button>
     <% end %>
 </div>

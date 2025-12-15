@@ -1,33 +1,57 @@
-<h2>Sign Up for Band Huddle</h2>
+<h2 id="signup-heading">Sign Up for Band Huddle</h2>
 
 <%= erb :_errors %>
 
-<form method="post" action="/signup">
+<form method="post" action="/signup" aria-labelledby="signup-heading" novalidate>
   <div class="form-group">
     <label for="username">Username:</label>
-    <input type="text" id="username" name="username" value="<%= params[:username] %>" required autofocus>
+    <input type="text"
+           id="username"
+           name="username"
+           value="<%= params[:username] %>"
+           required
+           autofocus
+           autocomplete="username"
+           aria-describedby="username-requirements">
+    <div id="username-requirements" class="sr-only">Choose a unique username for your account</div>
   </div>
 
   <div class="form-group">
     <label for="password">Password:</label>
-    <input type="password" id="password" name="password" required>
-    <small>Password must be at least 6 characters long</small>
+    <input type="password"
+           id="password"
+           name="password"
+           required
+           autocomplete="new-password"
+           aria-describedby="password-requirements"
+           minlength="6">
+    <small id="password-requirements">Password must be at least 6 characters long</small>
   </div>
 
   <div class="form-group">
     <label for="email">Email Address (Optional):</label>
-    <input type="email" id="email" name="email" placeholder="Enter your email address">
-    <small>Optional - for account recovery and notifications</small>
+    <input type="email"
+           id="email"
+           name="email"
+           placeholder="Enter your email address"
+           autocomplete="email"
+           aria-describedby="email-info">
+    <small id="email-info">Optional - for account recovery and notifications</small>
   </div>
 
   <div class="form-group">
     <label for="login_secret">Account Creation Code:</label>
-    <input type="password" id="login_secret" name="login_secret" required>
-    <small>Enter the account creation code required for registration</small>
+    <input type="password"
+           id="login_secret"
+           name="login_secret"
+           required
+           aria-describedby="code-info">
+    <small id="code-info">Enter the account creation code required for registration</small>
   </div>
 
   <div class="actions">
-    <button type="submit" class="btn">Sign Up</button>
-    <a href="/login" class="btn">Already have an account? Login</a>
+    <button type="submit" class="btn" aria-describedby="signup-submit-help">Sign Up</button>
+    <div id="signup-submit-help" class="sr-only">Create your new Band Huddle account</div>
+    <a href="/login" class="btn" role="button">Already have an account? Login</a>
   </div>
 </form>

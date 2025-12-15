@@ -1,8 +1,8 @@
-<h2>📋 Create New Gig</h2>
+<h2 id="new-gig-heading">📋 Create New Gig</h2>
 
 <%= erb :_errors %>
 
-<form method="POST" action="/gigs" class="card">
+<form method="POST" action="/gigs" class="card" aria-labelledby="new-gig-heading" novalidate>
     <div class="form-group">
         <label for="gig_venue_id">Venue</label>
         <select id="gig_venue_id" name="venue_id" autofocus>
@@ -26,24 +26,47 @@
                 }
             }
         </style>
-        <div class="form-grid" style="display: grid; grid-template-columns: 1fr; gap: 20px;">
+        <fieldset class="form-grid" style="display: grid; grid-template-columns: 1fr; gap: 20px; border: none; padding: 0; margin: 0;">
+            <legend class="sr-only">Performance Date and Time</legend>
+
             <div class="form-group">
                 <label for="gig_performance_date">Performance Date *</label>
-                <input type="date" id="gig_performance_date" name="performance_date" required>
+                <input type="date"
+                       id="gig_performance_date"
+                       name="performance_date"
+                       required
+                       aria-describedby="performance-date-help">
+                <div id="performance-date-help" class="sr-only">Select the date for this performance</div>
             </div>
 
             <div class="form-group">
                 <label for="gig_start_time">Start Time</label>
-                <div class="modern-time-control">
-                    <div class="preset-times">
-                        <button type="button" class="time-preset-btn" data-time="18:00">6:00 PM</button>
-                        <button type="button" class="time-preset-btn" data-time="19:00">7:00 PM</button>
-                        <button type="button" class="time-preset-btn" data-time="20:00">8:00 PM</button>
-                        <button type="button" class="time-preset-btn" data-time="21:00">9:00 PM</button>
+                <div class="modern-time-control"
+                     role="group"
+                     aria-labelledby="start-time-label"
+                     aria-describedby="start-time-help">
+                <div id="start-time-label" class="sr-only">Start time selection</div>
+                <div id="start-time-help" class="sr-only">Choose a preset time or enter a custom time</div>
+                    <div class="preset-times" role="group" aria-label="Quick time presets">
+                        <button type="button" class="time-preset-btn" data-time="18:00" aria-label="Set start time to 6:00 PM">6:00 PM</button>
+                        <button type="button" class="time-preset-btn" data-time="19:00" aria-label="Set start time to 7:00 PM">7:00 PM</button>
+                        <button type="button" class="time-preset-btn" data-time="20:00" aria-label="Set start time to 8:00 PM">8:00 PM</button>
+                        <button type="button" class="time-preset-btn" data-time="21:00" aria-label="Set start time to 9:00 PM">9:00 PM</button>
                     </div>
                     <div class="time-input-row">
-                        <input type="text" id="gig_start_time" name="start_time" placeholder="Select start time..." readonly>
-                        <select id="gig_duration" name="duration" class="duration-selector">
+                        <input type="text"
+                               id="gig_start_time"
+                               name="start_time"
+                               placeholder="Select start time..."
+                               readonly
+                               aria-describedby="start-time-instructions">
+                        <div id="start-time-instructions" class="sr-only">Use preset buttons above or enter custom time</div>
+
+                        <select id="gig_duration"
+                                name="duration"
+                                class="duration-selector"
+                                aria-label="Performance duration"
+                                aria-describedby="duration-instructions">
                             <option value="">Duration</option>
                             <option value="60">1 hour</option>
                             <option value="90">1.5 hours</option>
@@ -53,21 +76,34 @@
                             <option value="240">4 hours</option>
                             <option value="custom">Custom...</option>
                         </select>
+                        <div id="duration-instructions" class="sr-only">Select expected performance duration</div>
                     </div>
                     <div class="duration-info" id="duration-info" style="display: none;"></div>
                 </div>
             </div>
-        </div>
+        </fieldset>
     </div>
 
     <div class="form-group" id="end-time-group" style="display: none;">
         <label for="gig_end_time">End Time</label>
-        <input type="text" id="gig_end_time" name="end_time" placeholder="Select end time..." readonly>
+        <input type="text"
+               id="gig_end_time"
+               name="end_time"
+               placeholder="Select end time..."
+               readonly
+               aria-describedby="end-time-help">
+        <div id="end-time-help" class="sr-only">End time is calculated automatically based on duration</div>
     </div>
 
     <div class="form-group">
         <label for="gig_notes">Notes</label>
-        <textarea id="gig_notes" name="notes" rows="3" placeholder="Any notes about this set list (special instructions, equipment needs, etc.)"></textarea>
+        <textarea id="gig_notes"
+                  name="notes"
+                  rows="3"
+                  placeholder="Any notes about this set list (special instructions, equipment needs, etc.)"
+                  aria-describedby="notes-help">
+        </textarea>
+        <div id="notes-help" class="sr-only">Optional notes about special requirements, equipment, or instructions for this performance</div>
     </div>
 
     <%= erb :_form_actions, locals: { submit_text: 'Create Gig', cancel_url: '/gigs' } %>

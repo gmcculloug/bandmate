@@ -14,6 +14,8 @@
   cancel_url = cancel_url_param if defined?(cancel_url_param) && cancel_url_param
 %>
 <div class="actions">
-    <button type="submit" class="btn btn-success"><%= submit_text %></button>
-    <a href="<%= cancel_url %>" class="btn">Cancel</a>
+    <button type="submit" class="btn btn-success" aria-describedby="submit-help"><%= submit_text %></button>
+    <div id="submit-help" class="sr-only">Submit the form to save your changes</div>
+    <a href="<%= cancel_url %>" class="btn" role="button" aria-describedby="cancel-help">Cancel</a>
+    <div id="cancel-help" class="sr-only">Cancel and return without saving changes</div>
 </div>
