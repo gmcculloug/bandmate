@@ -6,9 +6,9 @@
 set -e  # Exit on any error
 
 # Configuration
-DOMAIN=""
+DOMAINS=()
 EMAIL=""
-WEBROOT_PATH="/var/www/certbot"
+WEBROOT_PATH="./certbot/www"
 SSL_DIR="./ssl"
 NGINX_CONF_DIR="./config"
 DOCKER_COMPOSE_FILE="docker-compose.yml"
@@ -42,10 +42,10 @@ show_help() {
     cat << EOF
 Let's Encrypt SSL Setup Script for Band Huddle
 
-Usage: $0 -d DOMAIN -e EMAIL [OPTIONS]
+Usage: $0 -d DOMAIN1 [-d DOMAIN2 ...] -e EMAIL [OPTIONS]
 
 Required Arguments:
-    -d DOMAIN    Your domain name (e.g., example.com)
+    -d DOMAIN    Your domain name (can be specified multiple times, e.g., -d example.com -d www.example.com)
     -e EMAIL     Email address for Let's Encrypt notifications
 
 Optional Arguments:
@@ -55,14 +55,17 @@ Optional Arguments:
     -h           Show this help message
 
 Examples:
-    # Initial setup
+    # Initial setup with single domain
     $0 -d yourdomain.com -e admin@yourdomain.com
 
+    # Initial setup with multiple domains
+    $0 -d yourdomain.com -d www.yourdomain.com -e admin@yourdomain.com
+
     # Test with staging server first
-    $0 -d yourdomain.com -e admin@yourdomain.com -s
+    $0 -d yourdomain.com -d www.yourdomain.com -e admin@yourdomain.com -s
 
     # Renew certificates
-    $0 -d yourdomain.com -e admin@yourdomain.com -r
+    $0 -d yourdomain.com -d www.yourdomain.com -e admin@yourdomain.com -r
 
 EOF
 }
@@ -130,8 +133,8 @@ install_certbot() {
 setup_webroot() {
     log "Setting up webroot directory for ACME challenge..."
 
-    sudo mkdir -p "$WEBROOT_PATH"
-    sudo chown -R $USER:$USER "$WEBROOT_PATH"
+    mkdir -p "$WEBROOT_PATH"
+    chown -R $USER:$USER "$WEBROOT_PATH" 2>/dev/null || true
 
     log "Webroot directory created at $WEBROOT_PATH"
 }
@@ -139,6 +142,9 @@ setup_webroot() {
 # Create temporary nginx config for certificate generation
 create_temp_nginx_config() {
     log "Creating temporary nginx configuration for certificate generation..."
+
+    # Create server_name list from domains array
+    local server_names=$(printf "%s " "${DOMAINS[@]}")
 
     cat > "$NGINX_CONF_DIR/nginx-temp.conf" << EOF
 events {
@@ -152,11 +158,12 @@ http {
     # Temporary server for ACME challenge
     server {
         listen 80;
-        server_name $DOMAIN;
+        server_name ${server_names};
 
         # ACME challenge location
         location /.well-known/acme-challenge/ {
-            root $WEBROOT_PATH;
+            root /var/www/certbot;
+            try_files \$uri =404;
         }
 
         # Redirect all other traffic to HTTPS (after cert is obtained)
@@ -173,6 +180,9 @@ EOF
 # Create production nginx config with SSL
 create_production_nginx_config() {
     log "Creating production nginx configuration..."
+
+    # Create server_name list from domains array
+    local server_names=$(printf "%s " "${DOMAINS[@]}")
 
     cat > "$NGINX_CONF_DIR/nginx.conf" << EOF
 events {
@@ -209,11 +219,12 @@ http {
     # HTTP server - redirects to HTTPS and serves ACME challenges
     server {
         listen 80;
-        server_name $DOMAIN;
+        server_name ${server_names};
 
         # ACME challenge location
         location /.well-known/acme-challenge/ {
-            root $WEBROOT_PATH;
+            root /var/www/certbot;
+            try_files \$uri =404;
         }
 
         # Redirect all other HTTP to HTTPS
@@ -225,7 +236,7 @@ http {
     # HTTPS server
     server {
         listen 443 ssl http2;
-        server_name $DOMAIN;
+        server_name ${server_names};
 
         # SSL configuration (Let's Encrypt certificates)
         ssl_certificate /etc/nginx/ssl/fullchain.pem;
@@ -290,28 +301,37 @@ EOF
 
 # Start nginx temporarily for certificate generation
 start_temp_nginx() {
-    log "Starting temporary nginx for certificate generation..."
+    log "Starting nginx with temporary configuration for certificate generation..."
 
     # Stop existing nginx if running
     docker-compose down nginx 2>/dev/null || true
 
-    # Start nginx with temporary config
-    docker run -d --name temp-nginx \
-        -p 80:80 \
-        -v "$(pwd)/$NGINX_CONF_DIR/nginx-temp.conf:/etc/nginx/nginx.conf:ro" \
-        -v "$WEBROOT_PATH:$WEBROOT_PATH:ro" \
-        nginx:alpine
+    # Backup current nginx config
+    cp "$NGINX_CONF_DIR/nginx.conf" "$NGINX_CONF_DIR/nginx.conf.backup" 2>/dev/null || true
 
-    sleep 5
-    log "Temporary nginx started"
+    # Use temporary config
+    cp "$NGINX_CONF_DIR/nginx-temp.conf" "$NGINX_CONF_DIR/nginx.conf"
+
+    # Start nginx with temporary config
+    docker-compose up -d nginx
+
+    sleep 10
+    log "Temporary nginx configuration started"
 }
 
-# Stop temporary nginx
+# Stop temporary nginx and restore production config
 stop_temp_nginx() {
-    log "Stopping temporary nginx..."
-    docker stop temp-nginx 2>/dev/null || true
-    docker rm temp-nginx 2>/dev/null || true
-    log "Temporary nginx stopped"
+    log "Restoring production nginx configuration..."
+
+    # Stop nginx
+    docker-compose down nginx 2>/dev/null || true
+
+    # Restore production config
+    if [ -f "$NGINX_CONF_DIR/nginx.conf.backup" ]; then
+        mv "$NGINX_CONF_DIR/nginx.conf.backup" "$NGINX_CONF_DIR/nginx.conf"
+    fi
+
+    log "Production nginx configuration restored"
 }
 
 # Obtain SSL certificate
@@ -322,13 +342,19 @@ obtain_certificate() {
         warning "Using Let's Encrypt staging server (test certificates)"
     fi
 
-    log "Obtaining SSL certificate for $DOMAIN..."
+    # Build domain arguments for certbot
+    local domain_args=""
+    for domain in "${DOMAINS[@]}"; do
+        domain_args="$domain_args -d $domain"
+    done
+
+    log "Obtaining SSL certificate for domains: ${DOMAINS[*]}..."
 
     # Obtain certificate using webroot
     sudo certbot certonly \
         --webroot \
         -w "$WEBROOT_PATH" \
-        -d "$DOMAIN" \
+        $domain_args \
         --email "$EMAIL" \
         --agree-tos \
         --non-interactive \
@@ -349,10 +375,13 @@ copy_certificates() {
     # Create SSL directory if it doesn't exist
     mkdir -p "$SSL_DIR"
 
+    # Use the first domain as the primary domain for certificate path
+    local primary_domain="${DOMAINS[0]}"
+
     # Copy certificates
-    sudo cp "/etc/letsencrypt/live/$DOMAIN/fullchain.pem" "$SSL_DIR/"
-    sudo cp "/etc/letsencrypt/live/$DOMAIN/privkey.pem" "$SSL_DIR/"
-    sudo cp "/etc/letsencrypt/live/$DOMAIN/chain.pem" "$SSL_DIR/"
+    sudo cp "/etc/letsencrypt/live/$primary_domain/fullchain.pem" "$SSL_DIR/"
+    sudo cp "/etc/letsencrypt/live/$primary_domain/privkey.pem" "$SSL_DIR/"
+    sudo cp "/etc/letsencrypt/live/$primary_domain/chain.pem" "$SSL_DIR/"
 
     # Set proper permissions
     sudo chown -R $USER:$USER "$SSL_DIR"
@@ -387,8 +416,8 @@ renew_certificates() {
 restart_services() {
     log "Restarting services..."
 
-    # Restart nginx in Docker
-    docker-compose restart nginx
+    # Start all services including nginx with production config
+    docker-compose up -d
 
     log "Services restarted"
 }
@@ -397,6 +426,12 @@ restart_services() {
 create_renewal_script() {
     log "Creating automatic renewal script..."
 
+    # Build domain arguments for renewal script
+    local domain_args=""
+    for domain in "${DOMAINS[@]}"; do
+        domain_args="$domain_args -d $domain"
+    done
+
     cat > "scripts/renew-ssl.sh" << EOF
 #!/bin/bash
 # Automatic SSL certificate renewal script for Band Huddle
@@ -404,7 +439,7 @@ create_renewal_script() {
 cd "\$(dirname "\$0")/.."
 
 # Renew certificates
-$0 -d "$DOMAIN" -e "$EMAIL" -r
+$0 $domain_args -e "$EMAIL" -r
 
 EOF
 
@@ -425,7 +460,7 @@ main() {
     while getopts "d:e:srfh" opt; do
         case ${opt} in
             d )
-                DOMAIN="$OPTARG"
+                DOMAINS+=("$OPTARG")
                 ;;
             e )
                 EMAIL="$OPTARG"
@@ -452,14 +487,14 @@ main() {
     done
 
     # Check required arguments
-    if [[ -z "$DOMAIN" || -z "$EMAIL" ]]; then
-        error "Domain and email are required"
+    if [[ ${#DOMAINS[@]} -eq 0 || -z "$EMAIL" ]]; then
+        error "At least one domain and email are required"
         show_help
         exit 1
     fi
 
     log "Starting Let's Encrypt SSL setup for Band Huddle"
-    log "Domain: $DOMAIN"
+    log "Domains: ${DOMAINS[*]}"
     log "Email: $EMAIL"
 
     check_root
@@ -484,7 +519,10 @@ main() {
 
         log "SSL setup completed successfully!"
         info "You can now start your application with: docker-compose up -d"
-        info "Your site will be available at: https://$DOMAIN"
+        info "Your site will be available at:"
+        for domain in "${DOMAINS[@]}"; do
+            info "  - https://$domain"
+        done
     fi
 }
 

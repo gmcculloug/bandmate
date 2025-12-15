@@ -106,6 +106,7 @@ services:
       - ./config/nginx.conf:/etc/nginx/nginx.conf:Z
       - ./ssl:/etc/nginx/ssl:Z
       - ./logs/nginx:/var/log/nginx:Z
+      - ./certbot/www:/var/www/certbot:Z
     depends_on:
       - band-huddle
     restart: unless-stopped
