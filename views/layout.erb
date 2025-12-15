@@ -1723,9 +1723,10 @@
                         </svg>
                         Venues
                     </a>
-                <% elsif request.path_info != '/login' && request.path_info != '/signup' %>
+                <% elsif request.path_info != '/login' && request.path_info != '/signup' && request.path_info != '/legal' %>
                     <a href="/login">Login</a>
                     <a href="/signup">Sign Up</a>
+                    <a href="/legal">Privacy & Terms</a>
                 <% end %>
             </nav>
         </header>
