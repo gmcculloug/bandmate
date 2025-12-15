@@ -1672,7 +1672,7 @@
                         </svg>
                         Venues
                     </a>
-                <% else %>
+                <% elsif request.path_info != '/login' && request.path_info != '/signup' %>
                     <a href="/login">Login</a>
                     <a href="/signup">Sign Up</a>
                 <% end %>
