@@ -1,5 +1,5 @@
-# Use Ruby 3.2 slim image as base
-FROM ruby:3.2-slim
+# Use Ruby 3.4 slim image as base
+FROM ruby:3.4-slim
 
 # Set working directory
 WORKDIR /app
