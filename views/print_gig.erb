@@ -31,6 +31,12 @@
                 /* Portrait styles */
             }
 
+            body.layout-portrait .song-title-and-notes {
+                /* In portrait mode, keep notes below song name */
+                flex-direction: column;
+                gap: 0;
+            }
+
             body.layout-portrait @page {
                 size: letter portrait;
             }
@@ -63,6 +69,21 @@
                 flex: 1;
                 min-width: 0;
                 max-width: 50%;
+            }
+
+            body.layout-landscape .song-title-and-notes {
+                /* In landscape mode, put notes to the right of song name */
+                flex-direction: row;
+                gap: 12px;
+                align-items: baseline;
+            }
+
+            body.layout-landscape .song-notes {
+                /* Adjust notes styling for landscape layout */
+                flex-shrink: 1;
+                margin-top: 0;
+                flex-basis: auto;
+                max-width: none;
             }
 
             .controls {
@@ -129,7 +150,8 @@
         .song-title {
             font-size: calc(var(--base-font-size) * 1.2);
             font-weight: bold;
-            word-break: break-word;
+            white-space: nowrap;
+            flex-shrink: 0;
         }
         
         .song-artist {
@@ -154,6 +176,9 @@
             padding: 0;
             line-height: 1.0 !important;
             word-break: break-word;
+            overflow-wrap: break-word;
+            flex-shrink: 1;
+            min-width: 0;
         }
 
         
@@ -392,12 +417,12 @@
         // Set initial settings
         document.addEventListener('DOMContentLoaded', function() {
             changeFontSize(15);
-            changeLayout('portrait');
+            changeLayout('landscape');
             toggleSongKeys('show');
         });
     </script>
 </head>
-<body class="layout-portrait">
+<body class="layout-landscape">
     <div class="controls">
         <button class="print-button" onclick="printPage()">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 6px;">
@@ -415,8 +440,8 @@
         <div class="font-size-control">
             <label for="layout-selector">Layout:</label>
             <select id="layout-selector" onchange="changeLayout(this.value)">
-                <option value="portrait" selected>Portrait</option>
-                <option value="landscape">Landscape</option>
+                <option value="portrait">Portrait</option>
+                <option value="landscape" selected>Landscape</option>
             </select>
         </div>
         <div class="font-size-control">
