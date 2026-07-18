@@ -15,8 +15,8 @@ class Routes::PublicSongs < Sinatra::Base
   # No authentication required - these are public endpoints
   # ============================================================================
 
-  # GET /repertoire/:slug - Public HTML songs view
-  get '/repertoire/:slug' do
+  # GET /band/:slug/songs - Public HTML songs view
+  get '/band/:slug/songs' do
     band = Band.find_by(slug: params[:slug])
 
     if band.nil? || !band.public_songs_enabled?

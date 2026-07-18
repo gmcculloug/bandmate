@@ -235,7 +235,7 @@
                 </label>
                 <p style="color: #666; margin-left: 30px; margin-bottom: 15px;">
                     When enabled, your upcoming gigs will be visible to anyone at:<br>
-                    <a href="/schedule/<%= @band.slug %>" target="_blank" id="public-url" style="font-weight: 600; color: #10b981; text-decoration: none; word-break: break-all;" onmouseover="this.style.textDecoration='underline';" onmouseout="this.style.textDecoration='none';"><%= ENV['BASE_URL'] %>/schedule/<%= @band.slug %></a>
+                    <a href="/band/<%= @band.slug %>" target="_blank" id="public-url" style="font-weight: 600; color: #10b981; text-decoration: none; word-break: break-all;" onmouseover="this.style.textDecoration='underline';" onmouseout="this.style.textDecoration='none';"><%= ENV['BASE_URL'] %>/band/<%= @band.slug %></a>
                 </p>
             </div>
 
@@ -319,7 +319,7 @@
                 </label>
                 <p style="color: #666; margin-left: 30px; margin-bottom: 15px;">
                     When enabled, songs your band is ready to play will be visible to anyone at:<br>
-                    <a href="/repertoire/<%= @band.slug %>" target="_blank" style="font-weight: 600; color: #10b981; text-decoration: none; word-break: break-all;" onmouseover="this.style.textDecoration='underline';" onmouseout="this.style.textDecoration='none';"><%= ENV['BASE_URL'] %>/repertoire/<%= @band.slug %></a>
+                    <a href="/band/<%= @band.slug %>/songs" target="_blank" style="font-weight: 600; color: #10b981; text-decoration: none; word-break: break-all;" onmouseover="this.style.textDecoration='underline';" onmouseout="this.style.textDecoration='none';"><%= ENV['BASE_URL'] %>/band/<%= @band.slug %>/songs</a>
                 </p>
                 <p style="margin: 0; font-size: 0.9rem; color: #666;">
                     Songs currently marked as still being practiced are never shown publicly.
