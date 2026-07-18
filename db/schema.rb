@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_05_12_194503) do
+ActiveRecord::Schema[8.1].define(version: 2026_07_18_114527) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -24,6 +24,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_12_194503) do
     t.text "notes"
     t.bigint "owner_id"
     t.boolean "public_schedule_enabled", default: false
+    t.boolean "public_songs_enabled", default: false
     t.boolean "show_band_name", default: true, null: false
     t.string "slug"
     t.datetime "updated_at", null: false
@@ -32,6 +33,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_12_194503) do
     t.index ["name"], name: "index_bands_on_name", unique: true
     t.index ["owner_id"], name: "index_bands_on_owner_id"
     t.index ["public_schedule_enabled"], name: "index_bands_on_public_schedule_enabled"
+    t.index ["public_songs_enabled"], name: "index_bands_on_public_songs_enabled"
     t.index ["slug"], name: "index_bands_on_slug", unique: true
   end
 

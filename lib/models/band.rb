@@ -26,6 +26,10 @@ class Band < ActiveRecord::Base
     read_attribute(:public_schedule_enabled) == true
   end
 
+  def public_songs_enabled?
+    read_attribute(:public_songs_enabled) == true
+  end
+
   def owner?
     owners.exists?
   end

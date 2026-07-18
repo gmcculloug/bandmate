@@ -289,6 +289,49 @@
         </form>
     </div>
 
+    <!-- Public Songs Section -->
+    <div class="card" style="margin-top: 30px; border: 1px solid #10b981; background: #f0fdf4;">
+        <h3>🎵 Public Songs</h3>
+        <p style="color: #666; margin-bottom: 20px;">
+            Make your band's song list visible to fans and followers without requiring them to log in.
+        </p>
+
+        <% if @public_songs_error %>
+            <div class="errors" style="margin-bottom: 20px;">
+                <p><%= @public_songs_error %></p>
+            </div>
+        <% end %>
+
+        <% if @public_songs_success %>
+            <div class="success" style="margin-bottom: 20px;">
+                <p><%= @public_songs_success %></p>
+            </div>
+        <% end %>
+
+        <form method="POST" action="/bands/<%= @band.id %>/public_songs_settings">
+            <div style="margin-bottom: 10px;">
+                <label style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                    <input type="checkbox"
+                           name="public_songs_enabled"
+                           value="1"
+                           <%= 'checked' if @band.public_songs_enabled? %>>
+                    <span style="font-weight: bold;">Enable Public Songs</span>
+                </label>
+                <p style="color: #666; margin-left: 30px; margin-bottom: 15px;">
+                    When enabled, songs your band is ready to play will be visible to anyone at:<br>
+                    <a href="/repertoire/<%= @band.slug %>" target="_blank" style="font-weight: 600; color: #10b981; text-decoration: none; word-break: break-all;" onmouseover="this.style.textDecoration='underline';" onmouseout="this.style.textDecoration='none';"><%= ENV['BASE_URL'] %>/repertoire/<%= @band.slug %></a>
+                </p>
+                <p style="margin: 0; font-size: 0.9rem; color: #666;">
+                    Songs currently marked as still being practiced are never shown publicly.
+                </p>
+            </div>
+
+            <div class="actions">
+                <button type="submit" class="btn btn-success">Save Public Songs Settings</button>
+            </div>
+        </form>
+    </div>
+
     <script>
         function togglePublicScheduleInfo(checkbox) {
             const infoDiv = document.getElementById('public-schedule-info');

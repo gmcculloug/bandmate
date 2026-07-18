@@ -111,6 +111,22 @@ RSpec.describe 'Public Schedule Routes', type: :request do
         expect(last_response.body).to include('Test Venue')
         expect(last_response.body).to include('123 Main St')
       end
+
+      it 'links to the public songs page when it is enabled' do
+        band_with_gigs.update!(public_songs_enabled: true)
+
+        get "/schedule/#{band_with_gigs.slug}"
+
+        expect(last_response.body).to include("/repertoire/#{band_with_gigs.slug}")
+      end
+
+      it 'does not link to the public songs page when it is disabled' do
+        band_with_gigs.update!(public_songs_enabled: false)
+
+        get "/schedule/#{band_with_gigs.slug}"
+
+        expect(last_response.body).not_to include("/repertoire/#{band_with_gigs.slug}")
+      end
     end
 
     context 'when public schedule is disabled' do
