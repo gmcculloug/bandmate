@@ -1,0 +1,64 @@
+<% if @band.logo_filename.present? || @band.show_band_name %>
+    <div class="band-header">
+        <% if @band.logo_filename.present? %>
+            <img src="/uploads/band_logos/<%= @band.logo_filename %>"
+                 alt="<%= h(@band.name) %>"
+                 fetchpriority="high">
+        <% end %>
+        <% if @band.show_band_name || !@band.logo_filename.present? %>
+            <div class="band-title"><%= h(@band.name) %></div>
+        <% end %>
+    </div>
+<% end %>
+
+<h1 class="page-heading">Songs</h1>
+
+<% if @band.public_schedule_enabled? %>
+    <div class="cross-page-nav">
+        <a href="/schedule/<%= @band.slug %>">📅 View Upcoming Shows</a>
+    </div>
+<% end %>
+
+<div class="view-toggle">
+    <a href="/repertoire/<%= @band.slug %>?by=title" class="view-toggle-link<%= ' active' if @view_by == 'title' %>">By Title</a>
+    <a href="/repertoire/<%= @band.slug %>?by=artist" class="view-toggle-link<%= ' active' if @view_by == 'artist' %>">By Artist</a>
+</div>
+
+<% if @songs.any? %>
+    <%
+      _group_field = @view_by == 'artist' ? :artist : :title
+      _letter_groups = @songs.group_by { |song| song.public_send(_group_field)[0].upcase }
+
+      _palette = [
+        { bg: '#c44d7a' },
+        { bg: '#c97030' },
+        { bg: '#6848c0' },
+        { bg: '#2a9e8a' },
+        { bg: '#b89020' },
+      ]
+      _last = nil
+      _letter_colors = _letter_groups.keys.each_with_object({}) do |letter, colors|
+        _last = (_palette - [_last]).sample
+        colors[letter] = _last
+      end
+    %>
+    <% _letter_groups.each do |letter, songs| %>
+        <div class="letter-row">
+            <div class="song-badge" style="background:<%= _letter_colors[letter][:bg] %>"><%= h(letter) %></div>
+            <div class="song-card">
+                <% songs.each do |song| %>
+                    <div class="song-row">
+                        <div class="song-title"><%= h(song.title) %></div>
+                        <div class="song-artist"><%= h(song.artist) %></div>
+                    </div>
+                <% end %>
+            </div>
+        </div>
+    <% end %>
+<% else %>
+    <div class="no-gigs">
+        <div class="no-gigs-icon">🎵</div>
+        <p>No songs to show yet.</p>
+        <p style="font-size: 0.9rem; margin-top: 10px;">Check back soon for updates!</p>
+    </div>
+<% end %>

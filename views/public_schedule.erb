@@ -13,6 +13,12 @@
 
 <h1 class="page-heading">Upcoming Shows</h1>
 
+<% if @band.public_songs_enabled? %>
+    <div class="cross-page-nav">
+        <a href="/repertoire/<%= @band.slug %>">🎵 View Song List</a>
+    </div>
+<% end %>
+
 <% if @upcoming_gigs.any? %>
     <%
       _palette = [

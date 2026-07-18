@@ -52,6 +52,7 @@ require_relative 'lib/routes/practices'
 require_relative 'lib/routes/api'
 require_relative 'lib/routes/mobile_api'
 require_relative 'lib/routes/public_schedule'
+require_relative 'lib/routes/public_songs'
 require_relative 'lib/routes/public_member'
 
 enable :static
@@ -115,6 +116,7 @@ use Routes::Practices
 use Routes::Api
 use Routes::MobileAPI
 use Routes::PublicSchedule
+use Routes::PublicSongs
 use Routes::PublicMember
 
 # Account creation code for user registration (required)

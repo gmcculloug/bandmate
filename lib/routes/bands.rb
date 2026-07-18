@@ -518,6 +518,27 @@ class Routes::Bands < Sinatra::Base
     erb :edit_band
   end
 
+  # ============================================================================
+  # PUBLIC SONGS SETTINGS ROUTES
+  # ============================================================================
+
+  post '/bands/:id/public_songs_settings' do
+    require_login
+    @band = user_bands.includes(:user_bands, :owners).find(params[:id])
+    @user_bands_by_user_id = @band.user_bands.index_by(&:user_id)
+
+    # Any band member can configure public songs settings
+    unless @band.users.include?(current_user)
+      @public_songs_error = "You must be a member of this band to configure public songs settings"
+      return erb :edit_band
+    end
+
+    @band.update!(public_songs_enabled: params[:public_songs_enabled] == '1')
+
+    @public_songs_success = "Public songs settings updated successfully"
+    erb :edit_band
+  end
+
   private
 
   def _delete_band_logo(filename)
