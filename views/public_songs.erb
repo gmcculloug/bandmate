@@ -15,13 +15,13 @@
 
 <% if @band.public_schedule_enabled? %>
     <div class="cross-page-nav">
-        <a href="/schedule/<%= @band.slug %>">📅 View Upcoming Shows</a>
+        <a href="/band/<%= @band.slug %>">📅 View Upcoming Shows</a>
     </div>
 <% end %>
 
 <div class="view-toggle">
-    <a href="/repertoire/<%= @band.slug %>?by=title" class="view-toggle-link<%= ' active' if @view_by == 'title' %>">By Title</a>
-    <a href="/repertoire/<%= @band.slug %>?by=artist" class="view-toggle-link<%= ' active' if @view_by == 'artist' %>">By Artist</a>
+    <a href="/band/<%= @band.slug %>/songs?by=title" class="view-toggle-link<%= ' active' if @view_by == 'title' %>">By Title</a>
+    <a href="/band/<%= @band.slug %>/songs?by=artist" class="view-toggle-link<%= ' active' if @view_by == 'artist' %>">By Artist</a>
 </div>
 
 <% if @songs.any? %>
@@ -48,8 +48,13 @@
             <div class="song-card">
                 <% songs.each do |song| %>
                     <div class="song-row">
-                        <div class="song-title"><%= h(song.title) %></div>
-                        <div class="song-artist"><%= h(song.artist) %></div>
+                        <% if @view_by == 'artist' %>
+                            <div class="song-title"><%= h(song.artist) %></div>
+                            <div class="song-artist"><%= h(song.title) %></div>
+                        <% else %>
+                            <div class="song-title"><%= h(song.title) %></div>
+                            <div class="song-artist"><%= h(song.artist) %></div>
+                        <% end %>
                     </div>
                 <% end %>
             </div>

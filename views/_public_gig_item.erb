@@ -28,7 +28,7 @@
             <% has_tags = gig.venue&.name.present? || gig.venue&.location.present? %>
             <%
               if defined?(@band) && @band
-                calendar_url = "/schedule/#{@band.slug}/gigs/#{gig.id}/calendar.ics"
+                calendar_url = "/band/#{@band.slug}/gigs/#{gig.id}/calendar.ics"
               elsif defined?(@user) && @user
                 calendar_url = "/members/#{@user.slug}/gigs/#{gig.id}/calendar.ics"
               else

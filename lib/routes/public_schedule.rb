@@ -16,8 +16,8 @@ class Routes::PublicSchedule < Sinatra::Base
   # No authentication required - these are public endpoints
   # ============================================================================
 
-  # GET /schedule/:slug - Public HTML schedule view
-  get '/schedule/:slug' do
+  # GET /band/:slug - Public HTML schedule view (default public page for a band)
+  get '/band/:slug' do
     band = Band.find_by(slug: params[:slug])
 
     if band.nil? || !band.public_schedule_enabled?
@@ -73,8 +73,8 @@ class Routes::PublicSchedule < Sinatra::Base
     }.to_json
   end
 
-  # GET /schedule/:slug/gigs/:gig_id/calendar.ics - Download iCalendar file
-  get '/schedule/:slug/gigs/:gig_id/calendar.ics' do
+  # GET /band/:slug/gigs/:gig_id/calendar.ics - Download iCalendar file
+  get '/band/:slug/gigs/:gig_id/calendar.ics' do
     band = Band.find_by(slug: params[:slug])
 
     if band.nil? || !band.public_schedule_enabled?

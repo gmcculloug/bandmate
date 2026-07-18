@@ -8,7 +8,7 @@ RSpec.describe 'Public Schedule Routes', type: :request do
   let(:band_with_gigs) { create(:band, name: 'Test Band', public_schedule_enabled: true) }
   let(:disabled_band) { create(:band, name: 'Private Band', public_schedule_enabled: false) }
 
-  describe 'GET /schedule/:slug' do
+  describe 'GET /band/:slug' do
     context 'when public schedule is enabled' do
       let!(:gig) { create(:gig, band: band_with_gigs, performance_date: Date.current + 7.days, start_time: Time.new(2025, 1, 1, 19, 0, 0)) }
       let!(:venue) { create(:venue, band: band_with_gigs, name: 'Test Venue', location: '123 Main St') }
@@ -18,25 +18,25 @@ RSpec.describe 'Public Schedule Routes', type: :request do
       end
 
       it 'returns the public schedule page' do
-        get "/schedule/#{band_with_gigs.slug}"
+        get "/band/#{band_with_gigs.slug}"
 
         expect(last_response).to be_ok
       end
 
       it 'displays the band name' do
-        get "/schedule/#{band_with_gigs.slug}"
+        get "/band/#{band_with_gigs.slug}"
 
         expect(last_response.body).to include('Test Band')
       end
 
       it 'displays upcoming gigs' do
-        get "/schedule/#{band_with_gigs.slug}"
+        get "/band/#{band_with_gigs.slug}"
 
         expect(last_response.body).to include(gig.name)
       end
 
       it 'displays venue information' do
-        get "/schedule/#{band_with_gigs.slug}"
+        get "/band/#{band_with_gigs.slug}"
 
         expect(last_response.body).to include('Test Venue')
         expect(last_response.body).to include('123 Main St')
@@ -45,13 +45,13 @@ RSpec.describe 'Public Schedule Routes', type: :request do
       it 'includes gigs scheduled for today' do
         today_gig = create(:gig, band: band_with_gigs, name: 'Today Gig', performance_date: Date.current)
 
-        get "/schedule/#{band_with_gigs.slug}"
+        get "/band/#{band_with_gigs.slug}"
 
         expect(last_response.body).to include('Today Gig')
       end
 
       it 'shows empty state when band has no upcoming gigs' do
-        get "/schedule/#{band.slug}"
+        get "/band/#{band.slug}"
 
         expect(last_response).to be_ok
         expect(last_response.body).to include('No upcoming shows scheduled')
@@ -60,7 +60,7 @@ RSpec.describe 'Public Schedule Routes', type: :request do
       it 'does not display past gigs' do
         past_gig = create(:gig, band: band_with_gigs, name: 'Past Gig', performance_date: Date.current - 7.days)
 
-        get "/schedule/#{band_with_gigs.slug}"
+        get "/band/#{band_with_gigs.slug}"
 
         expect(last_response.body).not_to include('Past Gig')
       end
@@ -68,7 +68,7 @@ RSpec.describe 'Public Schedule Routes', type: :request do
       it 'displays gigs in chronological order' do
         later_gig = create(:gig, band: band_with_gigs, name: 'Later Gig', performance_date: Date.current + 30.days)
 
-        get "/schedule/#{band_with_gigs.slug}"
+        get "/band/#{band_with_gigs.slug}"
 
         body = last_response.body
         expect(body.index(gig.name)).to be < body.index('Later Gig')
@@ -77,7 +77,7 @@ RSpec.describe 'Public Schedule Routes', type: :request do
       it 'renders without error when a gig has no venue' do
         create(:gig, band: band_with_gigs, name: 'Venue-less Gig', performance_date: Date.current + 3.days, venue: nil)
 
-        get "/schedule/#{band_with_gigs.slug}"
+        get "/band/#{band_with_gigs.slug}"
 
         expect(last_response).to be_ok
         expect(last_response.body).to include('Venue-less Gig')
@@ -95,7 +95,7 @@ RSpec.describe 'Public Schedule Routes', type: :request do
           private_event: true
         )
 
-        get "/schedule/#{band_with_gigs.slug}"
+        get "/band/#{band_with_gigs.slug}"
 
         expect(last_response).to be_ok
         expect(last_response.body).to include('Private Event')
@@ -105,7 +105,7 @@ RSpec.describe 'Public Schedule Routes', type: :request do
       end
 
       it 'displays public events with full details' do
-        get "/schedule/#{band_with_gigs.slug}"
+        get "/band/#{band_with_gigs.slug}"
 
         expect(last_response.body).to include(gig.name)
         expect(last_response.body).to include('Test Venue')
@@ -115,30 +115,30 @@ RSpec.describe 'Public Schedule Routes', type: :request do
       it 'links to the public songs page when it is enabled' do
         band_with_gigs.update!(public_songs_enabled: true)
 
-        get "/schedule/#{band_with_gigs.slug}"
+        get "/band/#{band_with_gigs.slug}"
 
-        expect(last_response.body).to include("/repertoire/#{band_with_gigs.slug}")
+        expect(last_response.body).to include("/band/#{band_with_gigs.slug}/songs")
       end
 
       it 'does not link to the public songs page when it is disabled' do
         band_with_gigs.update!(public_songs_enabled: false)
 
-        get "/schedule/#{band_with_gigs.slug}"
+        get "/band/#{band_with_gigs.slug}"
 
-        expect(last_response.body).not_to include("/repertoire/#{band_with_gigs.slug}")
+        expect(last_response.body).not_to include("/band/#{band_with_gigs.slug}/songs")
       end
     end
 
     context 'when public schedule is disabled' do
       it 'returns 200 with not found page (not a 404 for security)' do
-        get "/schedule/#{disabled_band.slug}"
+        get "/band/#{disabled_band.slug}"
 
         expect(last_response.status).to eq(200)
         expect(last_response.body).to include('Schedule Not Found')
       end
 
       it 'does not expose any band information' do
-        get "/schedule/#{disabled_band.slug}"
+        get "/band/#{disabled_band.slug}"
 
         expect(last_response.body).not_to include(disabled_band.name)
       end
@@ -146,7 +146,7 @@ RSpec.describe 'Public Schedule Routes', type: :request do
 
     context 'when band does not exist' do
       it 'returns not found page' do
-        get '/schedule/no-such-band'
+        get '/band/no-such-band'
 
         expect(last_response.status).to eq(200)
         expect(last_response.body).to include('Schedule Not Found')
@@ -319,7 +319,7 @@ RSpec.describe 'Public Schedule Routes', type: :request do
     end
   end
 
-  describe 'GET /schedule/:slug/gigs/:gig_id/calendar.ics' do
+  describe 'GET /band/:slug/gigs/:gig_id/calendar.ics' do
     context 'when public schedule is enabled' do
       let(:venue) { create(:venue, band: band_with_gigs, name: 'Test Venue', location: '123 Main St', website: 'https://venue.com') }
       let!(:gig) do
@@ -334,47 +334,47 @@ RSpec.describe 'Public Schedule Routes', type: :request do
       end
 
       it 'returns an iCalendar file' do
-        get "/schedule/#{band_with_gigs.slug}/gigs/#{gig.id}/calendar.ics"
+        get "/band/#{band_with_gigs.slug}/gigs/#{gig.id}/calendar.ics"
 
         expect(last_response).to be_ok
         expect(last_response.content_type).to include('text/calendar')
       end
 
       it 'sets correct download filename' do
-        get "/schedule/#{band_with_gigs.slug}/gigs/#{gig.id}/calendar.ics"
+        get "/band/#{band_with_gigs.slug}/gigs/#{gig.id}/calendar.ics"
 
         expect(last_response.headers['Content-Disposition']).to include('attachment')
         expect(last_response.headers['Content-Disposition']).to include('.ics')
       end
 
       it 'includes band name in the event summary' do
-        get "/schedule/#{band_with_gigs.slug}/gigs/#{gig.id}/calendar.ics"
+        get "/band/#{band_with_gigs.slug}/gigs/#{gig.id}/calendar.ics"
 
         expect(last_response.body).to include('SUMMARY:Test Band - Test Venue')
       end
 
       it 'includes start and end times in UTC' do
-        get "/schedule/#{band_with_gigs.slug}/gigs/#{gig.id}/calendar.ics"
+        get "/band/#{band_with_gigs.slug}/gigs/#{gig.id}/calendar.ics"
 
         expect(last_response.body).to include('DTSTART')
         expect(last_response.body).to include('DTEND')
       end
 
       it 'includes venue information in location' do
-        get "/schedule/#{band_with_gigs.slug}/gigs/#{gig.id}/calendar.ics"
+        get "/band/#{band_with_gigs.slug}/gigs/#{gig.id}/calendar.ics"
 
         # The icalendar gem properly escapes commas as \,
         expect(last_response.body).to include('LOCATION:Test Venue\\, 123 Main St')
       end
 
       it 'includes venue website in URL field' do
-        get "/schedule/#{band_with_gigs.slug}/gigs/#{gig.id}/calendar.ics"
+        get "/band/#{band_with_gigs.slug}/gigs/#{gig.id}/calendar.ics"
 
         expect(last_response.body).to include('URL;VALUE=URI:https://venue.com')
       end
 
       it 'includes band name in description' do
-        get "/schedule/#{band_with_gigs.slug}/gigs/#{gig.id}/calendar.ics"
+        get "/band/#{band_with_gigs.slug}/gigs/#{gig.id}/calendar.ics"
 
         expect(last_response.body).to include('Band: Test Band')
       end
@@ -389,7 +389,7 @@ RSpec.describe 'Public Schedule Routes', type: :request do
           private_event: true
         )
 
-        get "/schedule/#{band_with_gigs.slug}/gigs/#{private_gig.id}/calendar.ics"
+        get "/band/#{band_with_gigs.slug}/gigs/#{private_gig.id}/calendar.ics"
 
         expect(last_response.status).to eq(404)
         expect(last_response.body).to include('Calendar not available for private events')
@@ -405,7 +405,7 @@ RSpec.describe 'Public Schedule Routes', type: :request do
           venue: venue
         )
 
-        get "/schedule/#{band_with_gigs.slug}/gigs/#{all_day_gig.id}/calendar.ics"
+        get "/band/#{band_with_gigs.slug}/gigs/#{all_day_gig.id}/calendar.ics"
 
         expect(last_response).to be_ok
         expect(last_response.body).to include('DTSTART;VALUE=DATE:20250704')
@@ -421,7 +421,7 @@ RSpec.describe 'Public Schedule Routes', type: :request do
           venue: venue
         )
 
-        get "/schedule/#{band_with_gigs.slug}/gigs/#{gig_no_end.id}/calendar.ics"
+        get "/band/#{band_with_gigs.slug}/gigs/#{gig_no_end.id}/calendar.ics"
 
         expect(last_response).to be_ok
         expect(last_response.body).to include('DTSTART')
@@ -433,7 +433,7 @@ RSpec.describe 'Public Schedule Routes', type: :request do
       let!(:gig) { create(:gig, band: disabled_band, performance_date: Date.current + 7.days) }
 
       it 'returns 404' do
-        get "/schedule/#{disabled_band.slug}/gigs/#{gig.id}/calendar.ics"
+        get "/band/#{disabled_band.slug}/gigs/#{gig.id}/calendar.ics"
 
         expect(last_response.status).to eq(404)
       end
@@ -441,7 +441,7 @@ RSpec.describe 'Public Schedule Routes', type: :request do
 
     context 'when gig does not exist' do
       it 'returns 404' do
-        get "/schedule/#{band_with_gigs.slug}/gigs/99999/calendar.ics"
+        get "/band/#{band_with_gigs.slug}/gigs/99999/calendar.ics"
 
         expect(last_response.status).to eq(404)
       end
@@ -449,7 +449,7 @@ RSpec.describe 'Public Schedule Routes', type: :request do
 
     context 'when band does not exist' do
       it 'returns 404' do
-        get '/schedule/no-such-band/gigs/1/calendar.ics'
+        get '/band/no-such-band/gigs/1/calendar.ics'
 
         expect(last_response.status).to eq(404)
       end
@@ -460,7 +460,7 @@ RSpec.describe 'Public Schedule Routes', type: :request do
     it 'does not require authentication for public schedule page' do
       clear_cookies
 
-      get "/schedule/#{band.slug}"
+      get "/band/#{band.slug}"
 
       expect(last_response).to be_ok
     end
@@ -474,7 +474,7 @@ RSpec.describe 'Public Schedule Routes', type: :request do
     end
 
     it 'does not require Band Huddle session' do
-      get "/schedule/#{band.slug}"
+      get "/band/#{band.slug}"
 
       expect(last_response).to be_ok
       expect(last_response.body).not_to include('Login')
