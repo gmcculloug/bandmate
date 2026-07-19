@@ -1,5 +1,6 @@
 class SongCatalog < ActiveRecord::Base
   include Archivable
+  include StripsWhitespace
   has_many :songs
   
   validates :title, presence: true

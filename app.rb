@@ -16,6 +16,7 @@ end
 
 # Load concerns
 require_relative 'lib/concerns/archivable'
+require_relative 'lib/concerns/strips_whitespace'
 
 # Load models
 require_relative 'lib/models/user'

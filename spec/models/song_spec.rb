@@ -115,4 +115,26 @@ RSpec.describe Song, type: :model do
       expect(results).not_to include(song2)
     end
   end
+
+  describe 'whitespace stripping' do
+    it 'strips leading spaces from title' do
+      song = build(:song, title: '  Wonderwall')
+      song.valid?
+      expect(song.title).to eq('Wonderwall')
+    end
+
+    it 'strips leading spaces from artist' do
+      song = build(:song, artist: '  Oasis')
+      song.valid?
+      expect(song.artist).to eq('Oasis')
+    end
+
+    it 'strips leading spaces from title and artist on update' do
+      song = create(:song, title: 'Wonderwall', artist: 'Oasis')
+      song.update(title: '   Champagne Supernova', artist: '   Oasis')
+      song.reload
+      expect(song.title).to eq('Champagne Supernova')
+      expect(song.artist).to eq('Oasis')
+    end
+  end
 end 

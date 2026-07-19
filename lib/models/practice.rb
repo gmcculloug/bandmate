@@ -1,4 +1,6 @@
 class Practice < ActiveRecord::Base
+  include StripsWhitespace
+
   belongs_to :band
   belongs_to :created_by_user, class_name: 'User'
   has_many :practice_availabilities, dependent: :destroy

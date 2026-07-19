@@ -115,4 +115,17 @@ RSpec.describe Band, type: :model do
       expect { band.destroy }.to change(Band, :count).by(-1)
     end
   end
+
+  describe 'whitespace stripping' do
+    it 'strips leading spaces from name' do
+      band = create(:band, name: '  The Wandering Bards')
+      expect(band.name).to eq('The Wandering Bards')
+    end
+
+    it 'strips leading spaces from name on update' do
+      band = create(:band, name: 'The Wandering Bards')
+      band.update(name: '   Renamed Band')
+      expect(band.reload.name).to eq('Renamed Band')
+    end
+  end
 end 

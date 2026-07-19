@@ -1,4 +1,6 @@
 class Gig < ActiveRecord::Base
+  include StripsWhitespace
+
   belongs_to :band
   belongs_to :venue, optional: true
   has_many :gig_songs, dependent: :destroy
