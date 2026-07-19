@@ -1,4 +1,6 @@
 class Band < ActiveRecord::Base
+  include StripsWhitespace
+
   belongs_to :owner, class_name: 'User', optional: true
   has_many :song_bands, dependent: :destroy
   has_many :songs, through: :song_bands

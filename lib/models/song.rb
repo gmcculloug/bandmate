@@ -1,5 +1,6 @@
 class Song < ActiveRecord::Base
   include Archivable
+  include StripsWhitespace
   belongs_to :song_catalog, optional: true
   has_many :song_bands, dependent: :destroy
   has_many :bands, through: :song_bands

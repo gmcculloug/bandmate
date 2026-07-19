@@ -1,5 +1,6 @@
 class Venue < ActiveRecord::Base
   include Archivable
+  include StripsWhitespace
   belongs_to :band, optional: true
   has_many :gigs
 
