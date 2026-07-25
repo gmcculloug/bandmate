@@ -24,6 +24,28 @@
     <a href="/band/<%= @band.slug %>/songs?by=artist" class="view-toggle-link<%= ' active' if @view_by == 'artist' %>">By Artist</a>
 </div>
 
+<% if params[:success] %>
+    <div class="success-banner"><%= h(params[:success]) %></div>
+<% elsif params[:error] %>
+    <div class="error-banner"><%= h(params[:error]) %></div>
+<% end %>
+
+<details class="recommend-song">
+    <summary>🎤 Recommend a Song</summary>
+    <% if @recommend_errors %>
+        <ul class="error-list">
+            <% @recommend_errors.each do |msg| %><li><%= h(msg) %></li><% end %>
+        </ul>
+    <% end %>
+    <form method="post" action="/band/<%= @band.slug %>/songs/recommend">
+        <input type="text" name="website" value="" style="position:absolute;left:-9999px;top:-9999px" tabindex="-1" autocomplete="off">
+        <label>Song Title <input type="text" name="title" maxlength="200" required></label>
+        <label>Artist <input type="text" name="artist" maxlength="200" required></label>
+        <label>Notes (optional) <textarea name="notes" maxlength="500"></textarea></label>
+        <button type="submit" class="btn btn-primary">Submit Recommendation</button>
+    </form>
+</details>
+
 <% if @songs.any? %>
     <%
       _group_field = @view_by == 'artist' ? :artist : :title

@@ -92,6 +92,11 @@ RSpec.configure do |config|
     rescue ActiveRecord::StatementInvalid
       # BlackoutDate table doesn't exist in test DB, skip
     end
+    begin
+      SongRecommendation.delete_all
+    rescue ActiveRecord::StatementInvalid
+      # SongRecommendation table doesn't exist in test DB, skip
+    end
     # Clear many-to-many relationships first
     begin
       ActiveRecord::Base.connection.execute("DELETE FROM songs_bands")

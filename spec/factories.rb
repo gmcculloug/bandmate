@@ -113,4 +113,13 @@ FactoryBot.define do
     availability { 'available' }
     notes { "Available in the evening" }
   end
-end 
+
+  factory :song_recommendation do
+    association :band
+    sequence(:title) { |n| "Recommended Song #{n}" }
+    artist { Faker::Music.band }
+    notes { Faker::Lorem.sentence }
+    status { 'pending' }
+    ip_address { Faker::Internet.ip_v4_address }
+  end
+end

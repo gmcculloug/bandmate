@@ -311,6 +311,10 @@ function togglePracticeState(songId, button) {
     </div>
 <% end %>
 
+<% if params[:success] %>
+    <div class="message message--success">✅ <%= h(params[:success]) %></div>
+<% end %>
+
 <% if params[:error] %>
     <div class="message message--error">
         <% if params[:error] == 'already_exists' %>

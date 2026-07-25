@@ -32,6 +32,7 @@ require_relative 'lib/models/blackout_date'
 require_relative 'lib/models/google_calendar_event'
 require_relative 'lib/models/practice'
 require_relative 'lib/models/practice_availability'
+require_relative 'lib/models/song_recommendation'
 
 # Load services
 require_relative 'lib/services/google_calendar_service'
@@ -55,6 +56,7 @@ require_relative 'lib/routes/mobile_api'
 require_relative 'lib/routes/public_schedule'
 require_relative 'lib/routes/public_songs'
 require_relative 'lib/routes/public_member'
+require_relative 'lib/routes/song_recommendations'
 
 enable :static
 use Rack::MethodOverride
@@ -119,6 +121,7 @@ use Routes::MobileAPI
 use Routes::PublicSchedule
 use Routes::PublicSongs
 use Routes::PublicMember
+use Routes::SongRecommendations
 
 # Account creation code for user registration (required)
 # Set BAND_HUDDLE_ACCT_CREATION_SECRET environment variable to enable account creation

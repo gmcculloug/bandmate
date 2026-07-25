@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_07_18_114527) do
+ActiveRecord::Schema[8.1].define(version: 2026_07_25_153758) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -179,6 +179,21 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_18_114527) do
     t.index ["title"], name: "index_song_catalogs_on_title"
   end
 
+  create_table "song_recommendations", force: :cascade do |t|
+    t.string "artist", null: false
+    t.bigint "band_id", null: false
+    t.datetime "created_at", null: false
+    t.string "ip_address", null: false
+    t.text "notes"
+    t.string "status", default: "pending", null: false
+    t.string "title", null: false
+    t.datetime "updated_at", null: false
+    t.index ["band_id", "status"], name: "index_song_recommendations_on_band_id_and_status"
+    t.index ["band_id"], name: "index_song_recommendations_on_band_id"
+    t.index ["ip_address", "created_at"], name: "index_song_recommendations_on_ip_address_and_created_at"
+    t.index ["status"], name: "index_song_recommendations_on_status"
+  end
+
   create_table "songs", force: :cascade do |t|
     t.string "album"
     t.boolean "archived", default: false, null: false
@@ -289,6 +304,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_18_114527) do
   add_foreign_key "practice_availabilities", "users"
   add_foreign_key "practices", "bands"
   add_foreign_key "practices", "users", column: "created_by_user_id"
+  add_foreign_key "song_recommendations", "bands"
   add_foreign_key "songs", "song_catalogs"
   add_foreign_key "songs_bands", "bands"
   add_foreign_key "songs_bands", "songs"

@@ -163,7 +163,22 @@
             color: white;
             transform: translateY(-2px);
         }
-        
+
+        .nav-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 18px;
+            height: 18px;
+            padding: 0 5px;
+            margin-left: 6px;
+            border-radius: 999px;
+            background: #e53e3e;
+            color: #fff;
+            font-size: 11px;
+            font-weight: 700;
+        }
+
         .mobile-menu-toggle {
             display: none;
             background: rgba(0, 0, 0, 0.05);
@@ -1738,6 +1753,17 @@
                             <circle cx="18" cy="16" r="3"></circle>
                         </svg>
                         Songs
+                    </a>
+                    <a href="/song_recommendations">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 6px;" aria-hidden="true">
+                            <path d="M9 18V5l12-2v13"></path>
+                            <circle cx="6" cy="18" r="3"></circle>
+                            <circle cx="18" cy="16" r="3"></circle>
+                        </svg>
+                        Recommendations
+                        <% if current_band && (_pending_rec_count = SongRecommendation.where(band: current_band, status: 'pending').count) > 0 %>
+                            <span class="nav-badge"><%= _pending_rec_count %></span>
+                        <% end %>
                     </a>
                     <a href="/venues">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 6px;" aria-hidden="true">

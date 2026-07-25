@@ -1,0 +1,48 @@
+<section aria-labelledby="song-recommendations-heading">
+<div class="page-header">
+    <h2 class="page-title" id="song-recommendations-heading">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -4px; margin-right: 8px;" aria-hidden="true">
+            <path d="M9 18V5l12-2v13"></path>
+            <circle cx="6" cy="18" r="3"></circle>
+            <circle cx="18" cy="16" r="3"></circle>
+        </svg>
+        Song Recommendations (<%= @recommendations.count %>)
+    </h2>
+</div>
+
+<% if params[:success] %>
+    <div class="message message--success">✅ <%= h(params[:success]) %></div>
+<% end %>
+
+<% if @recommendations.any? %>
+    <% @recommendations.each do |rec| %>
+        <div class="card" style="margin-bottom: 20px;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 12px;">
+                <div>
+                    <h3 style="margin-bottom: 4px;"><%= h(rec.title) %></h3>
+                    <p style="color: #718096; margin-bottom: 8px;"><%= h(rec.artist) %></p>
+                    <% if rec.notes.present? %>
+                        <p><%= h(rec.notes) %></p>
+                    <% end %>
+                    <p style="color: #a0aec0; font-size: 0.85rem; margin-top: 8px;">
+                        Submitted <%= rec.created_at.strftime('%b %-d, %Y') %>
+                    </p>
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    <form method="post" action="/song_recommendations/<%= rec.id %>/approve" style="display: inline;">
+                        <button type="submit" class="btn btn-success">Approve</button>
+                    </form>
+                    <form method="post" action="/song_recommendations/<%= rec.id %>/reject" style="display: inline;">
+                        <button type="submit" class="btn">Reject</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    <% end %>
+<% else %>
+    <div class="card" style="text-align: center; padding: 60px 20px;">
+        <h3 style="color: #4a5568; margin-bottom: 10px;">No Pending Recommendations</h3>
+        <p style="color: #718096;">Fan song recommendations submitted from your public songs page will show up here.</p>
+    </div>
+<% end %>
+</section>
